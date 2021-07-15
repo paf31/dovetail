@@ -1,0 +1,4 @@
+dist-newstyle/
+input.purs
+output/
+.stack-work

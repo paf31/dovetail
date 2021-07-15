@@ -1,0 +1,59 @@
+name:                runpurs-hs
+version:             0.1.0.0
+github:              "paf31/runpurs-hs"
+license:             BSD3
+author:              "Phil Freeman"
+maintainer:          "freeman.phil@gmail.com"
+copyright:           "2021 Phil Freeman"
+
+extra-source-files:
+- README.md
+
+description:         Please see the README on GitHub at <https://github.com/paf31/runpurs-hs#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  dependencies:
+  - aeson
+  - containers
+  - purescript
+  - purescript-cst
+  - scientific
+  - semialign
+  - text
+  - these
+  - transformers
+  - unordered-containers
+  - vector
+
+executables:
+  runpurs-hs-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Werror
+    dependencies:
+    - runpurs-hs
+    - aeson
+    - aeson-pretty
+    - bytestring
+    - purescript
+    - purescript-cst
+    - text
+
+tests:
+  runpurs-hs-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - runpurs-hs

@@ -1,0 +1,10 @@
+resolver: lts-17.6
+packages:
+- .
+extra-deps:
+- git: https://github.com/purescript/purescript.git
+  commit: 40dd447b2acd51c206c48cf3dcedada1e4b94594
+  subdirs:
+    - .
+    - lib/purescript-cst
+- language-javascript-0.7.0.0

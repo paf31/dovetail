@@ -5,8 +5,6 @@
 
 module Main where
 
-import Control.Monad.Supply (evalSupply)
-import Control.Monad.Supply.Class (MonadSupply)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
@@ -27,20 +25,24 @@ newtype ParsedCoreFn = ParsedCoreFn { getParsedCoreFn :: (Version, CoreFn.Module
 instance Aeson.FromJSON ParsedCoreFn where
   parseJSON v = ParsedCoreFn <$> moduleFromJSON v
 
-initialEnv :: MonadSupply m => m Interpreter.Env
-initialEnv = do
-  _map <- Interpreter.primitive
-  _append <- Interpreter.primitive
-  pure $ Map.fromList
-    [ ( Names.mkQualified (Names.Ident "map") (Names.ModuleName "Main")
-      , _map $ \f xs ->
-          Interpreter.Array <$> traverse (Interpreter.apply f) xs
-      )
-    , ( Names.mkQualified (Names.Ident "append") (Names.ModuleName "Main")
-      , _append $ \xs ys -> 
-          Interpreter.Array (xs <> ys)
-      )
-    ]
+initialEnv :: Interpreter.Env
+initialEnv = Map.unions
+  [ 
+  
+  -- Arrays
+    Interpreter.builtIn "map" $ \f xs ->
+      Interpreter.Array <$> traverse (Interpreter.apply f) xs
+  , Interpreter.builtIn "append" $ \xs ys -> 
+      Interpreter.Array (xs <> ys)
+      
+  -- Strings
+  , Interpreter.builtIn "appendString" $ \x y -> 
+      Interpreter.String (x <> y)
+      
+  -- Booleans
+  , Interpreter.builtIn "not" $ \b -> 
+      Interpreter.Bool (not b)
+  ]
 
 main :: IO ()
 main = do
@@ -53,6 +55,6 @@ main = do
       case Aeson.eitherDecode stdinBytes of
         Left err -> putStrLn err *> exitFailure
         Right (input :: Aeson.Value) -> do
-          case Interpreter.interpretModule (evalSupply 0 initialEnv) pursMod input of
+          case Interpreter.interpretModule initialEnv pursMod input of
             Left err -> putStrLn err *> exitFailure
             Right (result :: Aeson.Value) -> BL8.putStrLn (Pretty.encodePretty result)

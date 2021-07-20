@@ -1,5 +1,6 @@
 {-# LANGUAGE BlockArguments      #-}
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DefaultSignatures   #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE NamedFieldPuns      #-}
@@ -17,9 +18,11 @@ module Interpreter
   , ToValue(..)
   , FromValue(..)
   , primitive
+  , builtIn
   ) where
 
 import Control.Monad (foldM, join, zipWithM)
+import Control.Monad.Supply (evalSupply)
 import Control.Monad.Supply.Class (MonadSupply(..))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(..))
@@ -31,7 +34,8 @@ import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Scientific (Scientific)
+import Data.Maybe (fromMaybe)
+import Data.Scientific (Scientific, floatingOrInteger)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.These (These(..))
@@ -85,9 +89,20 @@ toJSON _ = Nothing
 
 class ToValue a where
   toValue :: MonadSupply m => m (a -> Either String Value)
+  
+  default toValue :: (MonadSupply m, Primitive a) => m (a -> Either String Value)
+  toValue = (pure . ) <$> primitive
+  
+instance ToValue Value
+instance ToValue Integer
+instance ToValue Scientific
+instance ToValue Text
+instance ToValue Bool
 
-instance ToValue Value where
-  toValue = pure pure
+instance ToValue a => ToValue (Maybe a) where
+  toValue = do
+    mk <- toValue
+    pure (maybe (pure Null) mk)
 
 instance (e ~ String, ToValue a) => ToValue (Either e a) where
   toValue = do
@@ -113,11 +128,40 @@ unsafeClosure argName f = Closure $
             f a
     }
   
-primitive :: (MonadSupply m, FromValue a, ToValue b) => m ((a -> b) -> Value)
-primitive = do
-  argName <- Names.freshIdent'
-  mk <- toValue
-  pure $ \f -> unsafeClosure argName (mk . f)
+class Primitive a where
+  primitive :: MonadSupply m => m (a -> Value)
+  
+instance Primitive Value where
+  primitive = pure id
+  
+instance Primitive Integer where
+  primitive = pure (Number . fromIntegral)
+  
+instance Primitive Scientific where
+  primitive = pure Number
+  
+instance Primitive Text where
+  primitive = pure String
+  
+instance Primitive Bool where
+  primitive = pure Bool
+  
+instance Primitive a => Primitive (Maybe a) where
+  primitive = do
+    mk <- primitive
+    pure (maybe Null mk)
+  
+instance (FromValue a, ToValue b) => Primitive (a -> b) where
+  primitive = do
+    argName <- Names.freshIdent'
+    mk <- toValue
+    pure $ \f -> unsafeClosure argName (mk . f)
+  
+builtIn :: Primitive a => Text -> a -> Interpreter.Env
+builtIn name value = evalSupply 0 do
+  mk <- Interpreter.primitive
+  let qualName = Names.mkQualified (Names.Ident name) (Names.ModuleName "Main")
+  pure $ Map.singleton qualName $ mk value
   
 class FromValue a where
   fromValue :: Value -> Either String a
@@ -125,8 +169,30 @@ class FromValue a where
 instance FromValue Value where
   fromValue = pure
   
+instance FromValue Text where
+  fromValue (String s) = pure s
+  fromValue _ = Left "fromValue: expected string"
+  
+instance FromValue Integer where
+  fromValue (Number s) 
+    | Right i <- floatingOrInteger s = pure i
+  fromValue _ = Left "fromValue: expected integer"
+  
+instance FromValue Scientific where
+  fromValue (Number s) = pure s
+  fromValue _ = Left "fromValue: expected number"
+  
+instance FromValue Bool where
+  fromValue (Bool b) = pure b
+  fromValue _ = Left "fromValue: expected boolean"
+  
+instance FromValue a => FromValue (Maybe a) where
+  fromValue Null = pure Nothing
+  fromValue v = Just <$> fromValue v
+  
 instance FromValue a => FromValue (Vector a) where
   fromValue (Array xs) = traverse fromValue xs
+  fromValue _ = Left "fromValue: expected array"
   
 interpretModule :: Env -> CoreFn.Module ann -> Aeson.Value -> Either String Aeson.Value
 interpretModule initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } input = do

@@ -19,7 +19,7 @@ Work in progress Haskell port of [runpurs](https://github.com/paf31/runpurs).
   - [x] Basic `FromValue` and `ToValue` classes
   - [x] `builtIn` function for constructing environments from Haskell functions
   - [ ] Generic deriving for `FromValue` and `ToValue`
-- [ ] Integrated parser and type checker
+- [x] Integrated parser and type checker
   - [ ] Generate externs along with environment for foreign imports
 - [ ] Improved error messages and error type
 - [ ] CPS'd evaluator with `shift`/`reset`

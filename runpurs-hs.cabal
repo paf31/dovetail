@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a841ec1d34639459fbdc6e1b6e570976026a673c5083d698c8e9469d9843eafb
+-- hash: 9dba6cbee563c1e2c4cade993d08938d423c2fd757c27827c1f097e611160387
 
 name:           runpurs-hs
 version:        0.1.0.0
@@ -63,6 +63,8 @@ executable runpurs-hs-exe
     , purescript-cst
     , runpurs-hs
     , text
+    , transformers
+    , vector
   default-language: Haskell2010
 
 test-suite runpurs-hs-test

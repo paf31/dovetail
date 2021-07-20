@@ -43,6 +43,7 @@ executables:
     - aeson
     - aeson-pretty
     - bytestring
+    - containers
     - purescript
     - purescript-cst
     - text

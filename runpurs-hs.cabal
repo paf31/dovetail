@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a0dec73f9e10de55bf5e0935ac43754c9ca7c48ffe597bf4e384dc83dc3a22e5
+-- hash: a841ec1d34639459fbdc6e1b6e570976026a673c5083d698c8e9469d9843eafb
 
 name:           runpurs-hs
 version:        0.1.0.0
@@ -58,6 +58,7 @@ executable runpurs-hs-exe
     , aeson-pretty
     , base >=4.7 && <5
     , bytestring
+    , containers
     , purescript
     , purescript-cst
     , runpurs-hs

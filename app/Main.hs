@@ -20,6 +20,7 @@ import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Data.Version (Version)
 import Interpreter qualified
+import Interpreter.JSON (JSON(..))
 import Language.PureScript.AST.Declarations qualified as AST
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.CoreFn.FromJSON (moduleFromJSON)
@@ -83,9 +84,13 @@ main = do
             case Aeson.eitherDecode stdinBytes of
               Left err -> putStrLn err *> exitFailure
               Right (input :: Aeson.Value) -> do
-                case Interpreter.interpretModule initialEnv m input of
+                case Interpreter.interpretModule initialEnv m of
                   Left err -> putStrLn err *> exitFailure
-                  Right (result :: Aeson.Value) -> BL8.putStrLn (Pretty.encodePretty result)
+                  Right f -> 
+                    case f (JSON input) of
+                      Left err -> putStrLn err *> exitFailure
+                      Right (JSON (result :: Aeson.Value)) -> 
+                        BL8.putStrLn (Pretty.encodePretty result)
       | otherwise ->
           putStrLn "Expected module name 'Main'" *> exitFailure
       

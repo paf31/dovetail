@@ -1,11 +1,12 @@
-{-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE DefaultSignatures   #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE NamedFieldPuns      #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE BlockArguments       #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE DefaultSignatures    #-}
+{-# LANGUAGE GADTs                #-}
+{-# LANGUAGE ImportQualifiedPost  #-}
+{-# LANGUAGE NamedFieldPuns       #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE TupleSections        #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Interpreter
   ( Env
@@ -26,7 +27,6 @@ import Control.Monad.Supply (evalSupply)
 import Control.Monad.Supply.Class (MonadSupply(..))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(..))
-import Data.Aeson qualified as Aeson
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
 import Data.Functor (void)
@@ -69,23 +69,6 @@ data Constructor = MkConstructor
   , ctorApplied :: [Value]
   , ctorUnapplied :: [Ident]
   }
-
-fromJSON :: Aeson.Value -> Value
-fromJSON (Aeson.Object x) = Object (fmap fromJSON x)
-fromJSON (Aeson.Array x) = Array (fmap fromJSON x)
-fromJSON (Aeson.String x) = String x
-fromJSON (Aeson.Number x) = Number x
-fromJSON (Aeson.Bool x) = Bool x
-fromJSON Aeson.Null = Null
-
-toJSON :: Value -> Maybe Aeson.Value
-toJSON (Object x) = Aeson.Object <$> traverse toJSON x
-toJSON (Array x) = Aeson.Array <$> traverse toJSON x
-toJSON (String x) = pure (Aeson.String x)
-toJSON (Number x) = pure (Aeson.Number x)
-toJSON (Bool x) = pure (Aeson.Bool x)
-toJSON Null = pure Aeson.Null
-toJSON _ = Nothing
 
 class ToValue a where
   toValue :: MonadSupply m => m (a -> Either String Value)
@@ -199,14 +182,22 @@ instance FromValue a => FromValue (Vector a) where
   fromValue (Array xs) = traverse fromValue xs
   fromValue _ = Left "fromValue: expected array"
   
-interpretModule :: Env -> CoreFn.Module ann -> Aeson.Value -> Either String Aeson.Value
-interpretModule initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } input = do
+instance (ToValue a, b ~ Either String result, FromValue result) => FromValue (a -> b) where
+  fromValue f = pure \a -> do
+    x <- evalSupply 0 toValue a -- TODO: dodgy?
+    result <- apply f x
+    fromValue result
+  
+interpretModule :: FromValue a => Env -> CoreFn.Module ann -> Either String a
+interpretModule initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = do
   env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
   mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
-  output <- apply mainFn (fromJSON input)
-  case toJSON output of
-    Nothing -> Left "interpretModule: not JSON output"
-    Just result -> pure result
+  fromValue mainFn
+  
+  -- output <- apply mainFn (fromJSON input)
+  -- case toJSON output of
+  --   Nothing -> Left "interpretModule: not JSON output"
+  --   Just result -> pure result
 
 eval :: Names.ModuleName -> Env -> CoreFn.Expr () -> Either String Value
 eval mn env (CoreFn.Literal _ lit) =

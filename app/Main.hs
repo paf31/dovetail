@@ -6,6 +6,8 @@
 
 module Main where
 
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Cont qualified as Cont
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
@@ -40,6 +42,14 @@ initialEnv = Map.unions
       
   -- Booleans
   , Interpreter.builtIn "not" not
+      
+  -- Continuations
+  , Interpreter.builtIn "callcc" $ \f ->
+      Cont.callCC $ \k -> Interpreter.apply f (Interpreter.unsafeClosure (Names.Ident "cc") k)
+  , Interpreter.builtIn "reset" $ \f ->
+      Cont.resetT (Interpreter.apply f (Interpreter.Object mempty))
+  , Interpreter.builtIn "shift" $ \f ->
+      Cont.shiftT $ \k -> Interpreter.apply f (Interpreter.unsafeClosure @Interpreter.Value (Names.Ident "cc") (lift . k))
   ]
 
 main :: IO ()

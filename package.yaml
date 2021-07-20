@@ -47,6 +47,8 @@ executables:
     - purescript
     - purescript-cst
     - text
+    - transformers
+    - vector
 
 tests:
   runpurs-hs-test:

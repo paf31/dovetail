@@ -19,11 +19,13 @@ module Interpreter
   , FromValue(..)
   , primitive
   , builtIn
+  , unsafeClosure
   ) where
 
 import Control.Monad (foldM, join, zipWithM)
 import Control.Monad.Supply (evalSupply)
 import Control.Monad.Supply.Class (MonadSupply(..))
+import Control.Monad.Trans.Cont (ContT, evalContT)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Data.Aeson qualified as Aeson
@@ -61,7 +63,7 @@ data Value
 data Closure = MkClosure
   { closEnv :: Env
   , closArg :: Ident
-  , closBody :: Env -> Either String Value
+  , closBody :: Env -> ContT Value (Either String) Value
   }
   
 data Constructor = MkConstructor
@@ -88,9 +90,9 @@ toJSON Null = pure Aeson.Null
 toJSON _ = Nothing
 
 class ToValue a where
-  toValue :: MonadSupply m => m (a -> Either String Value)
+  toValue :: MonadSupply m => m (a -> ContT Value (Either String) Value)
   
-  default toValue :: (MonadSupply m, Primitive a) => m (a -> Either String Value)
+  default toValue :: (MonadSupply m, Primitive a) => m (a -> ContT Value (Either String) Value)
   toValue = (pure . ) <$> primitive
   
 instance ToValue Value
@@ -107,6 +109,11 @@ instance ToValue a => ToValue (Maybe a) where
 instance (e ~ String, ToValue a) => ToValue (Either e a) where
   toValue = do
     mk <- toValue
+    pure $ (>>= mk) . lift
+
+instance (r ~ Value, m ~ Either String, ToValue a) => ToValue (ContT r m a) where
+  toValue = do
+    mk <- toValue
     pure $ (>>= mk)
 
 instance ToValue a => ToValue (Vector a) where
@@ -120,16 +127,16 @@ instance (FromValue a, ToValue b) => ToValue (a -> b) where
     mk <- toValue
     pure $ \f -> pure $ unsafeClosure argName (mk . f)
   
-unsafeClosure :: FromValue a => Ident -> (a -> Either String Value) -> Value
+unsafeClosure :: FromValue a => Ident -> (a -> ContT Value (Either String) Value) -> Value
 unsafeClosure argName f = Closure $
   MkClosure 
     { closEnv = Map.empty
     , closArg = argName
     , closBody = \env -> do
         case Map.lookup (Qualified Nothing argName) env of
-          Nothing -> Left "toValue: argName not in env"
+          Nothing -> lift $ Left "toValue: argName not in env"
           Just input -> do
-            a <- fromValue input 
+            a <- lift $ fromValue input 
             f a
     }
   
@@ -202,67 +209,68 @@ instance FromValue a => FromValue (Vector a) where
 interpretModule :: Env -> CoreFn.Module ann -> Aeson.Value -> Either String Aeson.Value
 interpretModule initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } input = do
   env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
-  mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
-  output <- apply mainFn (fromJSON input)
+  output <- evalContT do
+    mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
+    apply mainFn (fromJSON input)
   case toJSON output of
     Nothing -> Left "interpretModule: not JSON output"
     Just result -> pure result
 
-eval :: Names.ModuleName -> Env -> CoreFn.Expr () -> Either String Value
+eval :: Names.ModuleName -> Env -> CoreFn.Expr () -> ContT Value (Either String) Value
 eval mn env (CoreFn.Literal _ lit) =
   evalLit mn env lit
 eval mn env (CoreFn.Accessor _ pss e) = do
   val <- eval mn env e
-  field <- evalPSString pss
+  field <- lift $ evalPSString pss
   case val of
     Object o ->
       case HashMap.lookup field o of
         Just x -> pure x
-        Nothing -> Left "eval: field not found"
+        Nothing -> lift $ Left "eval: field not found"
 eval mn env (CoreFn.Abs _ arg body) =
   pure (Closure (MkClosure env arg (\env' -> eval mn env' body)))
 eval mn env (CoreFn.App _ f x) =
   join (apply <$> eval mn env f <*> eval mn env x)
 eval mn env (CoreFn.Var _ name) =
   case Map.lookup name env of
-    Nothing -> Left $ "eval: unknown ident " <> show name
+    Nothing -> lift . Left $ "eval: unknown ident " <> show name
     Just val -> pure val
 eval mn env (CoreFn.Let _ binders body) = do
-  env' <- bind mn Nothing env binders
+  env' <- lift $ bind mn Nothing env binders
   eval mn env' body
 eval mn env (CoreFn.ObjectUpdate _ e updates) = do
   val <- eval mn env e
   let updateOne 
         :: HashMap Text Value
         -> (PSString.PSString, CoreFn.Expr ())
-        -> Either String (HashMap Text Value)
+        -> ContT Value (Either String) (HashMap Text Value)
       updateOne o (pss, new) = do
-        field <- evalPSString pss
+        field <- lift $ evalPSString pss
         newVal <- eval mn env new
         pure (HashMap.insert field newVal o)
   case val of
     Object o -> Object <$> foldM updateOne o updates
-    _ -> Left "eval: expected object"
+    _ -> lift $ Left "eval: expected object"
 eval mn env (CoreFn.Case _ args alts) = do
   vals <- traverse (eval mn env) args
   result <- runMaybeT (asum (map (match vals) alts))
   case result of
-    Nothing -> Left "eval: inexhaustive pattern match"
+    Nothing -> lift $ Left "eval: inexhaustive pattern match"
     Just (newEnv, matchedExpr) -> eval mn (newEnv <> env) matchedExpr
 eval mn env (CoreFn.Constructor _ _tyName ctor fields) = 
   pure (Constructor (MkConstructor (Qualified (Just mn) ctor) [] fields))
 
 match :: [Value]
       -> CoreFn.CaseAlternative ()
-      -> MaybeT (Either String) (Env, CoreFn.Expr ())
+      -> MaybeT (ContT Value (Either String)) (Env, CoreFn.Expr ())
 match vals (CoreFn.CaseAlternative binders expr) | length vals == length binders = do
   newEnv <- fold <$> zipWithM matchOne vals binders
   case expr of
-    Left guards -> MaybeT (Left "match: guards not supported")
+    Left guards -> lift . lift $ Left "match: guards not supported"
     Right e -> pure (newEnv, e)
-match _ _ = MaybeT (Left "match: incorrect number of arguments")
+match _ _ = lift . lift $ Left "match: incorrect number of arguments"
 
-matchOne :: Value -> CoreFn.Binder () -> MaybeT (Either String) Env
+matchOne :: Value -> CoreFn.Binder () -> MaybeT (ContT Value (Either String)) Env
 matchOne _ (CoreFn.NullBinder _) = pure mempty
 matchOne val (CoreFn.LiteralBinder _ lit) = matchLit val lit
 matchOne val (CoreFn.VarBinder _ ident) = MaybeT do
@@ -274,19 +282,19 @@ matchOne (Constructor (MkConstructor ctor vals [])) (CoreFn.ConstructorBinder _ 
   | ctor == ctor'
   = fold <$> zipWithM matchOne vals bs
 matchOne Constructor{} CoreFn.ConstructorBinder{} =
-  MaybeT (Left "matchOne: unsaturated constructor application")
+  lift . lift $ Left "matchOne: unsaturated constructor application"
 matchOne _ _ = MaybeT (pure Nothing)
 
 matchLit
   :: Value
   -> CoreFn.Literal (CoreFn.Binder ())
-  -> MaybeT (Either String) Env
+  -> MaybeT (ContT Value (Either String)) Env
 matchLit (Number n) (CoreFn.NumericLiteral (Left i)) 
   | fromIntegral i == n = pure mempty
 matchLit (Number n) (CoreFn.NumericLiteral (Right d))
   | realToFrac d == n = pure mempty
 matchLit (String s) (CoreFn.StringLiteral pss) = MaybeT do
-  s' <- evalPSString pss
+  s' <- lift $ evalPSString pss
   if s' == s
     then pure (Just mempty)
     else pure Nothing
@@ -298,10 +306,10 @@ matchLit (Array xs) (CoreFn.ArrayLiteral bs)
   | length xs == length bs
   = fold <$> zipWithM matchOne (Vector.toList xs) bs
 matchLit (Object o) (CoreFn.ObjectLiteral bs) = do
-  vals <- lift (HashMap.fromList <$> traverse (\(pss, b) -> (, b) <$> evalPSString pss) bs)
-  let matchField :: These Value (CoreFn.Binder ()) -> MaybeT (Either String) Env
+  vals <- lift . lift $ HashMap.fromList <$> traverse (\(pss, b) -> (, b) <$> evalPSString pss) bs
+  let matchField :: These Value (CoreFn.Binder ()) -> MaybeT (ContT Value (Either String)) Env
       matchField This{} = pure mempty
-      matchField That{} = MaybeT (Left "matchField: field doesn't exist in object")
+      matchField That{} = lift . lift $ Left "matchField: field doesn't exist in object"
       matchField (These val b) = matchOne val b
   fold <$> sequence (Align.alignWith matchField o vals)
 matchLit _ _ = MaybeT (pure Nothing)
@@ -312,13 +320,13 @@ evalPSString pss =
     Just field -> pure field
     _ -> Left "evalPSString: invalid field name"
 
-evalLit :: Names.ModuleName -> Env -> CoreFn.Literal (CoreFn.Expr ()) -> Either String Value
+evalLit :: Names.ModuleName -> Env -> CoreFn.Literal (CoreFn.Expr ()) -> ContT Value (Either String) Value
 evalLit mn env (CoreFn.NumericLiteral (Left int)) =
   pure (Number (fromIntegral int))
 evalLit mn env (CoreFn.NumericLiteral (Right dbl)) =
   pure (Number (realToFrac dbl))
 evalLit mn env (CoreFn.StringLiteral str) =
-  String <$> evalPSString str
+  String <$> lift (evalPSString str)
 evalLit mn env (CoreFn.CharLiteral chr) =
   pure (String (Text.singleton chr))
 evalLit mn env (CoreFn.BooleanLiteral b) =
@@ -328,7 +336,7 @@ evalLit mn env (CoreFn.ArrayLiteral xs) = do
   pure (Array (Vector.fromList vs))
 evalLit mn env (CoreFn.ObjectLiteral xs) = do
   let evalField (pss, e) = do
-        field <- evalPSString pss
+        field <- lift $ evalPSString pss
         val <- eval mn env e
         pure (field, val)
   vs <- traverse evalField xs
@@ -338,14 +346,14 @@ bind :: Names.ModuleName -> Maybe Names.ModuleName ->  Env -> [CoreFn.Bind ()] -
 bind mn scope = foldM go where
   go :: Env -> CoreFn.Bind () -> Either String Env
   go env (CoreFn.NonRec _ name e) = do
-    val <- eval mn env e
+    val <- evalContT (eval mn env e)
     pure (Map.insert (Qualified scope name) val env)
   go env (CoreFn.Rec es) = 
     Left "bind: Rec not supported" 
 
-apply :: Value -> Value -> Either String Value
+apply :: Value -> Value -> ContT Value (Either String) Value
 apply (Closure MkClosure{ closEnv, closArg, closBody }) arg =
   closBody (Map.insert (Qualified Nothing closArg) arg closEnv)
 apply (Constructor MkConstructor{ ctorName, ctorApplied, ctorUnapplied = hd : tl }) arg = do
   pure (Constructor MkConstructor{ ctorName, ctorApplied = arg : ctorApplied, ctorUnapplied = tl })
-apply _ _ = Left "apply: expected closure or unsaturated constructor"
+apply _ _ = lift $ Left "apply: expected closure or unsaturated constructor"

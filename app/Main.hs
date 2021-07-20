@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 
 module Main where
 
@@ -12,6 +13,7 @@ import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Version (Version)
+import Data.Vector (Vector)
 import Interpreter qualified
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.CoreFn.FromJSON (moduleFromJSON)
@@ -28,20 +30,16 @@ instance Aeson.FromJSON ParsedCoreFn where
 initialEnv :: Interpreter.Env
 initialEnv = Map.unions
   [ 
-  
   -- Arrays
-    Interpreter.builtIn "map" $ \f xs ->
+    Interpreter.builtIn "append" ((<>) @(Vector Interpreter.Value))
+  , Interpreter.builtIn "map" $ \f xs ->
       Interpreter.Array <$> traverse (Interpreter.apply f) xs
-  , Interpreter.builtIn "append" $ \xs ys -> 
-      Interpreter.Array (xs <> ys)
       
   -- Strings
-  , Interpreter.builtIn "appendString" $ \x y -> 
-      Interpreter.String (x <> y)
+  , Interpreter.builtIn "appendString" ((<>) @Text)
       
   -- Booleans
-  , Interpreter.builtIn "not" $ \b -> 
-      Interpreter.Bool (not b)
+  , Interpreter.builtIn "not" not
   ]
 
 main :: IO ()

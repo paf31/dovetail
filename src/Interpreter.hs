@@ -109,6 +109,11 @@ instance (e ~ String, ToValue a) => ToValue (Either e a) where
     mk <- toValue
     pure $ (>>= mk)
 
+instance ToValue a => ToValue (Vector a) where
+  toValue = do
+    mk <- toValue
+    pure $ fmap Array . traverse mk
+
 instance (FromValue a, ToValue b) => ToValue (a -> b) where
   toValue = do
     argName <- Names.freshIdent'

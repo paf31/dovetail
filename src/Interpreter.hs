@@ -16,6 +16,7 @@ module Interpreter
   , interpretModule
   , ToValue(..)
   , FromValue(..)
+  , primitive
   ) where
 
 import Control.Monad (foldM, join, zipWithM)
@@ -83,31 +84,40 @@ toJSON Null = pure Aeson.Null
 toJSON _ = Nothing
 
 class ToValue a where
-  toValue :: MonadSupply m => m (a -> Value)
+  toValue :: MonadSupply m => m (a -> Either String Value)
 
 instance ToValue Value where
-  toValue = pure id
+  toValue = pure pure
 
 instance (e ~ String, ToValue a) => ToValue (Either e a) where
   toValue = do
     mk <- toValue
-    pure (either error mk) --TODO
+    pure $ (>>= mk)
 
 instance (FromValue a, ToValue b) => ToValue (a -> b) where
   toValue = do
     argName <- Names.freshIdent'
     mk <- toValue
-    pure $ \f -> Closure $
-      MkClosure 
-        { closEnv = Map.empty
-        , closArg = argName
-        , closBody = \env -> do
-            case Map.lookup (Qualified Nothing argName) env of
-              Nothing -> Left "primitive: argName not in env"
-              Just input -> do
-                a <- fromValue input 
-                pure (mk (f a))
-        }
+    pure $ \f -> pure $ unsafeClosure argName (mk . f)
+  
+unsafeClosure :: FromValue a => Ident -> (a -> Either String Value) -> Value
+unsafeClosure argName f = Closure $
+  MkClosure 
+    { closEnv = Map.empty
+    , closArg = argName
+    , closBody = \env -> do
+        case Map.lookup (Qualified Nothing argName) env of
+          Nothing -> Left "toValue: argName not in env"
+          Just input -> do
+            a <- fromValue input 
+            f a
+    }
+  
+primitive :: (MonadSupply m, FromValue a, ToValue b) => m ((a -> b) -> Value)
+primitive = do
+  argName <- Names.freshIdent'
+  mk <- toValue
+  pure $ \f -> unsafeClosure argName (mk . f)
   
 class FromValue a where
   fromValue :: Value -> Either String a
@@ -120,12 +130,12 @@ instance FromValue a => FromValue (Vector a) where
   
 interpretModule :: Env -> CoreFn.Module ann -> Aeson.Value -> Either String Aeson.Value
 interpretModule initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } input = do
-    env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
-    mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
-    output <- apply mainFn (fromJSON input)
-    case toJSON output of
-      Nothing -> Left "interpretModule: not JSON output"
-      Just result -> pure result
+  env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
+  mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
+  output <- apply mainFn (fromJSON input)
+  case toJSON output of
+    Nothing -> Left "interpretModule: not JSON output"
+    Just result -> pure result
 
 eval :: Names.ModuleName -> Env -> CoreFn.Expr () -> Either String Value
 eval mn env (CoreFn.Literal _ lit) =

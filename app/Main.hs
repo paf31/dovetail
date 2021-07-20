@@ -29,8 +29,8 @@ instance Aeson.FromJSON ParsedCoreFn where
 
 initialEnv :: MonadSupply m => m Interpreter.Env
 initialEnv = do
-  _map <- Interpreter.toValue
-  _append <- Interpreter.toValue
+  _map <- Interpreter.primitive
+  _append <- Interpreter.primitive
   pure $ Map.fromList
     [ ( Names.mkQualified (Names.Ident "map") (Names.ModuleName "Main")
       , _map $ \f xs ->

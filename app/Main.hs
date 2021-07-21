@@ -18,8 +18,10 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Data.Version (Version)
 import Interpreter qualified
+import Interpreter.JSON (JSON(..), fromJSON, toJSON)
 import Language.PureScript.AST.Declarations qualified as AST
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.CoreFn.FromJSON (moduleFromJSON)
@@ -37,8 +39,7 @@ initialEnv = Map.unions
   [ 
   -- Arrays
     Interpreter.builtIn "append" ((<>) @(Vector Interpreter.Value))
-  , Interpreter.builtIn "map" $ \f xs ->
-      Interpreter.Array <$> traverse (Interpreter.apply f) xs
+  , Interpreter.builtIn "map" (Vector.map @Interpreter.Value @Interpreter.Value)
       
   -- Strings
   , Interpreter.builtIn "appendString" ((<>) @Text)
@@ -61,6 +62,16 @@ makeActions k = Make.MakeActions
   , Make.readCacheDb = pure mempty
   , Make.writeCacheDb = \_ -> pure mempty
   }
+    
+run :: CoreFn.Module ann -> IO ()
+run m = do
+  stdinBytes <- BL.hGetContents stdin
+  case Aeson.eitherDecode stdinBytes of
+    Left err -> putStrLn err *> exitFailure
+    Right input -> do
+      let f :: JSON Aeson.Value -> JSON Aeson.Value
+          f = Interpreter.interpret initialEnv m
+      BL8.putStrLn (Pretty.encodePretty (getJSON (f (JSON input))))
       
 main :: IO ()
 main = do
@@ -78,14 +89,7 @@ main = do
               Left errs ->
                 putStrLn (show errs) *> exitFailure
               Right{} -> pure ()
-          lift $ do
-            stdinBytes <- BL.hGetContents stdin
-            case Aeson.eitherDecode stdinBytes of
-              Left err -> putStrLn err *> exitFailure
-              Right (input :: Aeson.Value) -> do
-                case Interpreter.interpretModule initialEnv m input of
-                  Left err -> putStrLn err *> exitFailure
-                  Right (result :: Aeson.Value) -> BL8.putStrLn (Pretty.encodePretty result)
+          lift $ run m
       | otherwise ->
           putStrLn "Expected module name 'Main'" *> exitFailure
       

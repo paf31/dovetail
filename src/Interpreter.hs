@@ -6,6 +6,7 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE TupleSections        #-}
+{-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Interpreter
@@ -152,7 +153,7 @@ builtIn name value = evalSupply 0 do
   pure $ Map.singleton qualName $ mk value
   
 class FromValue a where
-  fromValue :: Value -> Either String a
+  fromValue ::  Value -> Either String a
   
 instance FromValue Value where
   fromValue = pure
@@ -182,11 +183,13 @@ instance FromValue a => FromValue (Vector a) where
   fromValue (Array xs) = traverse fromValue xs
   fromValue _ = Left "fromValue: expected array"
   
-instance (ToValue a, b ~ Either String result, FromValue result) => FromValue (a -> b) where
-  fromValue f = pure \a -> do
-    x <- evalSupply 0 toValue a -- TODO: dodgy?
-    result <- apply f x
-    fromValue result
+newtype a :-> b = Fun (a -> Either String b)
+  
+-- instance (ToValue a, FromValue b) => FromValue (a :-> b) where
+--   fromValue f = pure $ Fun \a -> do
+--     x <- evalSupply 0 toValue a -- TODO: dodgy?
+--     result <- apply f x
+--     fromValue result
   
 interpretModule :: FromValue a => Env -> CoreFn.Module ann -> Either String a
 interpretModule initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = do

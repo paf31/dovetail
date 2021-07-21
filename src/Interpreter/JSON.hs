@@ -6,7 +6,9 @@ module Interpreter.JSON
   , toJSON
   ) where
   
+import Control.Exception (throw)
 import Data.Aeson qualified as Aeson
+import Data.String (fromString)
 import Interpreter qualified
 
 fromJSON :: Aeson.Value -> Interpreter.Value
@@ -29,12 +31,12 @@ toJSON _ = Nothing
 newtype JSON a = JSON { getJSON :: a }
 
 instance Aeson.FromJSON a => Interpreter.FromValue (JSON a) where
-  fromValue a = 
+  fromValue = pure $ \a -> 
     case toJSON a of
       Just value ->
         case Aeson.fromJSON value of
-          Aeson.Error err -> Left $ "Invalid JSON: " <> err
-          Aeson.Success a -> Right (JSON a)
+          Aeson.Error err -> throw . Interpreter.OtherError . fromString $ "Invalid JSON: " <> err
+          Aeson.Success a -> JSON a
 
 instance Aeson.ToJSON a => Interpreter.ToValue (JSON a) where
-  toValue = pure (pure . fromJSON . Aeson.toJSON . getJSON)
+  toValue = pure (fromJSON . Aeson.toJSON . getJSON)

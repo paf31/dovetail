@@ -36,7 +36,6 @@ import Control.Monad (guard, foldM, join, mzero, zipWithM)
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
-import Data.Functor (void)
 import Data.Functor.Identity (Identity(..))
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
@@ -51,6 +50,7 @@ import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import GHC.Generics qualified as G
 import GHC.TypeLits (KnownSymbol, symbolVal)
+import Language.PureScript.AST qualified as AST
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Names (Ident(..), Qualified(..))
 import Language.PureScript.Names qualified as Names
@@ -70,6 +70,7 @@ data Value m
   
 data Constructor m = MkConstructor
   { ctorName :: Qualified (Names.ProperName 'Names.ConstructorName)
+  , ctorIsNewtype :: Bool
   , ctorApplied :: [Value m]
   , ctorUnapplied :: [Ident]
   }
@@ -235,10 +236,11 @@ builtIn name value =
   let qualName = Names.mkQualified (Names.Ident name) (Names.ModuleName "Main")
    in Map.singleton qualName $ toValue value
    
-interpret :: FromValue m a => Env m -> CoreFn.Module ann -> m a
+interpret :: FromValue m a => Env m -> CoreFn.Module CoreFn.Ann -> m a
 interpret initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = do
-  env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
-  mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
+  env <- bind moduleName (Just moduleName) initialEnv moduleDecls
+  let srcSpan = AST.internalModuleSourceSpan "<interpreter>"
+  mainFn <- eval moduleName env (CoreFn.Var (CoreFn.ssAnn srcSpan) (Qualified (Just moduleName) (Ident "main")))
   pure (fromValue mainFn)
 
 eval 
@@ -246,7 +248,7 @@ eval
    . Monad m
   => Names.ModuleName
   -> Env m
-  -> CoreFn.Expr ()
+  -> CoreFn.Expr CoreFn.Ann
   -> m (Value m)
 eval mn env (CoreFn.Literal _ lit) =
   evalLit mn env lit
@@ -274,7 +276,7 @@ eval mn env (CoreFn.ObjectUpdate _ e updates) = do
   val <- eval mn env e
   let updateOne 
         :: HashMap Text (Value m)
-        -> (PSString.PSString, CoreFn.Expr ())
+        -> (PSString.PSString, CoreFn.Expr CoreFn.Ann)
         -> m (HashMap Text (Value m))
       updateOne o (pss, new) = do
         let field = evalPSString pss
@@ -289,13 +291,18 @@ eval mn env (CoreFn.Case _ args alts) = do
   case result of
     Nothing -> throw InexhaustivePatternMatch
     Just (newEnv, matchedExpr) -> eval mn (newEnv <> env) matchedExpr
-eval mn _ (CoreFn.Constructor _ _tyName ctor fields) = 
-  pure . Constructor $ MkConstructor (Qualified (Just mn) ctor) [] fields
+eval mn _ (CoreFn.Constructor (_, _, _, meta) _tyName ctor fields) = 
+  pure . Constructor $ MkConstructor 
+    { ctorName = Qualified (Just mn) ctor
+    , ctorIsNewtype = meta == Just CoreFn.IsNewtype
+    , ctorApplied = []
+    , ctorUnapplied = fields
+    }
 
 match :: Monad m
       => [Value m]
-      -> CoreFn.CaseAlternative ()
-      -> MaybeT m (Env m, CoreFn.Expr ())
+      -> CoreFn.CaseAlternative CoreFn.Ann
+      -> MaybeT m (Env m, CoreFn.Expr CoreFn.Ann)
 match vals (CoreFn.CaseAlternative binders expr) 
   | length vals == length binders = do
     newEnv <- fold <$> zipWithM matchOne vals binders
@@ -304,7 +311,7 @@ match vals (CoreFn.CaseAlternative binders expr)
       Right e -> pure (newEnv, e)
   | otherwise = throw (InvalidNumberOfArguments (length vals) (length binders))
 
-matchOne :: Monad m => Value m -> CoreFn.Binder () -> MaybeT m (Env m)
+matchOne :: Monad m => Value m -> CoreFn.Binder CoreFn.Ann -> MaybeT m (Env m)
 matchOne _ (CoreFn.NullBinder _) = pure mempty
 matchOne val (CoreFn.LiteralBinder _ lit) = matchLit val lit
 matchOne val (CoreFn.VarBinder _ ident) = do
@@ -312,7 +319,7 @@ matchOne val (CoreFn.VarBinder _ ident) = do
 matchOne val (CoreFn.NamedBinder _ ident b) = do
   env <- matchOne val b
   pure (Map.insert (Qualified Nothing ident) val env)
-matchOne (Constructor (MkConstructor ctor vals [])) (CoreFn.ConstructorBinder _ _tyName ctor' bs) 
+matchOne (Constructor (MkConstructor ctor _ vals [])) (CoreFn.ConstructorBinder _ _tyName ctor' bs) 
   | ctor == ctor'
   = fold <$> zipWithM matchOne vals bs
 matchOne Constructor{} CoreFn.ConstructorBinder{} =
@@ -323,7 +330,7 @@ matchLit
   :: forall m
    . Monad m
   => Value m
-  -> CoreFn.Literal (CoreFn.Binder ())
+  -> CoreFn.Literal (CoreFn.Binder CoreFn.Ann)
   -> MaybeT m (Env m)
 matchLit (Number n) (CoreFn.NumericLiteral (Left i)) 
   | fromIntegral i == n = pure mempty
@@ -341,7 +348,7 @@ matchLit (Array xs) (CoreFn.ArrayLiteral bs)
   = fold <$> zipWithM matchOne (Vector.toList xs) bs
 matchLit (Object o) (CoreFn.ObjectLiteral bs) = do
   let vals = HashMap.fromList [ (t, (t, b)) | (pss, b) <- bs, let t = evalPSString pss ]
-  let matchField :: These (Value m) (Text, CoreFn.Binder ()) -> MaybeT m (Env m)
+  let matchField :: These (Value m) (Text, CoreFn.Binder CoreFn.Ann) -> MaybeT m (Env m)
       matchField This{} = pure mempty
       matchField (That (pss, _)) = throw (FieldNotFound pss)
       matchField (These val (_, b)) = matchOne val b
@@ -354,7 +361,7 @@ evalPSString pss =
     Just field -> field
     _ -> throw (InvalidFieldName pss)
 
-evalLit :: Monad m => Names.ModuleName -> Env m -> CoreFn.Literal (CoreFn.Expr ()) -> m (Value m)
+evalLit :: Monad m => Names.ModuleName -> Env m -> CoreFn.Literal (CoreFn.Expr CoreFn.Ann) -> m (Value m)
 evalLit _ _ (CoreFn.NumericLiteral (Left int)) =
   pure $ Number (fromIntegral int)
 evalLit _ _ (CoreFn.NumericLiteral (Right dbl)) =
@@ -375,9 +382,9 @@ evalLit mn env (CoreFn.ObjectLiteral xs) = do
         pure (field, val)
   Object . HashMap.fromList <$> traverse evalField xs
 
-bind :: forall m. Monad m => Names.ModuleName -> Maybe Names.ModuleName -> Env m -> [CoreFn.Bind ()] -> m (Env m)
+bind :: forall m. Monad m => Names.ModuleName -> Maybe Names.ModuleName -> Env m -> [CoreFn.Bind CoreFn.Ann] -> m (Env m)
 bind mn scope = foldM go where
-  go :: Env m -> CoreFn.Bind () -> m (Env m)
+  go :: Env m -> CoreFn.Bind CoreFn.Ann -> m (Env m)
   go env (CoreFn.NonRec _ name e) = do
     val <- eval mn env e
     pure $ Map.insert (Qualified scope name) val env
@@ -386,6 +393,11 @@ bind mn scope = foldM go where
 
 apply :: Monad m => Value m -> Value m -> m (Value m)
 apply (Closure f) arg = f arg
-apply (Constructor MkConstructor{ ctorName, ctorApplied, ctorUnapplied = _ : tl }) arg = do
-  pure $ Constructor MkConstructor{ ctorName, ctorApplied = arg : ctorApplied, ctorUnapplied = tl }
+apply (Constructor MkConstructor{ ctorName, ctorIsNewtype, ctorApplied, ctorUnapplied = _ : tl }) arg = do
+  pure $ Constructor MkConstructor
+    { ctorName
+    , ctorIsNewtype
+    , ctorApplied = arg : ctorApplied
+    , ctorUnapplied = tl
+    }
 apply _ _ = throw (TypeMismatch "closure")

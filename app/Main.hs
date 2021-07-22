@@ -15,8 +15,9 @@ import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Functor (void)
+import Data.Functor.Identity (Identity(..))
 import Data.Map.Strict qualified as Map
-import Data.Text (Text)
+import Data.Text (Text, pack)
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
@@ -36,12 +37,12 @@ import System.Environment (getArgs)
 import System.Exit (exitFailure)
 import System.IO (stdin)
 
-initialEnv :: Interpreter.Env
+initialEnv :: Interpreter.Env Identity
 initialEnv = Map.unions
   [ 
   -- Arrays
-    Interpreter.builtIn "append" ((<>) @(Vector Interpreter.Value))
-  , Interpreter.builtIn "map" (Vector.map @Interpreter.Value @Interpreter.Value)
+    Interpreter.builtIn "append" ((<>) @(Vector (Interpreter.Value Identity)))
+  , Interpreter.builtIn "map" (Vector.map @(Interpreter.Value Identity) @(Interpreter.Value Identity))
       
   -- Strings
   , Interpreter.builtIn "appendString" ((<>) @Text)
@@ -72,7 +73,7 @@ run m = do
     Left err -> putStrLn err *> exitFailure
     Right input -> do
       let f :: JSON Aeson.Value -> JSON Aeson.Value
-          f = Interpreter.interpret initialEnv m
+          f = runIdentity (Interpreter.interpret initialEnv m)
       BL8.putStrLn (Pretty.encodePretty (getJSON (f (JSON input))))
       
 main :: IO ()
@@ -94,4 +95,3 @@ main = do
           lift $ run m
       | otherwise ->
           putStrLn "Expected module name 'Main'" *> exitFailure
-      

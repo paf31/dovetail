@@ -16,6 +16,13 @@ dependencies:
 
 library:
   source-dirs: src
+  ghc-options:
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+  - -Wall
+  # - -Werror
+  - -fwarn-unused-imports
   dependencies:
   - aeson
   - containers
@@ -37,7 +44,9 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    - -Werror
+    - -Wall
+    # - -Werror
+    - -fwarn-unused-imports
     dependencies:
     - runpurs-hs
     - aeson
@@ -57,5 +66,6 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -fwarn-unused-imports
     dependencies:
     - runpurs-hs

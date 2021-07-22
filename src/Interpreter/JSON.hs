@@ -1,5 +1,7 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ImportQualifiedPost   #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module Interpreter.JSON 
   ( JSON(..)
@@ -12,7 +14,7 @@ import Data.Aeson qualified as Aeson
 import Data.String (fromString)
 import Interpreter qualified
 
-fromJSON :: Aeson.Value -> Interpreter.Value
+fromJSON :: Aeson.Value -> Interpreter.Value m
 fromJSON (Aeson.Object x) = Interpreter.Object (fmap fromJSON x)
 fromJSON (Aeson.Array x) = Interpreter.Array (fmap fromJSON x)
 fromJSON (Aeson.String x) = Interpreter.String x
@@ -20,7 +22,7 @@ fromJSON (Aeson.Number x) = Interpreter.Number x
 fromJSON (Aeson.Bool x) = Interpreter.Bool x
 fromJSON Aeson.Null = Interpreter.Null
 
-toJSON :: Interpreter.Value -> Maybe Aeson.Value
+toJSON :: Interpreter.Value m -> Maybe Aeson.Value
 toJSON (Interpreter.Object x) = Aeson.Object <$> traverse toJSON x
 toJSON (Interpreter.Array x) = Aeson.Array <$> traverse toJSON x
 toJSON (Interpreter.String x) = pure (Aeson.String x)
@@ -31,7 +33,7 @@ toJSON _ = Nothing
 
 newtype JSON a = JSON { getJSON :: a }
 
-instance Aeson.FromJSON a => Interpreter.FromValue (JSON a) where
+instance (Monad m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
   fromValue a =
     case toJSON a of
       Just value ->
@@ -40,5 +42,5 @@ instance Aeson.FromJSON a => Interpreter.FromValue (JSON a) where
           Aeson.Success a -> JSON a
       Nothing -> throw (Interpreter.TypeMismatch "json")
 
-instance Aeson.ToJSON a => Interpreter.ToValue (JSON a) where
+instance (Monad m, Aeson.ToJSON a) => Interpreter.ToValue m (JSON a) where
   toValue = fromJSON . Aeson.toJSON . getJSON

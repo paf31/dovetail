@@ -25,4 +25,4 @@ Work in progress Haskell port of [runpurs](https://github.com/paf31/runpurs).
 - [ ] Improved error messages and error type
 - [ ] CPS'd evaluator with `shift`/`reset`
 - [ ] Support CoreFn annotations for better error messages
-- [ ] Monadic interpreters
+- [x] Monadic interpreters

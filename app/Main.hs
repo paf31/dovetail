@@ -8,7 +8,6 @@
 
 module Main where
 
-import Control.Monad.Error.Class (MonadError)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
@@ -17,6 +16,7 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
+import Language.PureScript.Interpreter (EvalT, Eval, runEval)
 import Language.PureScript.Interpreter qualified as Interpreter
 import Language.PureScript.Make.Simplified qualified as Make
 import Language.PureScript.Interpreter.JSON (JSON(..))
@@ -26,25 +26,30 @@ import System.IO (stdin)
 
 initialEnv 
   :: forall m
-   . MonadError Interpreter.EvaluationError m
+   . Monad m
   => Interpreter.Env m
 initialEnv = Map.unions
-  [ 
-  -- Arrays
-    Interpreter.builtIn "append" \xs ys ->
-      pure ((xs <> ys) :: Vector (Interpreter.Value m))
-  , Interpreter.builtIn "map" \f xs ->
-      traverse
-        (f :: Interpreter.Value m -> m (Interpreter.Value m))
-        (xs :: Vector (Interpreter.Value m))
-  
-  -- Strings
-  , Interpreter.builtIn "appendString" \s1 s2 ->
-      pure ((s1 <> s2) ::Text)
-      
-  -- Booleans
-  , Interpreter.builtIn "not" (pure . not)
-  ]
+    [ Interpreter.builtIn "append" append
+    , Interpreter.builtIn "map" _map
+    , Interpreter.builtIn "appendString" appendString
+    , Interpreter.builtIn "not" _not
+    ]
+  where
+    append :: Vector (Interpreter.Value m)
+           -> Vector (Interpreter.Value m)
+           -> EvalT m (Vector (Interpreter.Value m))
+    append xs ys = pure (xs <> ys)
+    
+    _map :: (Interpreter.Value m -> EvalT m (Interpreter.Value m))
+         -> Vector (Interpreter.Value m)
+         -> EvalT m (Vector (Interpreter.Value m))
+    _map = traverse
+    
+    appendString :: Text -> Text -> EvalT m Text
+    appendString xs ys = pure (xs <> ys)
+    
+    _not :: Bool -> EvalT m Bool
+    _not b = pure (not b)
       
 main :: IO ()
 main = do
@@ -58,9 +63,9 @@ main = do
       case Aeson.eitherDecode stdinBytes of
         Left err -> putStrLn err *> exitFailure
         Right input -> do
-          let f :: Either Interpreter.EvaluationError (JSON Aeson.Value -> Either Interpreter.EvaluationError (JSON Aeson.Value))
+          let f :: Eval (JSON Aeson.Value -> Eval (JSON Aeson.Value))
               f = Interpreter.interpret initialEnv m
-          case f >>= ($ JSON input) of
+          case runEval (f >>= ($ JSON input)) of
             Left err -> putStrLn (Interpreter.renderEvaluationError err) *> exitFailure
             Right output ->
               BL8.putStrLn (Pretty.encodePretty (getJSON output))

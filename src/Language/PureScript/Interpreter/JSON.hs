@@ -1,5 +1,4 @@
 {-# LANGUAGE ImportQualifiedPost   #-}
-{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
@@ -10,7 +9,7 @@ module Language.PureScript.Interpreter.JSON
   , toJSON
   ) where
   
-import Control.Monad.Error.Class (MonadError, throwError)
+import Control.Monad.Error.Class (throwError)
 import Data.Aeson qualified as Aeson
 import Data.String (fromString)
 import Language.PureScript.Interpreter qualified as Interpreter
@@ -22,7 +21,7 @@ fromJSON (Aeson.String x) = Interpreter.String x
 fromJSON (Aeson.Number x) = Interpreter.Number x
 fromJSON (Aeson.Bool x) = Interpreter.Bool x
 fromJSON Aeson.Null = Interpreter.Null
-
+ 
 toJSON :: Interpreter.Value m -> Maybe Aeson.Value
 toJSON (Interpreter.Object x) = Aeson.Object <$> traverse toJSON x
 toJSON (Interpreter.Array x) = Aeson.Array <$> traverse toJSON x
@@ -34,7 +33,7 @@ toJSON _ = Nothing
  
 newtype JSON a = JSON { getJSON :: a }
 
-instance (MonadError Interpreter.EvaluationError m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
+instance (Monad m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
   fromValue a =
     case toJSON a of
       Just value ->

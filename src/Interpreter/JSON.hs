@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings   #-}
 
 module Interpreter.JSON 
   ( JSON(..)
@@ -31,12 +32,13 @@ toJSON _ = Nothing
 newtype JSON a = JSON { getJSON :: a }
 
 instance Aeson.FromJSON a => Interpreter.FromValue (JSON a) where
-  fromValue = pure $ \a -> 
+  fromValue a =
     case toJSON a of
       Just value ->
         case Aeson.fromJSON value of
           Aeson.Error err -> throw . Interpreter.OtherError . fromString $ "Invalid JSON: " <> err
           Aeson.Success a -> JSON a
+      Nothing -> throw (Interpreter.TypeMismatch "json")
 
 instance Aeson.ToJSON a => Interpreter.ToValue (JSON a) where
-  toValue = pure (fromJSON . Aeson.toJSON . getJSON)
+  toValue = fromJSON . Aeson.toJSON . getJSON

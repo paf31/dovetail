@@ -19,7 +19,6 @@
 module Interpreter
   ( Env
   , Value(..)
-  , Closure(..)
   , Constructor(..)
   , EvalException(..)
   , eval
@@ -32,8 +31,6 @@ module Interpreter
 
 import Control.Exception (Exception, evaluate, throw, try)
 import Control.Monad (guard, foldM, join, zipWithM)
-import Control.Monad.Supply (evalSupply)
-import Control.Monad.Supply.Class (MonadSupply(..))
 import Control.Monad.Trans.Class (lift)
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
@@ -42,7 +39,6 @@ import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Maybe (fromMaybe)
 import Data.Proxy (Proxy(..))
 import Data.Scientific (Scientific, floatingOrInteger)
 import Data.Text (Text)
@@ -66,14 +62,8 @@ data Value
   | Number Scientific
   | Bool Bool
   | Null
-  | Closure Closure
+  | Closure (Value -> Value)
   | Constructor Constructor
-  
-data Closure = MkClosure
-  { closEnv :: Env
-  , closArg :: Ident
-  , closBody :: Env -> Value
-  }
   
 data Constructor = MkConstructor
   { ctorName :: Qualified (Names.ProperName 'Names.ConstructorName)
@@ -96,125 +86,92 @@ data EvalException
 
 instance Exception EvalException
   
-unsafeClosure :: Ident -> (Value -> Value) -> Value
-unsafeClosure argName f = Closure $
-  MkClosure 
-    { closEnv = Map.empty
-    , closArg = argName
-    , closBody = \env -> do
-        case Map.lookup (Qualified Nothing argName) env of
-          Nothing -> throw (UnknownIdent (Qualified Nothing argName))
-          Just input -> f input
-    }
-  
 class ToValue a where
-  toValue :: MonadSupply m => m (a -> Value)
+  toValue :: a -> Value
   
-  default toValue :: (MonadSupply m, G.Generic a, GToObject (G.Rep a)) => m (a -> Value)
-  toValue = ((Object .) . (. G.from)) <$> gToObject
+  default toValue :: (G.Generic a, GToObject (G.Rep a)) => a -> Value
+  toValue = Object . gToObject . G.from
   
 instance ToValue Value where
-  toValue = pure id
+  toValue = id
   
 instance ToValue Integer where
-  toValue = pure (Number . fromIntegral)
+  toValue = Number . fromIntegral
   
 instance ToValue Scientific where
-  toValue = pure Number
+  toValue = Number
   
 instance ToValue Text where
-  toValue = pure String
+  toValue = String
   
 instance ToValue Bool where
-  toValue = pure Bool
+  toValue = Bool
   
 instance (FromValue a, ToValue b) => ToValue (a -> b) where
-  toValue = do
-    argName <- Names.freshIdent'
-    toA <- fromValue
-    fromB <- toValue
-    pure $ \f -> unsafeClosure argName (fromB . f . toA)
+  toValue f = Closure (toValue . f . fromValue)
 
 instance ToValue a => ToValue (Maybe a) where
-  toValue = do
-    mk <- toValue
-    pure (maybe Null mk)
+  toValue = maybe Null toValue
 
 instance ToValue a => ToValue (Vector a) where
-  toValue = do
-    mk <- toValue
-    pure $ Array . fmap mk
+  toValue = Array . fmap toValue
   
 class FromValue a where
-  fromValue :: MonadSupply m => m (Value -> a)
+  fromValue :: Value -> a
   
-  default fromValue :: (MonadSupply m, G.Generic a, GFromObject (G.Rep a)) => m (Value -> a)
-  fromValue = do
-    mk <- gFromObject
-    pure \case
-      Object o -> G.to (mk o)
-      _ -> throw (TypeMismatch "object")
+  default fromValue :: (G.Generic a, GFromObject (G.Rep a)) => Value -> a
+  fromValue = \case
+    Object o -> G.to (gFromObject o)
+    _ -> throw (TypeMismatch "object")
   
 instance FromValue Value where
-  fromValue = pure id
+  fromValue = id
   
 instance FromValue Text where
-  fromValue = pure \case
+  fromValue = \case
     String s -> s
     _ -> throw (TypeMismatch "string")
   
 instance FromValue Integer where
-  fromValue = pure \case
+  fromValue = \case
     Number s
       | Right i <- floatingOrInteger s -> i
     _ -> throw (TypeMismatch "integer")
   
 instance FromValue Scientific where
-  fromValue = pure \case
+  fromValue = \case
     Number s -> s
     _ -> throw (TypeMismatch "number")
   
 instance FromValue Bool where
-  fromValue = pure \case
+  fromValue = \case
     Bool b -> b
     _ -> throw (TypeMismatch "boolean")
   
 instance FromValue a => FromValue (Maybe a) where
-  fromValue  = do
-    fromA <- fromValue
-    pure $ \case
-      Null -> Nothing
-      v -> Just (fromA v)
+  fromValue = \case
+    Null -> Nothing
+    v -> Just (fromValue v)
   
 instance FromValue a => FromValue (Vector a) where
-  fromValue = do
-    fromA <- fromValue
-    pure \case
-      Array xs -> fmap fromA xs
-      _ -> throw (TypeMismatch "array")
+  fromValue = \case
+    Array xs -> fmap fromValue xs
+    _ -> throw (TypeMismatch "array")
   
 instance (ToValue a, FromValue b) => FromValue (a -> b) where
-  fromValue = do
-    fromA <- toValue
-    toB <- fromValue
-    pure $ \f a -> 
-      let result = apply f (fromA a)
-       in toB result
+  fromValue f a = fromValue (apply f (toValue a))
        
 class GToObject f where
-  gToObject :: MonadSupply m => m (f x -> HashMap Text Value)
+  gToObject :: f x -> HashMap Text Value
   
 instance GToObject f => GToObject (G.M1 G.D t f) where
-  gToObject = (. G.unM1) <$> gToObject
+  gToObject = gToObject . G.unM1
   
 instance GToObject f => GToObject (G.M1 G.C t f) where
-  gToObject = (. G.unM1) <$> gToObject
+  gToObject = gToObject . G.unM1
   
 instance (GToObject f, GToObject g) => GToObject (f G.:*: g) where
-  gToObject = do
-    mk1 <- gToObject
-    mk2 <- gToObject
-    pure \(f G.:*: g) -> mk1 f <> mk2 g
+  gToObject (f G.:*: g) = gToObject f <> gToObject g
     
 instance 
     forall field u s l r a
@@ -229,19 +186,18 @@ instance
              u s l) 
             (G.K1 r a)) 
   where
-    gToObject = do
-      mk <- toValue
+    gToObject (G.M1 (G.K1 a)) = do
       let field = Text.pack (symbolVal @field (Proxy :: Proxy field))
-      pure \(G.M1 (G.K1 a)) -> HashMap.singleton field (mk a)
+       in HashMap.singleton field (toValue a)
   
 class GFromObject f where
-  gFromObject :: MonadSupply m => m (HashMap Text Value -> f x)
+  gFromObject :: HashMap Text Value -> f x
   
 instance GFromObject f => GFromObject (G.M1 G.D t f) where
-  gFromObject = (G.M1 .) <$> gFromObject
+  gFromObject = G.M1 . gFromObject
   
 instance GFromObject f => GFromObject (G.M1 G.C t f) where
-  gFromObject = (G.M1 .) <$> gFromObject
+  gFromObject = G.M1 . gFromObject
 
 instance 
     forall field u s l r a
@@ -256,31 +212,25 @@ instance
              u s l) 
             (G.K1 r a)) 
   where
-    gFromObject = do
-      mk <- fromValue
+    gFromObject o = do
       let field = Text.pack (symbolVal @field (Proxy :: Proxy field))
-      pure \o ->
-        case HashMap.lookup field o of
-          Nothing -> throw (FieldNotFound field)
-          Just v -> G.M1 (G.K1 (mk v))
+      case HashMap.lookup field o of
+        Nothing -> throw (FieldNotFound field)
+        Just v -> G.M1 (G.K1 (fromValue v))
   
 instance (GFromObject f, GFromObject g) => GFromObject (f G.:*: g) where
-  gFromObject = do
-    mk1 <- gFromObject
-    mk2 <- gFromObject
-    pure \o -> mk1 o G.:*: mk2 o
+  gFromObject o = gFromObject o G.:*: gFromObject o
 
 builtIn :: ToValue a => Text -> a -> Interpreter.Env
-builtIn name value = evalSupply 0 do
-  mk <- Interpreter.toValue
+builtIn name value =
   let qualName = Names.mkQualified (Names.Ident name) (Names.ModuleName "Main")
-  pure $ Map.singleton qualName $ mk value
+   in Map.singleton qualName $ toValue value
    
 interpret :: FromValue a => Env -> CoreFn.Module ann -> a
 interpret initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } =
   let env = bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
       mainFn = eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
-   in evalSupply 0 fromValue mainFn
+   in fromValue mainFn
 
 eval :: Names.ModuleName -> Env -> CoreFn.Expr () -> Value
 eval mn env (CoreFn.Literal _ lit) =
@@ -294,7 +244,7 @@ eval mn env (CoreFn.Accessor _ pss e) =
             Just x -> x
             Nothing -> throw (FieldNotFound field)
 eval mn env (CoreFn.Abs _ arg body) =
-  Closure (MkClosure env arg (\env' -> eval mn env' body))
+  Closure $ \v -> eval mn (Map.insert (Qualified Nothing arg) v env) body
 eval mn env (CoreFn.App _ f x) =
   apply (eval mn env f) (eval mn env x)
 eval mn env (CoreFn.Var _ name) =
@@ -416,8 +366,7 @@ bind mn scope = foldl go where
     throw (NotSupported "recursive bindings")
 
 apply :: Value -> Value -> Value
-apply (Closure MkClosure{ closEnv, closArg, closBody }) arg =
-  closBody (Map.insert (Qualified Nothing closArg) arg closEnv)
+apply (Closure f) arg = f arg
 apply (Constructor MkConstructor{ ctorName, ctorApplied, ctorUnapplied = hd : tl }) arg = do
   Constructor MkConstructor{ ctorName, ctorApplied = arg : ctorApplied, ctorUnapplied = tl }
 apply _ _ = throw (TypeMismatch "closure")

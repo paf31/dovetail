@@ -17,7 +17,7 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
-module Interpreter
+module Language.PureScript.Interpreter
   ( Env
   , Value(..)
   , Constructor(..)
@@ -31,14 +31,13 @@ module Interpreter
   ) where
 
 import Control.Arrow (Kleisli(..))
-import Control.Exception (Exception, evaluate, throw, try)
+import Control.Exception (Exception, throw)
 import Control.Monad (guard, foldM, join, mzero, zipWithM)
-import Data.Functor.Identity (Identity(..))
 import Control.Monad.Trans.Maybe (MaybeT(..))
-import Control.Monad.Trans.Class (lift)
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
 import Data.Functor (void)
+import Data.Functor.Identity (Identity(..))
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map (Map)
@@ -142,7 +141,7 @@ instance Monad m => FromValue m Text where
 instance Monad m => FromValue m Integer where
   fromValue = \case
     Number s
-      | Right i <- floatingOrInteger s -> i
+      | Right i <- floatingOrInteger @Double s -> i
     _ -> throw (TypeMismatch "integer")
   
 instance Monad m => FromValue m Scientific where
@@ -191,8 +190,8 @@ instance
     => GToObject m 
          (G.M1 
            G.S
-           (G.MetaSel 
-             (Just field) 
+           ('G.MetaSel 
+             ('Just field) 
              u s l) 
             (G.K1 r a)) 
   where
@@ -217,8 +216,8 @@ instance
     => GFromObject m 
          (G.M1 
            G.S
-           (G.MetaSel 
-             (Just field) 
+           ('G.MetaSel 
+             ('Just field) 
              u s l) 
             (G.K1 r a)) 
   where
@@ -231,7 +230,7 @@ instance
 instance (GFromObject m f, GFromObject m g) => GFromObject m (f G.:*: g) where
   gFromObject o = gFromObject o G.:*: gFromObject o
 
-builtIn :: ToValue m a => Text -> a -> Interpreter.Env m
+builtIn :: ToValue m a => Text -> a -> Env m
 builtIn name value =
   let qualName = Names.mkQualified (Names.Ident name) (Names.ModuleName "Main")
    in Map.singleton qualName $ toValue value
@@ -259,11 +258,12 @@ eval mn env (CoreFn.Accessor _ pss e) = do
       case HashMap.lookup field o of
         Just x -> pure x
         Nothing -> throw (FieldNotFound field)
+    _ -> throw (TypeMismatch "object")
 eval mn env (CoreFn.Abs _ arg body) =
   pure . Closure $ \v -> eval mn (Map.insert (Qualified Nothing arg) v env) body
 eval mn env (CoreFn.App _ f x) =
   join (apply <$> eval mn env f <*> eval mn env x)
-eval mn env (CoreFn.Var _ name) =
+eval _ env (CoreFn.Var _ name) =
   case Map.lookup name env of
     Nothing -> throw $ UnknownIdent name
     Just val -> pure val
@@ -289,7 +289,7 @@ eval mn env (CoreFn.Case _ args alts) = do
   case result of
     Nothing -> throw InexhaustivePatternMatch
     Just (newEnv, matchedExpr) -> eval mn (newEnv <> env) matchedExpr
-eval mn env (CoreFn.Constructor _ _tyName ctor fields) = 
+eval mn _ (CoreFn.Constructor _ _tyName ctor fields) = 
   pure . Constructor $ MkConstructor (Qualified (Just mn) ctor) [] fields
 
 match :: Monad m
@@ -300,7 +300,7 @@ match vals (CoreFn.CaseAlternative binders expr)
   | length vals == length binders = do
     newEnv <- fold <$> zipWithM matchOne vals binders
     case expr of
-      Left guards -> throw (NotSupported "guards")
+      Left _guards -> throw (NotSupported "guards")
       Right e -> pure (newEnv, e)
   | otherwise = throw (InvalidNumberOfArguments (length vals) (length binders))
 
@@ -355,15 +355,15 @@ evalPSString pss =
     _ -> throw (InvalidFieldName pss)
 
 evalLit :: Monad m => Names.ModuleName -> Env m -> CoreFn.Literal (CoreFn.Expr ()) -> m (Value m)
-evalLit mn env (CoreFn.NumericLiteral (Left int)) =
+evalLit _ _ (CoreFn.NumericLiteral (Left int)) =
   pure $ Number (fromIntegral int)
-evalLit mn env (CoreFn.NumericLiteral (Right dbl)) =
+evalLit _ _ (CoreFn.NumericLiteral (Right dbl)) =
   pure $ Number (realToFrac dbl)
-evalLit mn env (CoreFn.StringLiteral str) =
+evalLit _ _ (CoreFn.StringLiteral str) =
   pure $ String (evalPSString str)
-evalLit mn env (CoreFn.CharLiteral chr) =
+evalLit _ _ (CoreFn.CharLiteral chr) =
   pure $ String (Text.singleton chr)
-evalLit mn env (CoreFn.BooleanLiteral b) =
+evalLit _ _ (CoreFn.BooleanLiteral b) =
   pure $ Bool b
 evalLit mn env (CoreFn.ArrayLiteral xs) = do
   vs <- traverse (eval mn env) xs
@@ -381,11 +381,11 @@ bind mn scope = foldM go where
   go env (CoreFn.NonRec _ name e) = do
     val <- eval mn env e
     pure $ Map.insert (Qualified scope name) val env
-  go env (CoreFn.Rec es) = 
+  go _ (CoreFn.Rec _) = 
     throw (NotSupported "recursive bindings")
 
 apply :: Monad m => Value m -> Value m -> m (Value m)
 apply (Closure f) arg = f arg
-apply (Constructor MkConstructor{ ctorName, ctorApplied, ctorUnapplied = hd : tl }) arg = do
+apply (Constructor MkConstructor{ ctorName, ctorApplied, ctorUnapplied = _ : tl }) arg = do
   pure $ Constructor MkConstructor{ ctorName, ctorApplied = arg : ctorApplied, ctorUnapplied = tl }
 apply _ _ = throw (TypeMismatch "closure")

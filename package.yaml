@@ -26,6 +26,7 @@ library:
   dependencies:
   - aeson
   - containers
+  - mtl
   - purescript
   - purescript-cst
   - scientific

@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module Interpreter.JSON 
+module Language.PureScript.Interpreter.JSON 
   ( JSON(..)
   , fromJSON
   , toJSON
@@ -12,7 +12,7 @@ module Interpreter.JSON
 import Control.Exception (throw)
 import Data.Aeson qualified as Aeson
 import Data.String (fromString)
-import Interpreter qualified
+import Language.PureScript.Interpreter qualified as Interpreter
 
 fromJSON :: Aeson.Value -> Interpreter.Value m
 fromJSON (Aeson.Object x) = Interpreter.Object (fmap fromJSON x)
@@ -30,7 +30,7 @@ toJSON (Interpreter.Number x) = pure (Aeson.Number x)
 toJSON (Interpreter.Bool x) = pure (Aeson.Bool x)
 toJSON Interpreter.Null = pure Aeson.Null
 toJSON _ = Nothing
-
+ 
 newtype JSON a = JSON { getJSON :: a }
 
 instance (Monad m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
@@ -39,7 +39,7 @@ instance (Monad m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
       Just value ->
         case Aeson.fromJSON value of
           Aeson.Error err -> throw . Interpreter.OtherError . fromString $ "Invalid JSON: " <> err
-          Aeson.Success a -> JSON a
+          Aeson.Success json -> JSON json
       Nothing -> throw (Interpreter.TypeMismatch "json")
 
 instance (Monad m, Aeson.ToJSON a) => Interpreter.ToValue m (JSON a) where

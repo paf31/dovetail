@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
@@ -20,6 +21,7 @@ import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Data.Version (Version)
+import GHC.Generics (Generic)
 import Interpreter qualified
 import Interpreter.JSON (JSON(..), fromJSON, toJSON)
 import Language.PureScript.AST.Declarations qualified as AST
@@ -62,7 +64,7 @@ makeActions k = Make.MakeActions
   , Make.readCacheDb = pure mempty
   , Make.writeCacheDb = \_ -> pure mempty
   }
-    
+
 run :: CoreFn.Module ann -> IO ()
 run m = do
   stdinBytes <- BL.hGetContents stdin

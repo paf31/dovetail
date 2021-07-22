@@ -1,14 +1,20 @@
-{-# LANGUAGE BlockArguments       #-}
-{-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE DefaultSignatures    #-}
-{-# LANGUAGE GADTs                #-}
-{-# LANGUAGE ImportQualifiedPost  #-}
-{-# LANGUAGE LambdaCase           #-}
-{-# LANGUAGE NamedFieldPuns       #-}
-{-# LANGUAGE OverloadedStrings    #-}
-{-# LANGUAGE TupleSections        #-}
-{-# LANGUAGE TypeOperators        #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE BlockArguments        #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DefaultSignatures     #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE ImportQualifiedPost   #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TupleSections         #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Interpreter
   ( Env
@@ -37,12 +43,15 @@ import Data.HashMap.Strict qualified as HashMap
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe)
+import Data.Proxy (Proxy(..))
 import Data.Scientific (Scientific, floatingOrInteger)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.These (These(..))
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
+import GHC.Generics qualified as G
+import GHC.TypeLits (KnownSymbol, symbolVal)
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Names (Ident(..), Qualified(..))
 import Language.PureScript.Names qualified as Names
@@ -101,6 +110,9 @@ unsafeClosure argName f = Closure $
 class ToValue a where
   toValue :: MonadSupply m => m (a -> Value)
   
+  default toValue :: (MonadSupply m, G.Generic a, GToObject (G.Rep a)) => m (a -> Value)
+  toValue = ((Object .) . (. G.from)) <$> gToObject
+  
 instance ToValue Value where
   toValue = pure id
   
@@ -135,6 +147,13 @@ instance ToValue a => ToValue (Vector a) where
   
 class FromValue a where
   fromValue :: MonadSupply m => m (Value -> a)
+  
+  default fromValue :: (MonadSupply m, G.Generic a, GFromObject (G.Rep a)) => m (Value -> a)
+  fromValue = do
+    mk <- gFromObject
+    pure \case
+      Object o -> G.to (mk o)
+      _ -> throw (TypeMismatch "object")
   
 instance FromValue Value where
   fromValue = pure id
@@ -181,6 +200,75 @@ instance (ToValue a, FromValue b) => FromValue (a -> b) where
     pure $ \f a -> 
       let result = apply f (fromA a)
        in toB result
+       
+class GToObject f where
+  gToObject :: MonadSupply m => m (f x -> HashMap Text Value)
+  
+instance GToObject f => GToObject (G.M1 G.D t f) where
+  gToObject = (. G.unM1) <$> gToObject
+  
+instance GToObject f => GToObject (G.M1 G.C t f) where
+  gToObject = (. G.unM1) <$> gToObject
+  
+instance (GToObject f, GToObject g) => GToObject (f G.:*: g) where
+  gToObject = do
+    mk1 <- gToObject
+    mk2 <- gToObject
+    pure \(f G.:*: g) -> mk1 f <> mk2 g
+    
+instance 
+    forall field u s l r a
+     . ( KnownSymbol field
+       , ToValue a
+       ) 
+    => GToObject 
+         (G.M1 
+           G.S
+           (G.MetaSel 
+             (Just field) 
+             u s l) 
+            (G.K1 r a)) 
+  where
+    gToObject = do
+      mk <- toValue
+      let field = Text.pack (symbolVal @field (Proxy :: Proxy field))
+      pure \(G.M1 (G.K1 a)) -> HashMap.singleton field (mk a)
+  
+class GFromObject f where
+  gFromObject :: MonadSupply m => m (HashMap Text Value -> f x)
+  
+instance GFromObject f => GFromObject (G.M1 G.D t f) where
+  gFromObject = (G.M1 .) <$> gFromObject
+  
+instance GFromObject f => GFromObject (G.M1 G.C t f) where
+  gFromObject = (G.M1 .) <$> gFromObject
+
+instance 
+    forall field u s l r a
+     . ( KnownSymbol field
+       , FromValue a
+       ) 
+    => GFromObject 
+         (G.M1 
+           G.S
+           (G.MetaSel 
+             (Just field) 
+             u s l) 
+            (G.K1 r a)) 
+  where
+    gFromObject = do
+      mk <- fromValue
+      let field = Text.pack (symbolVal @field (Proxy :: Proxy field))
+      pure \o ->
+        case HashMap.lookup field o of
+          Nothing -> throw (FieldNotFound field)
+          Just v -> G.M1 (G.K1 (mk v))
+  
+instance (GFromObject f, GFromObject g) => GFromObject (f G.:*: g) where
+  gFromObject = do
+    mk1 <- gFromObject
+    mk2 <- gFromObject
+    pure \o -> mk1 o G.:*: mk2 o
 
 builtIn :: ToValue a => Text -> a -> Interpreter.Env
 builtIn name value = evalSupply 0 do

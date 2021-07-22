@@ -15,12 +15,14 @@ Work in progress Haskell port of [runpurs](https://github.com/paf31/runpurs).
   - [ ] Recursive binding groups 
   - [ ] Guards
   - [ ] Multiple modules
-- [ ] FFI
+- [x] FFI
   - [x] Basic `FromValue` and `ToValue` classes
   - [x] `builtIn` function for constructing environments from Haskell functions
-  - [ ] Generic deriving for `FromValue` and `ToValue`
+  - [x] Generic deriving for `FromValue` and `ToValue`
+  - [ ] Handle newtypes properly at FFI boundary
 - [x] Integrated parser and type checker
   - [ ] Generate externs along with environment for foreign imports
 - [ ] Improved error messages and error type
 - [ ] CPS'd evaluator with `shift`/`reset`
 - [ ] Support CoreFn annotations for better error messages
+- [ ] Monadic interpreters

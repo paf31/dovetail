@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE ImportQualifiedPost   #-}
+{-# LANGUAGE IncoherentInstances   #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns        #-}
@@ -21,7 +22,8 @@ module Language.PureScript.Interpreter
   ( Env
   , Value(..)
   , Constructor(..)
-  , EvalException(..)
+  , EvaluationError(..)
+  , renderEvaluationError
   , eval
   , apply
   , interpret
@@ -30,14 +32,12 @@ module Language.PureScript.Interpreter
   , builtIn
   ) where
 
-import Control.Arrow (Kleisli(..))
-import Control.Exception (Exception, throw)
 import Control.Monad (guard, foldM, join, mzero, zipWithM)
+import Control.Monad.Error.Class (MonadError, throwError)
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
 import Data.Functor (void)
-import Data.Functor.Identity (Identity(..))
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map (Map)
@@ -74,7 +74,7 @@ data Constructor m = MkConstructor
   , ctorUnapplied :: [Ident]
   }
   
-data EvalException 
+data EvaluationError 
   = UnknownIdent (Qualified Ident)
   | TypeMismatch Text
   | FieldNotFound Text
@@ -85,9 +85,26 @@ data EvalException
   | UnsaturatedConstructorApplication
   | InvalidFieldName PSString.PSString
   | OtherError Text
-  deriving Show
 
-instance Exception EvalException
+renderEvaluationError :: EvaluationError -> String
+renderEvaluationError (UnknownIdent x) =
+  "Identifier not in scope: " <> Text.unpack (Names.showQualified Names.showIdent x)
+renderEvaluationError (TypeMismatch x) =
+  "Type mismatch, expected " <> Text.unpack x
+renderEvaluationError (FieldNotFound x) =
+  "Record field not found: " <> Text.unpack x
+renderEvaluationError InexhaustivePatternMatch =
+  "Inexhaustive pattern match"
+renderEvaluationError (NotSupported x) =
+  "Unsupported feature: " <> Text.unpack x
+renderEvaluationError (InvalidNumberOfArguments given expected) =
+  "Invalid number of arguments, given " <> show given <> ", but expected " <> show expected
+renderEvaluationError UnsaturatedConstructorApplication =
+  "Unsaturated constructor application"
+renderEvaluationError (InvalidFieldName x) =
+  "Invalid field name: " <> PSString.decodeStringWithReplacement x
+renderEvaluationError (OtherError x) =
+  "Other error: " <> Text.unpack x
   
 class Monad m => ToValue m a where
   toValue :: a -> Value m
@@ -109,12 +126,18 @@ instance Monad m => ToValue m Text where
   
 instance Monad m => ToValue m Bool where
   toValue = Bool
+
+class ToValueRHS m a where
+  toValueRHS :: a -> m (Value m)
   
-instance (m ~ n, Monad m, FromValue m a, ToValue m b) => ToValue m (Kleisli n a b) where
-  toValue f = Closure (fmap toValue . runKleisli f . fromValue)
-  
-instance (Monad m, FromValue m a, ToValue m b) => ToValue m (a -> b) where
-  toValue f = Closure (pure . toValue . f . fromValue)
+instance (MonadError EvaluationError m, FromValue m a, ToValueRHS m b) => ToValueRHS m (a -> b) where
+  toValueRHS f = pure (Closure (\v -> toValueRHS . f =<< fromValue v))
+   
+instance {-# OVERLAPS #-} (ToValue m a, m ~ n) => ToValueRHS m (n a) where
+  toValueRHS = fmap toValue
+
+instance {-# OVERLAPS #-} (Monad m, FromValue m a, ToValueRHS m b) => ToValue m (a -> b) where
+  toValue f = Closure (\v -> toValueRHS . f =<< fromValue v)
 
 instance ToValue m a => ToValue m (Maybe a) where
   toValue = maybe Null toValue
@@ -122,53 +145,61 @@ instance ToValue m a => ToValue m (Maybe a) where
 instance ToValue m a => ToValue m (Vector a) where
   toValue = Array . fmap toValue
   
-class Monad m => FromValue m a where
-  fromValue :: Value m -> a
+class MonadError EvaluationError m => FromValue m a where
+  fromValue :: Value m -> m a
   
-  default fromValue :: (G.Generic a, GFromObject m (G.Rep a)) => Value m -> a
+  default fromValue :: (G.Generic a, GFromObject m (G.Rep a)) => Value m -> m a
   fromValue = \case
-    Object o -> G.to (gFromObject o)
-    _ -> throw (TypeMismatch "object")
+    Object o -> G.to <$> gFromObject o
+    _ -> throwError (TypeMismatch "object")
   
-instance Monad m => FromValue m (Value m) where
-  fromValue = id
+instance MonadError EvaluationError m => FromValue m (Value m) where
+  fromValue = pure
   
-instance Monad m => FromValue m Text where
+instance MonadError EvaluationError m => FromValue m Text where
   fromValue = \case
-    String s -> s
-    _ -> throw (TypeMismatch "string")
+    String s -> pure s
+    _ -> throwError (TypeMismatch "string")
   
-instance Monad m => FromValue m Integer where
+instance MonadError EvaluationError m => FromValue m Integer where
   fromValue = \case
     Number s
-      | Right i <- floatingOrInteger @Double s -> i
-    _ -> throw (TypeMismatch "integer")
+      | Right i <- floatingOrInteger @Double s -> pure i
+    _ -> throwError (TypeMismatch "integer")
   
-instance Monad m => FromValue m Scientific where
+instance MonadError EvaluationError m => FromValue m Scientific where
   fromValue = \case
-    Number s -> s
-    _ -> throw (TypeMismatch "number")
+    Number s -> pure s
+    _ -> throwError (TypeMismatch "number")
   
-instance Monad m => FromValue m Bool where
+instance MonadError EvaluationError m => FromValue m Bool where
   fromValue = \case
-    Bool b -> b
-    _ -> throw (TypeMismatch "boolean")
+    Bool b -> pure b
+    _ -> throwError (TypeMismatch "boolean")
   
 instance FromValue m a => FromValue m (Maybe a) where
   fromValue = \case
-    Null -> Nothing
-    v -> Just (fromValue v)
+    Null -> pure Nothing
+    v -> Just <$> fromValue v
   
 instance FromValue m a => FromValue m (Vector a) where
   fromValue = \case
-    Array xs -> fmap fromValue xs
-    _ -> throw (TypeMismatch "array")
+    Array xs -> traverse fromValue xs
+    _ -> throwError (TypeMismatch "array")
   
-instance (m ~ n, ToValue m a, FromValue m b) => FromValue m (Kleisli n a b) where
-  fromValue f = Kleisli \a -> fromValue <$> apply f (toValue a)
+class FromValueRHS m a where
+  fromValueRHS :: m (Value m) -> a
   
-instance (m ~ Identity, ToValue m a, FromValue m b) => FromValue m (a -> b) where
-  fromValue f = fromValue . runIdentity . apply f . toValue
+instance {-# OVERLAPS #-} (MonadError EvaluationError m, ToValue m a, FromValueRHS m b) => FromValueRHS m (a -> b) where
+  fromValueRHS mv a = fromValueRHS do
+    v <- mv
+    fromValueRHS (apply v (toValue a))
+   
+instance {-# OVERLAPS #-} FromValue m a => FromValueRHS m (m a) where
+  fromValueRHS = (>>= fromValue)
+  
+instance (MonadError EvaluationError m, FromValueRHS m b, ToValue m a) => FromValue m (a -> b) where
+  fromValue f = pure $ \a -> fromValueRHS (apply f (toValue a))
        
 class GToObject m f where
   gToObject :: f x -> HashMap Text (Value m)
@@ -200,13 +231,13 @@ instance
        in HashMap.singleton field (toValue a)
   
 class GFromObject m f where
-  gFromObject :: HashMap Text (Value m) -> f x
+  gFromObject :: HashMap Text (Value m) -> m (f x)
   
-instance GFromObject m f => GFromObject m (G.M1 G.D t f) where
-  gFromObject = G.M1 . gFromObject
+instance (Functor m, GFromObject m f) => GFromObject m (G.M1 G.D t f) where
+  gFromObject = fmap G.M1 . gFromObject
   
-instance GFromObject m f => GFromObject m (G.M1 G.C t f) where
-  gFromObject = G.M1 . gFromObject
+instance (Functor m, GFromObject m f) => GFromObject m (G.M1 G.C t f) where
+  gFromObject = fmap G.M1 . gFromObject
 
 instance 
     forall m field u s l r a
@@ -224,26 +255,26 @@ instance
     gFromObject o = do
       let field = Text.pack (symbolVal @field (Proxy :: Proxy field))
       case HashMap.lookup field o of
-        Nothing -> throw (FieldNotFound field)
-        Just v -> G.M1 . G.K1 $ fromValue v
+        Nothing -> throwError (FieldNotFound field)
+        Just v -> G.M1 . G.K1 <$> fromValue v
   
-instance (GFromObject m f, GFromObject m g) => GFromObject m (f G.:*: g) where
-  gFromObject o = gFromObject o G.:*: gFromObject o
+instance (Applicative m, GFromObject m f, GFromObject m g) => GFromObject m (f G.:*: g) where
+  gFromObject o = (G.:*:) <$> gFromObject o <*> gFromObject o
 
 builtIn :: ToValue m a => Text -> a -> Env m
 builtIn name value =
   let qualName = Names.mkQualified (Names.Ident name) (Names.ModuleName "Main")
    in Map.singleton qualName $ toValue value
    
-interpret :: FromValue m a => Env m -> CoreFn.Module ann -> m a
+interpret :: (FromValue m a, MonadError EvaluationError m) => Env m -> CoreFn.Module ann -> m a
 interpret initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = do
   env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
   mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
-  pure (fromValue mainFn)
+  fromValue mainFn
 
 eval 
   :: forall m
-   . Monad m
+   . MonadError EvaluationError m
   => Names.ModuleName
   -> Env m
   -> CoreFn.Expr ()
@@ -252,20 +283,20 @@ eval mn env (CoreFn.Literal _ lit) =
   evalLit mn env lit
 eval mn env (CoreFn.Accessor _ pss e) = do
   val <- eval mn env e
-  let field = evalPSString pss
+  field <- evalPSString pss
   case val of
     Object o ->
       case HashMap.lookup field o of
         Just x -> pure x
-        Nothing -> throw (FieldNotFound field)
-    _ -> throw (TypeMismatch "object")
+        Nothing -> throwError (FieldNotFound field)
+    _ -> throwError (TypeMismatch "object")
 eval mn env (CoreFn.Abs _ arg body) =
   pure . Closure $ \v -> eval mn (Map.insert (Qualified Nothing arg) v env) body
 eval mn env (CoreFn.App _ f x) =
   join (apply <$> eval mn env f <*> eval mn env x)
 eval _ env (CoreFn.Var _ name) =
   case Map.lookup name env of
-    Nothing -> throw $ UnknownIdent name
+    Nothing -> throwError $ UnknownIdent name
     Just val -> pure val
 eval mn env (CoreFn.Let _ binders body) = do
   env' <- bind mn Nothing env binders
@@ -277,22 +308,22 @@ eval mn env (CoreFn.ObjectUpdate _ e updates) = do
         -> (PSString.PSString, CoreFn.Expr ())
         -> m (HashMap Text (Value m))
       updateOne o (pss, new) = do
-        let field = evalPSString pss
+        field <- evalPSString pss
         newVal <- eval mn env new
         pure $ HashMap.insert field newVal o
   case val of
     Object o -> Object <$> foldM updateOne o updates
-    _ -> throw (TypeMismatch "object")
+    _ -> throwError (TypeMismatch "object")
 eval mn env (CoreFn.Case _ args alts) = do
   vals <- traverse (eval mn env) args
   result <- runMaybeT (asum (map (match vals) alts))
   case result of
-    Nothing -> throw InexhaustivePatternMatch
+    Nothing -> throwError InexhaustivePatternMatch
     Just (newEnv, matchedExpr) -> eval mn (newEnv <> env) matchedExpr
 eval mn _ (CoreFn.Constructor _ _tyName ctor fields) = 
   pure . Constructor $ MkConstructor (Qualified (Just mn) ctor) [] fields
 
-match :: Monad m
+match :: MonadError EvaluationError m
       => [Value m]
       -> CoreFn.CaseAlternative ()
       -> MaybeT m (Env m, CoreFn.Expr ())
@@ -300,11 +331,11 @@ match vals (CoreFn.CaseAlternative binders expr)
   | length vals == length binders = do
     newEnv <- fold <$> zipWithM matchOne vals binders
     case expr of
-      Left _guards -> throw (NotSupported "guards")
+      Left _guards -> throwError (NotSupported "guards")
       Right e -> pure (newEnv, e)
-  | otherwise = throw (InvalidNumberOfArguments (length vals) (length binders))
+  | otherwise = throwError (InvalidNumberOfArguments (length vals) (length binders))
 
-matchOne :: Monad m => Value m -> CoreFn.Binder () -> MaybeT m (Env m)
+matchOne :: MonadError EvaluationError m => Value m -> CoreFn.Binder () -> MaybeT m (Env m)
 matchOne _ (CoreFn.NullBinder _) = pure mempty
 matchOne val (CoreFn.LiteralBinder _ lit) = matchLit val lit
 matchOne val (CoreFn.VarBinder _ ident) = do
@@ -316,12 +347,12 @@ matchOne (Constructor (MkConstructor ctor vals [])) (CoreFn.ConstructorBinder _ 
   | ctor == ctor'
   = fold <$> zipWithM matchOne vals bs
 matchOne Constructor{} CoreFn.ConstructorBinder{} =
-  throw UnsaturatedConstructorApplication
+  throwError UnsaturatedConstructorApplication
 matchOne _ _ = mzero
 
 matchLit
   :: forall m
-   . Monad m
+   . MonadError EvaluationError m
   => Value m
   -> CoreFn.Literal (CoreFn.Binder ())
   -> MaybeT m (Env m)
@@ -330,7 +361,8 @@ matchLit (Number n) (CoreFn.NumericLiteral (Left i))
 matchLit (Number n) (CoreFn.NumericLiteral (Right d))
   | realToFrac d == n = pure mempty
 matchLit (String s) (CoreFn.StringLiteral pss) = do
-  guard (s == evalPSString pss)
+  s' <- evalPSString pss
+  guard (s == s')
   pure mempty
 matchLit (String s) (CoreFn.CharLiteral chr)
   | s == Text.singleton chr = pure mempty
@@ -340,27 +372,30 @@ matchLit (Array xs) (CoreFn.ArrayLiteral bs)
   | length xs == length bs
   = fold <$> zipWithM matchOne (Vector.toList xs) bs
 matchLit (Object o) (CoreFn.ObjectLiteral bs) = do
-  let vals = HashMap.fromList [ (t, (t, b)) | (pss, b) <- bs, let t = evalPSString pss ]
+  let evalField (pss, b) = do
+        t <- evalPSString pss
+        pure (t, (t, b))
+  vals <- HashMap.fromList <$> traverse evalField bs
   let matchField :: These (Value m) (Text, CoreFn.Binder ()) -> MaybeT m (Env m)
       matchField This{} = pure mempty
-      matchField (That (pss, _)) = throw (FieldNotFound pss)
+      matchField (That (pss, _)) = throwError (FieldNotFound pss)
       matchField (These val (_, b)) = matchOne val b
   fold <$> sequence (Align.alignWith matchField o vals)
 matchLit _ _ = mzero
 
-evalPSString :: PSString.PSString -> Text
+evalPSString :: MonadError EvaluationError m => PSString.PSString -> m Text
 evalPSString pss = 
   case PSString.decodeString pss of
-    Just field -> field
-    _ -> throw (InvalidFieldName pss)
+    Just field -> pure field
+    _ -> throwError (InvalidFieldName pss)
 
-evalLit :: Monad m => Names.ModuleName -> Env m -> CoreFn.Literal (CoreFn.Expr ()) -> m (Value m)
+evalLit :: MonadError EvaluationError m => Names.ModuleName -> Env m -> CoreFn.Literal (CoreFn.Expr ()) -> m (Value m)
 evalLit _ _ (CoreFn.NumericLiteral (Left int)) =
   pure $ Number (fromIntegral int)
 evalLit _ _ (CoreFn.NumericLiteral (Right dbl)) =
   pure $ Number (realToFrac dbl)
 evalLit _ _ (CoreFn.StringLiteral str) =
-  pure $ String (evalPSString str)
+  String <$> evalPSString str
 evalLit _ _ (CoreFn.CharLiteral chr) =
   pure $ String (Text.singleton chr)
 evalLit _ _ (CoreFn.BooleanLiteral b) =
@@ -370,22 +405,22 @@ evalLit mn env (CoreFn.ArrayLiteral xs) = do
   pure $ Array (Vector.fromList vs)
 evalLit mn env (CoreFn.ObjectLiteral xs) = do
   let evalField (pss, e) = do
-        let field = evalPSString pss
+        field <- evalPSString pss
         val <- eval mn env e
         pure (field, val)
   Object . HashMap.fromList <$> traverse evalField xs
 
-bind :: forall m. Monad m => Names.ModuleName -> Maybe Names.ModuleName -> Env m -> [CoreFn.Bind ()] -> m (Env m)
+bind :: forall m. MonadError EvaluationError m => Names.ModuleName -> Maybe Names.ModuleName -> Env m -> [CoreFn.Bind ()] -> m (Env m)
 bind mn scope = foldM go where
   go :: Env m -> CoreFn.Bind () -> m (Env m)
   go env (CoreFn.NonRec _ name e) = do
     val <- eval mn env e
     pure $ Map.insert (Qualified scope name) val env
   go _ (CoreFn.Rec _) = 
-    throw (NotSupported "recursive bindings")
+    throwError (NotSupported "recursive bindings")
 
-apply :: Monad m => Value m -> Value m -> m (Value m)
+apply :: MonadError EvaluationError m => Value m -> Value m -> m (Value m)
 apply (Closure f) arg = f arg
 apply (Constructor MkConstructor{ ctorName, ctorApplied, ctorUnapplied = _ : tl }) arg = do
   pure $ Constructor MkConstructor{ ctorName, ctorApplied = arg : ctorApplied, ctorUnapplied = tl }
-apply _ _ = throw (TypeMismatch "closure")
+apply _ _ = throwError (TypeMismatch "closure")

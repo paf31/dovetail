@@ -54,6 +54,7 @@ executables:
     - aeson-pretty
     - bytestring
     - containers
+    - mtl
     - purescript
     - purescript-cst
     - text

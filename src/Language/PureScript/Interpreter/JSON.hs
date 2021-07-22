@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost   #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
@@ -9,7 +10,7 @@ module Language.PureScript.Interpreter.JSON
   , toJSON
   ) where
   
-import Control.Exception (throw)
+import Control.Monad.Error.Class (MonadError, throwError)
 import Data.Aeson qualified as Aeson
 import Data.String (fromString)
 import Language.PureScript.Interpreter qualified as Interpreter
@@ -33,14 +34,14 @@ toJSON _ = Nothing
  
 newtype JSON a = JSON { getJSON :: a }
 
-instance (Monad m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
+instance (MonadError Interpreter.EvaluationError m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
   fromValue a =
     case toJSON a of
       Just value ->
         case Aeson.fromJSON value of
-          Aeson.Error err -> throw . Interpreter.OtherError . fromString $ "Invalid JSON: " <> err
-          Aeson.Success json -> JSON json
-      Nothing -> throw (Interpreter.TypeMismatch "json")
+          Aeson.Error err -> throwError . Interpreter.OtherError . fromString $ "Invalid JSON: " <> err
+          Aeson.Success json -> pure (JSON json)
+      Nothing -> throwError (Interpreter.TypeMismatch "json")
 
 instance (Monad m, Aeson.ToJSON a) => Interpreter.ToValue m (JSON a) where
   toValue = fromJSON . Aeson.toJSON . getJSON

@@ -8,49 +8,156 @@
 @version 0.1.0.0
 
 module Language.PureScript.Interpreter
-type Env m = Map (Qualified Ident) (Value m)
+
+-- | Evaluate a compiled PureScript module in the specified environment,
+--   returning the output from its main function as a Haskell value.
+interpret :: FromValue m a => Env m -> Module ann -> EvalT m a
+
+-- | Create an environment from a Haskell value.
+--   
+--   It is recommended that a type annotation is given for the type of the
+--   value being provided.
+--   
+--   For example:
+--   
+--   <pre>
+--   builtIn "greeting" ("Hello, World!" :: Text)
+--   builtIn "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
+--   </pre>
+--   
+--   Functions can be provided as built-ins, but the <a>EvalT</a> monad
+--   needs to be used to wrap any outputs (or values in positive position):
+--   
+--   <pre>
+--   builtIn "strip" ((pure . Text.strip) :: Text -&gt; EvalT m Text)
+--   builtIn "map" (traverse :: (Value -&gt; EvalT m Value) -&gt; Vector Value -&gt; EvalT m (Vector Value))
+--   </pre>
+--   
+--   Polymorphic functions can also be provided as built-ins, but values
+--   with polymoprhic types will need to be passed across the FFI boundary
+--   with monomorphic types. The type <a>Value</a> can always be used to
+--   represent values of unknown or polymorphic type, as in the
+--   <tt>map</tt> example above.
+builtIn :: ToValue m a => Text -> a -> Env m
+
+-- | The representation of values used by the interpreter - essentially,
+--   the semantic domain for a simple untyped lambda calculus with records
+--   and ADTs.
+--   
+--   Any additional side effects which might occur in FFI calls to Haskell
+--   code are tracked by a monad in the type argument.
 data Value m
+
+-- | Records are represented as hashmaps from their field names to values
 Object :: HashMap Text (Value m) -> Value m
+
+-- | Arrays
 Array :: Vector (Value m) -> Value m
 String :: Text -> Value m
+
+-- | Numeric values
+--   
+--   TODO: separate integers from floating-point values
 Number :: Scientific -> Value m
 Bool :: Bool -> Value m
-Null :: Value m
-Closure :: (Value m -> EvalT m (Value m)) -> Value m
-Constructor :: Constructor m -> Value m
-data Constructor m
-MkConstructor :: Qualified (ProperName 'ConstructorName) -> [Value m] -> [Ident] -> Constructor m
-[ctorName] :: Constructor m -> Qualified (ProperName 'ConstructorName)
-[ctorApplied] :: Constructor m -> [Value m]
-[ctorUnapplied] :: Constructor m -> [Ident]
-data EvaluationError
-UnknownIdent :: Qualified Ident -> EvaluationError
-TypeMismatch :: Text -> EvaluationError
-FieldNotFound :: Text -> EvaluationError
-InexhaustivePatternMatch :: EvaluationError
 
--- | TODO: remove this
-NotSupported :: Text -> EvaluationError
-InvalidNumberOfArguments :: Int -> Int -> EvaluationError
-UnsaturatedConstructorApplication :: EvaluationError
-InvalidFieldName :: PSString -> EvaluationError
-OtherError :: Text -> EvaluationError
-renderEvaluationError :: EvaluationError -> String
+-- | Closures, represented in higher-order abstract syntax style.
+Closure :: (Value m -> EvalT m (Value m)) -> Value m
+
+-- | Fully-applied data constructors
+Constructor :: Qualified (ProperName 'ConstructorName) -> [Value m] -> Value m
+
+-- | The monad used by the interpreter, which supports error reporting for
+--   errors which can occur during evaluation.
+--   
+--   The transformed monad is used to track any benign side effects that
+--   might be exposed via the foreign function interface to PureScript
+--   code.
 newtype EvalT m a
 EvalT :: ExceptT EvaluationError m a -> EvalT m a
 [runEvalT] :: EvalT m a -> ExceptT EvaluationError m a
+
+-- | Non-transformer version of <a>EvalT</a>, useful in any settings where
+--   the FFI does not use any side effects during evaluation.
 type Eval = EvalT Identity
 runEval :: Eval a -> Either EvaluationError a
+
+-- | Errors which can occur during evaluation of PureScript code.
+--   
+--   PureScript is a typed language, and tries to prevent runtime errors.
+--   However, in the context of this interpreter, we can receive data from
+--   outside PureScript code, so it is possible that runtime errors can
+--   occur if we are not careful. This is similar to how PureScript code
+--   can fail at runtime due to errors in the FFI.
+data EvaluationError
+
+-- | A name was not found in the environment
+UnknownIdent :: Qualified Ident -> EvaluationError
+
+-- | The runtime representation of a value did not match the expected
+--   representation
+TypeMismatch :: Text -> EvaluationError
+
+-- | A record field did not exist in an <a>Object</a> value.
+FieldNotFound :: Text -> EvaluationError
+
+-- | A pattern match failed to match its argument
+InexhaustivePatternMatch :: EvaluationError
+
+-- | A pattern match received the wrong number of arguments
+InvalidNumberOfArguments :: Int -> Int -> EvaluationError
+
+-- | A pattern match occurred against a partially-applied data constructor
+UnsaturatedConstructorApplication :: EvaluationError
+
+-- | A PureScript string which contains lone surrogates which could not be
+--   decoded. See <a>PSString</a>.
+InvalidFieldName :: PSString -> EvaluationError
+
+-- | A feature of the language is not yet implemented in the interpreter.
+--   
+--   TODO: remove this once all features are supported
+NotSupported :: Text -> EvaluationError
+
+-- | An error occurred in a foreign function which is not tracked by any of
+--   the other error types.
+--   
+--   TODO: remove this in favor of using monadic FFI functions
+OtherError :: Text -> EvaluationError
+
+-- | Render an <a>EvaluationError</a> as a human-readable string.
+renderEvaluationError :: EvaluationError -> String
+
+-- | An environment, i.e. a mapping from names to evaluated values.
+--   
+--   An environment for a single built-in function can be constructed using
+--   the <a>builtIn</a> function, and environments can be combined easily
+--   using the <a>Monoid</a> instance for <a>Map</a>.
+type Env m = Map (Qualified Ident) (Value m)
+
+-- | Evaluate a PureScript CoreFn expression in the given environment.
+--   
+--   Note: it should not be necessary to call this function directly in
+--   most circumstances. It is provided as a helper function, for some more
+--   advanced use cases, such as setting up a custom environment.
 eval :: forall m. Monad m => ModuleName -> Env m -> Expr () -> EvalT m (Value m)
+
+-- | Apply a value which represents an unevaluated closure to an argument.
 apply :: Monad m => Value m -> Value m -> EvalT m (Value m)
-interpret :: FromValue m a => Env m -> Module ann -> EvalT m a
 class Monad m => ToValue m a
 toValue :: ToValue m a => a -> Value m
 toValue :: (ToValue m a, Generic a, GToObject m (Rep a)) => a -> Value m
 class Monad m => FromValue m a
 fromValue :: FromValue m a => Value m -> EvalT m a
 fromValue :: (FromValue m a, Generic a, GFromObject m (Rep a)) => Value m -> EvalT m a
-builtIn :: ToValue m a => Text -> a -> Env m
+class ToValueRHS m a
+toValueRHS :: ToValueRHS m a => a -> EvalT m (Value m)
+class FromValueRHS m a
+fromValueRHS :: FromValueRHS m a => EvalT m (Value m) -> a
+class GToObject m f
+gToObject :: GToObject m f => f x -> HashMap Text (Value m)
+class GFromObject m f
+gFromObject :: GFromObject m f => HashMap Text (Value m) -> EvalT m (f x)
 instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError Language.PureScript.Interpreter.EvaluationError (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.EvalT m)
@@ -62,7 +169,6 @@ instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m Data.Te
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m GHC.Integer.Type.Integer
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m Data.Scientific.Scientific
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m GHC.Types.Bool
-instance Language.PureScript.Interpreter.FromValue m a => Language.PureScript.Interpreter.FromValue m (GHC.Maybe.Maybe a)
 instance Language.PureScript.Interpreter.FromValue m a => Language.PureScript.Interpreter.FromValue m (Data.Vector.Vector a)
 instance (Language.PureScript.Interpreter.FromValue m a, n GHC.Types.~ m) => Language.PureScript.Interpreter.FromValueRHS m (Language.PureScript.Interpreter.EvalT n a)
 instance (GHC.Base.Monad m, Language.PureScript.Interpreter.FromValueRHS m b, Language.PureScript.Interpreter.ToValue m a) => Language.PureScript.Interpreter.FromValue m (a -> b)
@@ -76,7 +182,6 @@ instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m Data.Scie
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m Data.Text.Internal.Text
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m GHC.Types.Bool
 instance (Language.PureScript.Interpreter.ToValue m a, n GHC.Types.~ m) => Language.PureScript.Interpreter.ToValueRHS m (Language.PureScript.Interpreter.EvalT n a)
-instance Language.PureScript.Interpreter.ToValue m a => Language.PureScript.Interpreter.ToValue m (GHC.Maybe.Maybe a)
 instance Language.PureScript.Interpreter.ToValue m a => Language.PureScript.Interpreter.ToValue m (Data.Vector.Vector a)
 instance (GHC.Base.Monad m, Language.PureScript.Interpreter.ToValue m a, Language.PureScript.Interpreter.FromValueRHS m b) => Language.PureScript.Interpreter.FromValueRHS m (a -> b)
 instance (GHC.TypeLits.KnownSymbol field, Language.PureScript.Interpreter.ToValue m a) => Language.PureScript.Interpreter.GToObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))

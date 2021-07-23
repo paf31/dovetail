@@ -26,3 +26,6 @@ Work in progress Haskell port of [runpurs](https://github.com/paf31/runpurs).
 - [ ] CPS'd evaluator with `shift`/`reset`
 - [ ] Support CoreFn annotations for better error messages
 - [x] Monadic interpreters
+- [ ] Support foreign types such as `Maybe`
+- [ ] Handle partial functions properly
+- [ ] Parser for expressions instead of modules

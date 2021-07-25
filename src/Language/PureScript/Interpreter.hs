@@ -55,6 +55,7 @@ module Language.PureScript.Interpreter
  
 import Control.Monad (guard, foldM, join, mzero, zipWithM)
 import Control.Monad.Error.Class (MonadError, throwError)
+import Control.Monad.Fix (MonadFix, mfix)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.Maybe (MaybeT(..))
@@ -156,8 +157,8 @@ type Env m = Map (Qualified Ident) (Value m)
 -- The transformed monad is used to track any benign side effects that might be
 -- exposed via the foreign function interface to PureScript code.
 newtype EvalT m a = EvalT { runEvalT :: ExceptT EvaluationError m a }
-  deriving newtype (Functor, Applicative, Monad, MonadError EvaluationError)
-
+  deriving newtype (Functor, Applicative, Monad, MonadError EvaluationError, MonadFix)
+  
 -- | Non-transformer version of `EvalT`, useful in any settings where the FFI
 -- does not use any side effects during evaluation.
 type Eval = EvalT Identity
@@ -189,10 +190,6 @@ data EvaluationError
   | InvalidFieldName PSString.PSString
   -- ^ A PureScript string which contains lone surrogates which could not be
   -- decoded. See 'PSString.PSString'.
-  | NotSupported Text 
-  -- ^ A feature of the language is not yet implemented in the interpreter.
-  --
-  -- TODO: remove this once all features are supported
   | OtherError Text
   -- ^ An error occurred in a foreign function which is not tracked by
   -- any of the other error types.
@@ -215,12 +212,10 @@ renderEvaluationError UnsaturatedConstructorApplication =
   "Unsaturated constructor application"
 renderEvaluationError (InvalidFieldName x) =
   "Invalid field name: " <> PSString.decodeStringWithReplacement x
-renderEvaluationError (NotSupported x) =
-  "Unsupported feature: " <> Text.unpack x
 renderEvaluationError (OtherError x) =
   "Other error: " <> Text.unpack x
 
-evalPSString :: Monad m => PSString.PSString -> EvalT m Text
+evalPSString :: MonadFix m => PSString.PSString -> EvalT m Text
 evalPSString pss = 
   case PSString.decodeString pss of
     Just field -> pure field
@@ -233,7 +228,7 @@ evalPSString pss =
 -- use cases, such as setting up a custom environment.
 eval 
   :: forall m
-   . Monad m
+   . MonadFix m
   => Names.ModuleName
   -> Env m
   -> CoreFn.Expr ()
@@ -285,7 +280,7 @@ eval mn _ (CoreFn.Constructor _ _tyName ctor fields) =
     go [] applied = Constructor (Qualified (Just mn) ctor) (reverse applied)
     go (_ : tl) applied = Closure \arg -> pure (go tl (arg : applied))
 
-match :: Monad m
+match :: MonadFix m
       => Names.ModuleName
       -> Env m
       -> [Value m]
@@ -300,7 +295,7 @@ match mn env vals (CoreFn.CaseAlternative binders expr)
   | otherwise = throwError (InvalidNumberOfArguments (length vals) (length binders))
 
 evalGuard
-  :: Monad m
+  :: MonadFix m
   => Names.ModuleName
   -> Env m
   -> CoreFn.Guard ()
@@ -314,7 +309,7 @@ evalGuard mn env g e = do
   pure e
 
 matchOne 
-  :: Monad m
+  :: MonadFix m
   => Value m
   -> CoreFn.Binder ()
   -> MaybeT (EvalT m) (Env m)
@@ -334,7 +329,7 @@ matchOne _ _ = mzero
 
 matchLit
   :: forall m
-   . Monad m
+   . MonadFix m
   => Value m
   -> CoreFn.Literal (CoreFn.Binder ())
   -> MaybeT (EvalT m) (Env m)
@@ -365,7 +360,7 @@ matchLit (Object o) (CoreFn.ObjectLiteral bs) = do
   fold <$> sequence (Align.alignWith matchField o vals)
 matchLit _ _ = mzero
 
-evalLit :: Monad m => Names.ModuleName -> Env m -> CoreFn.Literal (CoreFn.Expr ()) -> EvalT m (Value m)
+evalLit :: MonadFix m => Names.ModuleName -> Env m -> CoreFn.Literal (CoreFn.Expr ()) -> EvalT m (Value m)
 evalLit _ _ (CoreFn.NumericLiteral (Left int)) =
   pure $ Number (fromIntegral int)
 evalLit _ _ (CoreFn.NumericLiteral (Right dbl)) =
@@ -388,7 +383,7 @@ evalLit mn env (CoreFn.ObjectLiteral xs) = do
 
 bind 
   :: forall m
-   . Monad m
+   . MonadFix m
   => Names.ModuleName
   -> Maybe Names.ModuleName
   -> Env m
@@ -399,12 +394,15 @@ bind mn scope = foldM go where
   go env (CoreFn.NonRec _ name e) = do
     val <- eval mn env e
     pure $ Map.insert (Qualified scope name) val env
-  go _ (CoreFn.Rec _) = 
-    throwError (NotSupported "recursive bindings")
+  go env (CoreFn.Rec exprs) = mfix \newEnv -> do
+    vals <- flip traverse exprs \((_, name), e) -> do
+      val <- eval mn newEnv e
+      pure $ Map.singleton (Qualified scope name) val
+    pure (fold vals <> env)
 
 -- | Apply a value which represents an unevaluated closure to an argument.
 apply
-  :: Monad m
+  :: MonadFix m
   => Value m
   -> Value m
   -> EvalT m (Value m)
@@ -424,7 +422,7 @@ apply _ _ = throwError (TypeMismatch "closure")
 -- @
 --    fromValue . toValue = pure
 -- @
-class Monad m => ToValue m a where
+class MonadFix m => ToValue m a where
   toValue :: a -> Value m
   
   -- | The default implementation uses generic deriving to identify a Haskell
@@ -438,12 +436,12 @@ class Monad m => ToValue m a where
   default fromValue :: (G.Generic a, ToObject m (G.Rep a)) => Value m -> EvalT m a
   fromValue = genericFromValue defaultObjectOptions
   
-instance Monad m => ToValue m (Value m) where
+instance MonadFix m => ToValue m (Value m) where
   toValue = id
   fromValue = pure
 
 -- | The Haskell 'Integer' type corresponds to PureScript's integer type.
-instance Monad m => ToValue m Integer where
+instance MonadFix m => ToValue m Integer where
   toValue = Number . fromIntegral
   fromValue = \case
     Number s
@@ -452,7 +450,7 @@ instance Monad m => ToValue m Integer where
   
 -- | The Haskell 'Scientific' type corresponds to the subset of PureScript
 -- values consisting of its Int and Number types.
-instance Monad m => ToValue m Scientific where
+instance MonadFix m => ToValue m Scientific where
   toValue = Number
   fromValue = \case
     Number s -> pure s
@@ -460,14 +458,14 @@ instance Monad m => ToValue m Scientific where
 
 -- | The Haskell 'Text' type is represented by PureScript strings
 -- which contain no lone surrogates.
-instance Monad m => ToValue m Text where
+instance MonadFix m => ToValue m Text where
   toValue = String
   fromValue = \case
     String s -> pure s
     _ -> throwError (TypeMismatch "string")
 
 -- | Haskell booleans are represented by boolean values.
-instance Monad m => ToValue m Bool where
+instance MonadFix m => ToValue m Bool where
   toValue = Bool
   fromValue = \case
     Bool b -> pure b
@@ -476,7 +474,7 @@ instance Monad m => ToValue m Bool where
 -- | Haskell functions are represented as closures which take valid
 -- representations for the domain type to valid representations of the codomain
 -- type.
-instance (Monad m, ToValue m a, ToValueRHS m b) => ToValue m (a -> b) where
+instance (MonadFix m, ToValue m a, ToValueRHS m b) => ToValue m (a -> b) where
   toValue f = Closure (\v -> toValueRHS . f =<< fromValue v)
   fromValue f = pure $ \a -> fromValueRHS (apply f (toValue a))
 
@@ -517,7 +515,7 @@ class ToValueRHS m a where
   toValueRHS :: a -> EvalT m (Value m)
   fromValueRHS :: EvalT m (Value m) -> a
   
-instance (Monad m, ToValue m a, ToValueRHS m b) => ToValueRHS m (a -> b) where
+instance (MonadFix m, ToValue m a, ToValueRHS m b) => ToValueRHS m (a -> b) where
   toValueRHS f = pure (Closure (\v -> toValueRHS . f =<< fromValue v))
   fromValueRHS mv a = fromValueRHS do
     v <- mv
@@ -543,7 +541,7 @@ defaultObjectOptions = ObjectOptions
 -- | Derived 'toValue' function for Haskell record types which should map to 
 -- corresponding PureScript record types.
 genericToValue 
-  :: (Monad m, G.Generic a, ToObject m (G.Rep a))
+  :: (MonadFix m, G.Generic a, ToObject m (G.Rep a))
   => ObjectOptions
   -> a
   -> Value m
@@ -552,7 +550,7 @@ genericToValue opts = Object . toObject opts . G.from
 -- | Derived 'fromValue' function for Haskell record types which should map to 
 -- corresponding PureScript record types.
 genericFromValue
-  :: (Monad m, G.Generic a, ToObject m (G.Rep a))
+  :: (MonadFix m, G.Generic a, ToObject m (G.Rep a))
   => ObjectOptions
   -> Value m
   -> EvalT m a
@@ -576,7 +574,7 @@ instance (Functor m, ToObject m f) => ToObject m (G.M1 G.C t f) where
   toObject opts = toObject opts . G.unM1
   fromObject opts = fmap G.M1 . fromObject opts
   
-instance (Monad m, ToObject m f, ToObject m g) => ToObject m (f G.:*: g) where
+instance (MonadFix m, ToObject m f, ToObject m g) => ToObject m (f G.:*: g) where
   toObject opts (f G.:*: g) = toObject opts f <> toObject opts g
   fromObject opts o = (G.:*:) <$> fromObject opts o <*> fromObject opts o
     

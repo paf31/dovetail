@@ -8,8 +8,9 @@ module Language.PureScript.Interpreter.JSON
   , fromJSON
   , toJSON
   ) where
-  
+
 import Control.Monad.Error.Class (throwError)
+import Control.Monad.Fix (MonadFix)  
 import Data.Aeson qualified as Aeson
 import Data.String (fromString)
 import Language.PureScript.Interpreter qualified as Interpreter
@@ -32,7 +33,7 @@ toJSON _ = Nothing
  
 newtype JSON a = JSON { getJSON :: a }
 
-instance (Monad m, Aeson.ToJSON a, Aeson.FromJSON a) => Interpreter.ToValue m (JSON a) where
+instance (MonadFix m, Aeson.ToJSON a, Aeson.FromJSON a) => Interpreter.ToValue m (JSON a) where
   toValue = fromJSON . Aeson.toJSON . getJSON
   fromValue a =
     case toJSON a of

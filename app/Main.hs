@@ -8,6 +8,7 @@
 
 module Main where
 
+import Control.Monad.Fix (MonadFix)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
@@ -26,7 +27,7 @@ import System.IO (stdin)
 
 initialEnv 
   :: forall m
-   . Monad m
+   . MonadFix m
   => Interpreter.Env m
 initialEnv = Map.unions
     [ Interpreter.builtIn "append" append

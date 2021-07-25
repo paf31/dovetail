@@ -12,8 +12,8 @@ Work in progress Haskell port of [runpurs](https://github.com/paf31/runpurs).
   - [x] Closures
   - [x] Records
   - [x] ADTs
+  - [x] Guards
   - [ ] Recursive binding groups 
-  - [ ] Guards
   - [ ] Multiple modules
 - [ ] Test suite
 - [x] FFI

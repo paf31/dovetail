@@ -32,7 +32,8 @@ toJSON _ = Nothing
  
 newtype JSON a = JSON { getJSON :: a }
 
-instance (Monad m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
+instance (Monad m, Aeson.ToJSON a, Aeson.FromJSON a) => Interpreter.ToValue m (JSON a) where
+  toValue = fromJSON . Aeson.toJSON . getJSON
   fromValue a =
     case toJSON a of
       Just value ->
@@ -40,6 +41,3 @@ instance (Monad m, Aeson.FromJSON a) => Interpreter.FromValue m (JSON a) where
           Aeson.Error err -> throwError . Interpreter.OtherError . fromString $ "Invalid JSON: " <> err
           Aeson.Success json -> pure (JSON json)
       Nothing -> throwError (Interpreter.TypeMismatch "json")
-
-instance (Monad m, Aeson.ToJSON a) => Interpreter.ToValue m (JSON a) where
-  toValue = fromJSON . Aeson.toJSON . getJSON

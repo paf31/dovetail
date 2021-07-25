@@ -34,6 +34,8 @@ renderBuildError (UnableToParse xs) =
 renderBuildError (UnableToCompile xs) =
   Errors.prettyPrintMultipleErrors Errors.defaultPPEOptions xs
 
+-- | Parse and build a single PureScript module, returning the compiled CoreFn
+-- module.
 buildSingleModule :: FilePath -> Text -> IO (Either BuildError (CoreFn.Module CoreFn.Ann))
 buildSingleModule moduleFile moduleText = do
   case CST.parseFromFile moduleFile moduleText of
@@ -45,6 +47,14 @@ buildSingleModule moduleFile moduleText = do
           pure (Left (UnableToCompile errs))
         Right (result, _) -> pure (Right result)
 
+-- | Compile a single 'AST.Module' into a CoreFn module.
+--
+-- This function is based on the 'Language.PureScript.Make.rebuildModule'
+-- function.
+--
+-- It is reproduced and modified here in order to make it simpler to build a 
+-- single module without all of the additional capabilities and complexity of
+-- the upstream API.
 buildCoreFnOnly
   :: Env.Env
   -> [P.ExternsFile]

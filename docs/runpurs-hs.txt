@@ -9,9 +9,16 @@
 
 module Language.PureScript.Interpreter
 
--- | Evaluate a compiled PureScript module in the specified environment,
---   returning the output from its main function as a Haskell value.
-interpret :: FromValue m a => Env m -> Module ann -> EvalT m a
+-- | Evaluate a compiled PureScript <a>Module</a> in the specified
+--   environment, returning the output from its main function as a Haskell
+--   value.
+--   
+--   A <a>Module</a> can be obtained by parsing the JSON output of the
+--   PureScript compiler (see <a>Language.PureScript.CoreFn.FromJSON</a>),
+--   or by using the helper functions in the
+--   <a>Language.PureScript.Make.Simplified</a> module to build a module
+--   from source.
+interpret :: ToValue m a => Env m -> Module ann -> EvalT m a
 
 -- | Create an environment from a Haskell value.
 --   
@@ -144,50 +151,112 @@ eval :: forall m. Monad m => ModuleName -> Env m -> Expr () -> EvalT m (Value m)
 
 -- | Apply a value which represents an unevaluated closure to an argument.
 apply :: Monad m => Value m -> Value m -> EvalT m (Value m)
+
+-- | Values which can be communicated across the FFI boundary from Haskell
+--   to PureScript.
+--   
+--   Instances should identify and document any valid representations as a
+--   subset of the semantic domain <a>Value</a>. Such a subset can be
+--   identified by an injective function <a>toValue</a>, and a partial
+--   inverse, <a>fromValue</a>, defined on the image of <a>toValue</a>.
+--   
+--   Laws:
+--   
+--   <pre>
+--   fromValue . toValue = pure
+--   </pre>
 class Monad m => ToValue m a
+
+-- | The default implementation uses generic deriving to identify a Haskell
+--   record type with a single data constructor with a PureScript record
+--   with the same field names.
 toValue :: ToValue m a => a -> Value m
-toValue :: (ToValue m a, Generic a, GToObject m (Rep a)) => a -> Value m
-class Monad m => FromValue m a
-fromValue :: FromValue m a => Value m -> EvalT m a
-fromValue :: (FromValue m a, Generic a, GFromObject m (Rep a)) => Value m -> EvalT m a
+
+-- | The default implementation uses generic deriving to identify a Haskell
+--   record type with a single data constructor with a PureScript record
+--   with the same field names.
+toValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => a -> Value m
+fromValue :: ToValue m a => Value m -> EvalT m a
+fromValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => Value m -> EvalT m a
+
+-- | <a>ToValue</a> should support functions with types such as
+--   
+--   <pre>
+--   a -&gt; EvalT m b
+--   a -&gt; b -&gt; EvalT m c
+--   a -&gt; b -&gt; c -&gt; EvalT m d
+--   (a -&gt; EvalT m b) -&gt; EvalT m c
+--   (a -&gt; b -&gt; EvalT m c) -&gt; EvalT m d
+--   </pre>
+--   
+--   Note that every type in a return position is wrapped in the
+--   <a>EvalT</a> monad transformer. This is because evaluation in general
+--   may result in errors. However, a naive translation would result in too
+--   many applications of <a>EvalT</a>.
+--   
+--   Specifically, we do not want to require types such as these, in which
+--   <a>EvalT</a> appears on the right hand side of every function arrow:
+--   
+--   <pre>
+--   a -&gt; EvalT m b (b -&gt; EvalT m c)
+--   a -&gt; EvalT m b (b -&gt; EvalT m (c -&gt; EvalT m d))
+--   </pre>
+--   
+--   For this reason, the <a>ToValue</a> instance for functions delegates
+--   to this type class for the type on the right hand side of the
+--   function. It skips the application of <a>EvalT</a> for nested function
+--   types.
 class ToValueRHS m a
 toValueRHS :: ToValueRHS m a => a -> EvalT m (Value m)
-class FromValueRHS m a
-fromValueRHS :: FromValueRHS m a => EvalT m (Value m) -> a
-class GToObject m f
-gToObject :: GToObject m f => f x -> HashMap Text (Value m)
-class GFromObject m f
-gFromObject :: GFromObject m f => HashMap Text (Value m) -> EvalT m (f x)
+fromValueRHS :: ToValueRHS m a => EvalT m (Value m) -> a
+
+-- | Options for customizing generic deriving of record instances
+data ObjectOptions
+ObjectOptions :: (Text -> Text) -> ObjectOptions
+
+-- | Map a Haskell field name to a PureScript field name on the
+--   corresponding record type.
+[toPureScriptField] :: ObjectOptions -> Text -> Text
+
+-- | <ul>
+--   <li>Maps Haskell field names to PureScript field names,
+--   unmodified.</li>
+--   </ul>
+defaultObjectOptions :: ObjectOptions
+
+-- | Derived <a>toValue</a> function for Haskell record types which should
+--   map to corresponding PureScript record types.
+genericToValue :: (Monad m, Generic a, ToObject m (Rep a)) => ObjectOptions -> a -> Value m
+
+-- | Derived <a>fromValue</a> function for Haskell record types which
+--   should map to corresponding PureScript record types.
+genericFromValue :: (Monad m, Generic a, ToObject m (Rep a)) => ObjectOptions -> Value m -> EvalT m a
+
+-- | This class is used in the default instance for <a>ToValue</a>, via
+--   generic deriving, in order to identify a Haskell record type (with a
+--   single data constructor and named fields) with values in the semantic
+--   domain corresponding to a PureScript record type with the same field
+--   names.
+class ToObject m f
+toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
+fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
 instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError Language.PureScript.Interpreter.EvaluationError (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.EvalT m)
-instance (GHC.Base.Monad m, Language.PureScript.Interpreter.FromValue m a, Language.PureScript.Interpreter.ToValueRHS m b) => Language.PureScript.Interpreter.ToValueRHS m (a -> b)
-instance (GHC.Base.Monad m, Language.PureScript.Interpreter.FromValue m a, Language.PureScript.Interpreter.ToValueRHS m b) => Language.PureScript.Interpreter.ToValue m (a -> b)
-instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m (Language.PureScript.Interpreter.Value m)
-instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m Data.Text.Internal.Text
-instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m GHC.Integer.Type.Integer
-instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m Data.Scientific.Scientific
-instance GHC.Base.Monad m => Language.PureScript.Interpreter.FromValue m GHC.Types.Bool
-instance Language.PureScript.Interpreter.FromValue m a => Language.PureScript.Interpreter.FromValue m (Data.Vector.Vector a)
-instance (Language.PureScript.Interpreter.FromValue m a, n GHC.Types.~ m) => Language.PureScript.Interpreter.FromValueRHS m (Language.PureScript.Interpreter.EvalT n a)
-instance (GHC.Base.Monad m, Language.PureScript.Interpreter.FromValueRHS m b, Language.PureScript.Interpreter.ToValue m a) => Language.PureScript.Interpreter.FromValue m (a -> b)
-instance (GHC.TypeLits.KnownSymbol field, Language.PureScript.Interpreter.FromValue m a) => Language.PureScript.Interpreter.GFromObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.GFromObject m f) => Language.PureScript.Interpreter.GFromObject m (GHC.Generics.M1 GHC.Generics.D t f)
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.GFromObject m f) => Language.PureScript.Interpreter.GFromObject m (GHC.Generics.M1 GHC.Generics.C t f)
-instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (GHC.Base.Monad m, Language.PureScript.Interpreter.GFromObject m f, Language.PureScript.Interpreter.GFromObject m g) => Language.PureScript.Interpreter.GFromObject m (f GHC.Generics.:*: g)
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.Value m)
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m GHC.Integer.Type.Integer
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m Data.Scientific.Scientific
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m Data.Text.Internal.Text
 instance GHC.Base.Monad m => Language.PureScript.Interpreter.ToValue m GHC.Types.Bool
-instance (Language.PureScript.Interpreter.ToValue m a, n GHC.Types.~ m) => Language.PureScript.Interpreter.ToValueRHS m (Language.PureScript.Interpreter.EvalT n a)
+instance (GHC.Base.Monad m, Language.PureScript.Interpreter.ToValue m a, Language.PureScript.Interpreter.ToValueRHS m b) => Language.PureScript.Interpreter.ToValue m (a -> b)
 instance Language.PureScript.Interpreter.ToValue m a => Language.PureScript.Interpreter.ToValue m (Data.Vector.Vector a)
-instance (GHC.Base.Monad m, Language.PureScript.Interpreter.ToValue m a, Language.PureScript.Interpreter.FromValueRHS m b) => Language.PureScript.Interpreter.FromValueRHS m (a -> b)
-instance (GHC.TypeLits.KnownSymbol field, Language.PureScript.Interpreter.ToValue m a) => Language.PureScript.Interpreter.GToObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). Language.PureScript.Interpreter.GToObject m f => Language.PureScript.Interpreter.GToObject m (GHC.Generics.M1 GHC.Generics.D t f)
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). Language.PureScript.Interpreter.GToObject m f => Language.PureScript.Interpreter.GToObject m (GHC.Generics.M1 GHC.Generics.C t f)
-instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Language.PureScript.Interpreter.GToObject m f, Language.PureScript.Interpreter.GToObject m g) => Language.PureScript.Interpreter.GToObject m (f GHC.Generics.:*: g)
+instance (GHC.Base.Monad m, Language.PureScript.Interpreter.ToValue m a, Language.PureScript.Interpreter.ToValueRHS m b) => Language.PureScript.Interpreter.ToValueRHS m (a -> b)
+instance (Language.PureScript.Interpreter.ToValue m a, n GHC.Types.~ m) => Language.PureScript.Interpreter.ToValueRHS m (Language.PureScript.Interpreter.EvalT n a)
+instance (GHC.TypeLits.KnownSymbol field, Language.PureScript.Interpreter.ToValue m a) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))
+instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.ToObject m f) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.D t f)
+instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.ToObject m f) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
+instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (GHC.Base.Monad m, Language.PureScript.Interpreter.ToObject m f, Language.PureScript.Interpreter.ToObject m g) => Language.PureScript.Interpreter.ToObject m (f GHC.Generics.:*: g)
 
 module Language.PureScript.Interpreter.JSON
 newtype JSON a
@@ -195,13 +264,23 @@ JSON :: a -> JSON a
 [getJSON] :: JSON a -> a
 fromJSON :: Value -> Value m
 toJSON :: Value m -> Maybe Value
-instance (GHC.Base.Monad m, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.FromValue m (Language.PureScript.Interpreter.JSON.JSON a)
-instance (GHC.Base.Monad m, Data.Aeson.Types.ToJSON.ToJSON a) => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
+instance (GHC.Base.Monad m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
 
 module Language.PureScript.Make.Simplified
 data BuildError
 UnableToParse :: NonEmpty ParserError -> BuildError
 UnableToCompile :: MultipleErrors -> BuildError
 renderBuildError :: BuildError -> String
+
+-- | Parse and build a single PureScript module, returning the compiled
+--   CoreFn module.
 buildSingleModule :: FilePath -> Text -> IO (Either BuildError (Module Ann))
+
+-- | Compile a single <a>Module</a> into a CoreFn module.
+--   
+--   This function is based on the <a>rebuildModule</a> function.
+--   
+--   It is reproduced and modified here in order to make it simpler to
+--   build a single module without all of the additional capabilities and
+--   complexity of the upstream API.
 buildCoreFnOnly :: Env -> [ExternsFile] -> Module -> IO (Either MultipleErrors (Module Ann, MultipleErrors))

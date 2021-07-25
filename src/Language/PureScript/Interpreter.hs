@@ -43,13 +43,14 @@ module Language.PureScript.Interpreter
   
   -- * Conversion to and from Haskell types
   , ToValue(..)
-  , FromValue(..)
   -- ** Higher-order functions
   , ToValueRHS(..)
-  , FromValueRHS(..)
   -- ** Records
-  , GToObject(..)
-  , GFromObject(..)
+  , ObjectOptions(..)
+  , defaultObjectOptions
+  , genericToValue
+  , genericFromValue
+  , ToObject(..)
   ) where
  
 import Control.Monad (guard, foldM, join, mzero, zipWithM)
@@ -79,9 +80,14 @@ import Language.PureScript.Names (Ident(..), Qualified(..))
 import Language.PureScript.Names qualified as Names
 import Language.PureScript.PSString qualified as PSString
 
--- | Evaluate a compiled PureScript module in the specified environment,
+-- | Evaluate a compiled PureScript 'CoreFn.Module' in the specified environment,
 -- returning the output from its main function as a Haskell value.
-interpret :: FromValue m a => Env m -> CoreFn.Module ann -> EvalT m a
+--
+-- A 'CoreFn.Module' can be obtained by parsing the JSON output of the PureScript
+-- compiler (see "Language.PureScript.CoreFn.FromJSON"), or by using the helper
+-- functions in the "Language.PureScript.Make.Simplified" module to build a
+-- module from source.
+interpret :: ToValue m a => Env m -> CoreFn.Module ann -> EvalT m a
 interpret initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = do
   env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
   mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
@@ -388,112 +394,182 @@ apply
   -> EvalT m (Value m)
 apply (Closure f) arg = f arg
 apply _ _ = throwError (TypeMismatch "closure")
-  
+
+-- | Values which can be communicated across the FFI boundary from Haskell to 
+-- PureScript.
+--
+-- Instances should identify and document any valid representations as a subset 
+-- of the semantic domain 'Value'. Such a subset can be identified by an
+-- injective function 'toValue', and a partial inverse, 'fromValue', defined
+-- on the image of 'toValue'.
+--
+-- Laws:
+--
+-- @
+--    fromValue . toValue = pure
+-- @
 class Monad m => ToValue m a where
   toValue :: a -> Value m
   
-  default toValue :: (G.Generic a, GToObject m (G.Rep a)) => a -> Value m
-  toValue = Object . gToObject . G.from
+  -- | The default implementation uses generic deriving to identify a Haskell
+  -- record type with a single data constructor with a PureScript record with
+  -- the same field names.
+  default toValue :: (G.Generic a, ToObject m (G.Rep a)) => a -> Value m
+  toValue = genericToValue defaultObjectOptions
+  
+  fromValue :: Value m -> EvalT m a
+  
+  default fromValue :: (G.Generic a, ToObject m (G.Rep a)) => Value m -> EvalT m a
+  fromValue = genericFromValue defaultObjectOptions
   
 instance Monad m => ToValue m (Value m) where
   toValue = id
-  
+  fromValue = pure
+
+-- | The Haskell 'Integer' type corresponds to PureScript's integer type.
 instance Monad m => ToValue m Integer where
   toValue = Number . fromIntegral
-  
-instance Monad m => ToValue m Scientific where
-  toValue = Number
-  
-instance Monad m => ToValue m Text where
-  toValue = String
-  
-instance Monad m => ToValue m Bool where
-  toValue = Bool
-
-class ToValueRHS m a where
-  toValueRHS :: a -> EvalT m (Value m)
-  
-instance (Monad m, FromValue m a, ToValueRHS m b) => ToValueRHS m (a -> b) where
-  toValueRHS f = pure (Closure (\v -> toValueRHS . f =<< fromValue v))
-   
-instance (ToValue m a, n ~ m) => ToValueRHS m (EvalT n a) where
-  toValueRHS = fmap toValue
-
-instance (Monad m, FromValue m a, ToValueRHS m b) => ToValue m (a -> b) where
-  toValue f = Closure (\v -> toValueRHS . f =<< fromValue v)
-
-instance ToValue m a => ToValue m (Vector a) where
-  toValue = Array . fmap toValue
-  
-class Monad m => FromValue m a where
-  fromValue :: Value m -> EvalT m a
-  
-  default fromValue :: (G.Generic a, GFromObject m (G.Rep a)) => Value m -> EvalT m a
-  fromValue = \case
-    Object o -> G.to <$> gFromObject o
-    _ -> throwError (TypeMismatch "object")
-  
-instance Monad m => FromValue m (Value m) where
-  fromValue = pure
-  
-instance Monad m => FromValue m Text where
-  fromValue = \case
-    String s -> pure s
-    _ -> throwError (TypeMismatch "string")
-  
-instance Monad m => FromValue m Integer where
   fromValue = \case
     Number s
       | Right i <- floatingOrInteger @Double s -> pure i
     _ -> throwError (TypeMismatch "integer")
   
-instance Monad m => FromValue m Scientific where
+-- | The Haskell 'Scientific' type corresponds to the subset of PureScript
+-- values consisting of its Int and Number types.
+instance Monad m => ToValue m Scientific where
+  toValue = Number
   fromValue = \case
     Number s -> pure s
     _ -> throwError (TypeMismatch "number")
-  
-instance Monad m => FromValue m Bool where
+
+-- | The Haskell 'Text' type is represented by PureScript strings
+-- which contain no lone surrogates.
+instance Monad m => ToValue m Text where
+  toValue = String
+  fromValue = \case
+    String s -> pure s
+    _ -> throwError (TypeMismatch "string")
+
+-- | Haskell booleans are represented by boolean values.
+instance Monad m => ToValue m Bool where
+  toValue = Bool
   fromValue = \case
     Bool b -> pure b
     _ -> throwError (TypeMismatch "boolean")
   
-instance FromValue m a => FromValue m (Vector a) where
+-- | Haskell functions are represented as closures which take valid
+-- representations for the domain type to valid representations of the codomain
+-- type.
+instance (Monad m, ToValue m a, ToValueRHS m b) => ToValue m (a -> b) where
+  toValue f = Closure (\v -> toValueRHS . f =<< fromValue v)
+  fromValue f = pure $ \a -> fromValueRHS (apply f (toValue a))
+
+-- | Haskell vectors are represented as homogeneous vectors of values, each of
+-- which are valid representations of the element type.
+instance ToValue m a => ToValue m (Vector a) where
+  toValue = Array . fmap toValue
   fromValue = \case
     Array xs -> traverse fromValue xs
     _ -> throwError (TypeMismatch "array")
-  
-class FromValueRHS m a where
+    
+-- | 'ToValue' should support functions with types such as
+--
+-- @
+--    a -> EvalT m b
+--    a -> b -> EvalT m c
+--    a -> b -> c -> EvalT m d
+--    (a -> EvalT m b) -> EvalT m c
+--    (a -> b -> EvalT m c) -> EvalT m d
+-- @
+--
+-- Note that every type in a return position is wrapped in the 'EvalT' monad
+-- transformer. This is because evaluation in general may result in errors.
+-- However, a naive translation would result in too many applications of 'EvalT'.
+--
+-- Specifically, we do not want to require types such as these, in which 'EvalT'
+-- appears on the right hand side of every function arrow:
+--
+-- @
+--    a -> EvalT m b (b -> EvalT m c)
+--    a -> EvalT m b (b -> EvalT m (c -> EvalT m d))
+-- @
+--
+-- For this reason, the 'ToValue' instance for functions delegates to this
+-- type class for the type on the right hand side of the function. It skips the
+-- application of 'EvalT' for nested function types.
+class ToValueRHS m a where
+  toValueRHS :: a -> EvalT m (Value m)
   fromValueRHS :: EvalT m (Value m) -> a
   
-instance (Monad m, ToValue m a, FromValueRHS m b) => FromValueRHS m (a -> b) where
+instance (Monad m, ToValue m a, ToValueRHS m b) => ToValueRHS m (a -> b) where
+  toValueRHS f = pure (Closure (\v -> toValueRHS . f =<< fromValue v))
   fromValueRHS mv a = fromValueRHS do
     v <- mv
     fromValueRHS (apply v (toValue a))
    
-instance (FromValue m a, n ~ m) => FromValueRHS m (EvalT n a) where
+instance (ToValue m a, n ~ m) => ToValueRHS m (EvalT n a) where
+  toValueRHS = fmap toValue
   fromValueRHS = (>>= fromValue)
   
-instance (Monad m, FromValueRHS m b, ToValue m a) => FromValue m (a -> b) where
-  fromValue f = pure $ \a -> fromValueRHS (apply f (toValue a))
+-- | Options for customizing generic deriving of record instances
+data ObjectOptions = ObjectOptions
+  { toPureScriptField :: Text -> Text
+  -- ^ Map a Haskell field name to a PureScript field name on the corresponding
+  -- record type.
+  }
+  
+-- | * Maps Haskell field names to PureScript field names, unmodified.
+defaultObjectOptions :: ObjectOptions
+defaultObjectOptions = ObjectOptions
+  { toPureScriptField = id
+  }
+
+-- | Derived 'toValue' function for Haskell record types which should map to 
+-- corresponding PureScript record types.
+genericToValue 
+  :: (Monad m, G.Generic a, ToObject m (G.Rep a))
+  => ObjectOptions
+  -> a
+  -> Value m
+genericToValue opts = Object . toObject opts . G.from
+
+-- | Derived 'fromValue' function for Haskell record types which should map to 
+-- corresponding PureScript record types.
+genericFromValue
+  :: (Monad m, G.Generic a, ToObject m (G.Rep a))
+  => ObjectOptions
+  -> Value m
+  -> EvalT m a
+genericFromValue opts = \case
+  Object o -> G.to <$> fromObject opts o
+  _ -> throwError (TypeMismatch "object")
        
-class GToObject m f where
-  gToObject :: f x -> HashMap Text (Value m)
+-- | This class is used in the default instance for 'ToValue', via generic
+-- deriving, in order to identify a Haskell record type (with a single data
+-- constructor and named fields) with values in the semantic domain
+-- corresponding to a PureScript record type with the same field names.
+class ToObject m f where
+  toObject :: ObjectOptions -> f x -> HashMap Text (Value m)
+  fromObject :: ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
   
-instance GToObject m f => GToObject m (G.M1 G.D t f) where
-  gToObject = gToObject . G.unM1
+instance (Functor m, ToObject m f) => ToObject m (G.M1 G.D t f) where
+  toObject opts = toObject opts . G.unM1
+  fromObject opts = fmap G.M1 . fromObject opts
   
-instance GToObject m f => GToObject m (G.M1 G.C t f) where
-  gToObject = gToObject . G.unM1
+instance (Functor m, ToObject m f) => ToObject m (G.M1 G.C t f) where
+  toObject opts = toObject opts . G.unM1
+  fromObject opts = fmap G.M1 . fromObject opts
   
-instance (GToObject m f, GToObject m g) => GToObject m (f G.:*: g) where
-  gToObject (f G.:*: g) = gToObject f <> gToObject g
+instance (Monad m, ToObject m f, ToObject m g) => ToObject m (f G.:*: g) where
+  toObject opts (f G.:*: g) = toObject opts f <> toObject opts g
+  fromObject opts o = (G.:*:) <$> fromObject opts o <*> fromObject opts o
     
 instance 
     forall m field u s l r a
      . ( KnownSymbol field
        , ToValue m a
        ) 
-    => GToObject m 
+    => ToObject m 
          (G.M1 
            G.S
            ('G.MetaSel 
@@ -501,37 +577,11 @@ instance
              u s l) 
             (G.K1 r a)) 
   where
-    gToObject (G.M1 (G.K1 a)) = do
-      let field = Text.pack (symbolVal @field (Proxy :: Proxy field))
+    toObject opts (G.M1 (G.K1 a)) = do
+      let field = toPureScriptField opts (Text.pack (symbolVal @field (Proxy :: Proxy field)))
        in HashMap.singleton field (toValue a)
-  
-class GFromObject m f where
-  gFromObject :: HashMap Text (Value m) -> EvalT m (f x)
-  
-instance (Functor m, GFromObject m f) => GFromObject m (G.M1 G.D t f) where
-  gFromObject = fmap G.M1 . gFromObject
-  
-instance (Functor m, GFromObject m f) => GFromObject m (G.M1 G.C t f) where
-  gFromObject = fmap G.M1 . gFromObject
-
-instance 
-    forall m field u s l r a
-     . ( KnownSymbol field
-       , FromValue m a
-       ) 
-    => GFromObject m 
-         (G.M1 
-           G.S
-           ('G.MetaSel 
-             ('Just field) 
-             u s l) 
-            (G.K1 r a)) 
-  where
-    gFromObject o = do
-      let field = Text.pack (symbolVal @field (Proxy :: Proxy field))
+    fromObject opts o = do
+      let field = toPureScriptField opts (Text.pack (symbolVal @field (Proxy :: Proxy field)))
       case HashMap.lookup field o of
         Nothing -> throwError (FieldNotFound field)
         Just v -> G.M1 . G.K1 <$> fromValue v
-  
-instance (Monad m, GFromObject m f, GFromObject m g) => GFromObject m (f G.:*: g) where
-  gFromObject o = (G.:*:) <$> gFromObject o <*> gFromObject o

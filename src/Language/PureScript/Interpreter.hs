@@ -275,7 +275,7 @@ eval mn env (CoreFn.ObjectUpdate _ e updates) = do
     _ -> throwError (TypeMismatch "object")
 eval mn env (CoreFn.Case _ args alts) = do
   vals <- traverse (eval mn env) args
-  result <- runMaybeT (asum (map (match vals) alts))
+  result <- runMaybeT (asum (map (match mn env vals) alts))
   case result of
     Nothing -> throwError InexhaustivePatternMatch
     Just (newEnv, matchedExpr) -> eval mn (newEnv <> env) matchedExpr
@@ -286,16 +286,32 @@ eval mn _ (CoreFn.Constructor _ _tyName ctor fields) =
     go (_ : tl) applied = Closure \arg -> pure (go tl (arg : applied))
 
 match :: Monad m
-      => [Value m]
+      => Names.ModuleName
+      -> Env m
+      -> [Value m]
       -> CoreFn.CaseAlternative ()
       -> MaybeT (EvalT m) (Env m, CoreFn.Expr ())
-match vals (CoreFn.CaseAlternative binders expr) 
+match mn env vals (CoreFn.CaseAlternative binders expr) 
   | length vals == length binders = do
     newEnv <- fold <$> zipWithM matchOne vals binders
     case expr of
-      Left _guards -> throwError (NotSupported "guards")
+      Left guards -> (newEnv, ) <$> asum (map (uncurry (evalGuard mn env)) guards)
       Right e -> pure (newEnv, e)
   | otherwise = throwError (InvalidNumberOfArguments (length vals) (length binders))
+
+evalGuard
+  :: Monad m
+  => Names.ModuleName
+  -> Env m
+  -> CoreFn.Guard ()
+  -> CoreFn.Expr ()
+  -> MaybeT (EvalT m) (CoreFn.Expr ())
+evalGuard mn env g e = do
+  test <- lift $ eval mn env g
+  case test of
+    Bool b -> guard b
+    _ -> throwError (TypeMismatch "boolean")
+  pure e
 
 matchOne 
   :: Monad m

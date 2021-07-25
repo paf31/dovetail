@@ -1,32 +1,11 @@
 # runpurs-hs
 
-PureScript corefn interpreter experiment for processing JSON.
+A general-purpose PureScript corefn interpreter with an FFI to Haskell.
 
-Work in progress Haskell port of [runpurs](https://github.com/paf31/runpurs).
+(work in progress)
 
-## Progress
+- [Haddock documentation](http://functorial.com/runpurs-hs/index.html)
+- Examples:
+  - [JSON query language](examples/query-json)
+  - [Fake data generator](examples/fake-data)
 
-- [ ] Basic interpreter
-  - [x] Literals
-  - [x] Pattern matching
-  - [x] Closures
-  - [x] Records
-  - [x] ADTs
-  - [x] Guards
-  - [x] Recursive binding groups 
-  - [ ] Multiple modules
-- [ ] Test suite
-- [x] FFI
-  - [x] Basic `FromValue` and `ToValue` classes
-  - [x] `builtIn` function for constructing environments from Haskell functions
-  - [x] Generic deriving for `FromValue` and `ToValue`
-  - [ ] Handle newtypes properly at FFI boundary
-- [x] Monadic interpreters
-- [x] Integrated parser and type checker
-  - [ ] Generate externs along with environment for foreign imports
-- [ ] Improved error messages and error type
-- [ ] CPS'd evaluator with `shift`/`reset`
-- [ ] Support CoreFn annotations for better error messages
-- [ ] Support foreign types such as `Maybe`
-- [ ] Handle partial functions properly
-- [ ] Parser for expressions instead of modules

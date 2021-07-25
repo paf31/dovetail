@@ -21,7 +21,7 @@ library:
   - -rtsopts
   - -with-rtsopts=-N
   - -Wall
-  # - -Werror
+  - -Werror
   - -fwarn-unused-imports
   dependencies:
   - aeson
@@ -38,15 +38,15 @@ library:
   - vector
 
 executables:
-  runpurs-hs-exe:
+  query-json:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         examples/query-json
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall
-    # - -Werror
+    - -Werror
     - -fwarn-unused-imports
     dependencies:
     - runpurs-hs
@@ -60,6 +60,31 @@ executables:
     - text
     - transformers
     - vector
+    
+  fake-data:
+    main:                Main.hs
+    source-dirs:         examples/fake-data
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    - -Werror
+    - -fwarn-unused-imports
+    dependencies:
+    - runpurs-hs
+    - aeson
+    - aeson-pretty
+    - bytestring
+    - containers
+    - mtl
+    - purescript
+    - purescript-cst
+    - random
+    - text
+    - transformers
+    - vector
+    
 tests:
   runpurs-hs-test:
     main:                Spec.hs

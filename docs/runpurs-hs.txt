@@ -18,7 +18,12 @@ module Language.PureScript.Interpreter
 --   or by using the helper functions in the
 --   <a>Language.PureScript.Make.Simplified</a> module to build a module
 --   from source.
-interpret :: ToValue m a => Env m -> Module ann -> EvalT m a
+run :: (MonadFix m, ToValueRHS m a) => Env m -> Module ann -> a
+
+-- | Evaluate each of the bindings in a compiled PureScript module, and
+--   store the evaluated values in the environment, without evaluating any
+--   main expression.
+build :: MonadFix m => Env m -> Module ann -> EvalT m (Env m)
 
 -- | Create an environment from a Haskell value.
 --   
@@ -237,6 +242,7 @@ toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
 fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
 instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError Language.PureScript.Interpreter.EvaluationError (Language.PureScript.Interpreter.EvalT m)
+instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.EvalT
 instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.EvalT m)

@@ -22,7 +22,8 @@
 module Language.PureScript.Interpreter
   ( 
   -- * High-level API
-    interpret
+    run
+  , build
   , builtIn
   
   -- * Evaluation
@@ -56,7 +57,7 @@ module Language.PureScript.Interpreter
 import Control.Monad (guard, foldM, join, mzero, zipWithM)
 import Control.Monad.Error.Class (MonadError, throwError)
 import Control.Monad.Fix (MonadFix, mfix)
-import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Data.Align qualified as Align
@@ -88,12 +89,18 @@ import Language.PureScript.PSString qualified as PSString
 -- compiler (see "Language.PureScript.CoreFn.FromJSON"), or by using the helper
 -- functions in the "Language.PureScript.Make.Simplified" module to build a
 -- module from source.
-interpret :: ToValue m a => Env m -> CoreFn.Module ann -> EvalT m a
-interpret initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = do
+run :: (MonadFix m, ToValueRHS m a) => Env m -> CoreFn.Module ann -> a
+run initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = fromValueRHS do
   env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
-  mainFn <- eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
-  fromValue mainFn
-
+  eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
+  
+-- | Evaluate each of the bindings in a compiled PureScript module, and store
+-- the evaluated values in the environment, without evaluating any main
+-- expression.
+build :: MonadFix m => Env m -> CoreFn.Module ann -> EvalT m (Env m)
+build env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = 
+  bind moduleName (Just moduleName) env (fmap void moduleDecls)
+  
 -- | Create an environment from a Haskell value.
 --
 -- It is recommended that a type annotation is given for the type of the value
@@ -157,7 +164,14 @@ type Env m = Map (Qualified Ident) (Value m)
 -- The transformed monad is used to track any benign side effects that might be
 -- exposed via the foreign function interface to PureScript code.
 newtype EvalT m a = EvalT { runEvalT :: ExceptT EvaluationError m a }
-  deriving newtype (Functor, Applicative, Monad, MonadError EvaluationError, MonadFix)
+  deriving newtype 
+    ( Functor
+    , Applicative
+    , Monad
+    , MonadTrans
+    , MonadError EvaluationError
+    , MonadFix
+    )
   
 -- | Non-transformer version of `EvalT`, useful in any settings where the FFI
 -- does not use any side effects during evaluation.

@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
 
 module Language.PureScript.Make.Simplified where
@@ -15,6 +16,7 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NEL
 import Data.Text (Text)
 import Language.PureScript qualified as P
+import Language.PureScript.AST.SourcePos qualified as AST
 import Language.PureScript.AST.Declarations qualified as AST
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.CST qualified as CST
@@ -42,6 +44,31 @@ buildSingleModule moduleFile moduleText = do
     (_, Left errs) ->
       pure (Left (UnableToParse errs))
     (_, Right m) -> 
+      buildCoreFnOnly Env.primEnv [] m >>= \case
+        Left errs ->
+          pure (Left (UnableToCompile errs))
+        Right (result, _) -> pure (Right result)
+
+-- | Parse and build a single PureScript expression, returning the compiled CoreFn
+-- module. The expression will be used to create a placeholder module with the name
+-- @Main@, and a single expression named @main@, with the specified content.
+buildSingleExpression :: FilePath -> Text -> IO (Either BuildError (CoreFn.Module CoreFn.Ann))
+buildSingleExpression filename input = do
+  let tokens = CST.lex input
+      (_, parseResult) = CST.runParser (CST.ParserState tokens [] []) CST.parseExpr
+  case parseResult of
+    Left errs ->
+      pure (Left (UnableToParse errs))
+    Right cst -> do
+      let expr = CST.convertExpr filename cst
+          decl = AST.ValueDeclarationData
+                   { AST.valdeclSourceAnn  = AST.nullSourceAnn
+                   , AST.valdeclIdent      = P.Ident "main"
+                   , AST.valdeclName       = P.Public
+                   , AST.valdeclBinders    = []
+                   , AST.valdeclExpression = [AST.GuardedExpr [] expr]
+                   }
+          m = AST.Module AST.nullSourceSpan [] (P.ModuleName "Main") [P.ValueDeclaration decl] Nothing
       buildCoreFnOnly Env.primEnv [] m >>= \case
         Left errs ->
           pure (Left (UnableToCompile errs))

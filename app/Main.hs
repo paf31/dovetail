@@ -53,9 +53,9 @@ initialEnv = Map.unions
       
 main :: IO ()
 main = do
-  [_, moduleFile] <- getArgs
-  moduleText <- Text.readFile moduleFile
-  buildResult <- Make.buildSingleModule moduleFile moduleText
+  [_, exprFile] <- getArgs
+  exprText <- Text.readFile exprFile
+  buildResult <- Make.buildSingleExpression exprFile exprText
   case buildResult of
     Left err -> putStrLn (Make.renderBuildError err) *> exitFailure
     Right m -> do

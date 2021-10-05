@@ -23,6 +23,7 @@ module Language.PureScript.Interpreter
   ( 
   -- * High-level API
     run
+  , runWithFFI
   , build
   , builtIn
   
@@ -41,6 +42,9 @@ module Language.PureScript.Interpreter
   , Env
   , eval
   , apply
+  
+  -- **
+  , FFI(..)
   
   -- * Conversion to and from Haskell types
   , ToValue(..)
@@ -77,10 +81,44 @@ import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import GHC.Generics qualified as G
 import GHC.TypeLits (KnownSymbol, symbolVal)
+import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
+import Language.PureScript.Externs qualified as Externs
 import Language.PureScript.Names (Ident(..), Qualified(..))
 import Language.PureScript.Names qualified as Names
+import Language.PureScript.Make.Simplified qualified as Make
 import Language.PureScript.PSString qualified as PSString
+
+data FFI m = FFI
+  { ffi_moduleName :: P.ModuleName
+  , ffi_values :: [(P.Ident, P.SourceType, Value m)]
+  }
+
+toExterns :: FFI m -> P.ExternsFile
+toExterns (FFI mn vals) =
+  Externs.ExternsFile   
+    { Externs.efVersion      = "0.14.2"
+    , Externs.efModuleName   = mn
+    , Externs.efExports      = [P.ValueRef P.nullSourceSpan name | (name, _, _) <- vals]
+    , Externs.efImports      = [ P.ExternsImport (P.ModuleName "Prim") P.Implicit (Just (P.ModuleName "Prim"))
+                               , P.ExternsImport (P.ModuleName "Prim") P.Implicit Nothing
+                               ]
+    , Externs.efFixities     = []
+    , Externs.efTypeFixities = []
+    , Externs.efDeclarations = [Externs.EDValue name ty | (name, ty, _) <- vals]
+    , Externs.efSourceSpan   = P.nullSourceSpan
+    } 
+
+toEnv :: FFI m -> Env m
+toEnv (FFI mn vals) = 
+  Map.fromList [ (P.mkQualified name mn, val) | (name, _, val) <- vals ]
+  
+-- TODO: can we do this without tangling together the Make module and this module?
+runWithFFI :: (MonadFix m, ToValueRHS m a) => [FFI m] -> FilePath -> Text -> IO (Either Make.BuildError a)
+runWithFFI ffi moduleFile moduleText = do
+  buildResult <- Make.buildSingleModule (map toExterns ffi) moduleFile moduleText
+  let env = Map.unions (map toEnv ffi)
+  pure (fmap (run env) buildResult)
 
 -- | Evaluate a compiled PureScript 'CoreFn.Module' in the specified environment,
 -- returning the output from its main function as a Haskell value.
@@ -125,9 +163,9 @@ build env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } =
 -- polymoprhic types will need to be passed across the FFI boundary with 
 -- monomorphic types. The type 'Value' can always be used to represent values of
 -- unknown or polymorphic type, as in the @map@ example above.
-builtIn :: ToValue m a => Text -> a -> Env m
-builtIn name value =
-  let qualName = Names.mkQualified (Names.Ident name) (Names.ModuleName "Main")
+builtIn :: ToValue m a => Names.ModuleName -> Text -> a -> Env m
+builtIn mn name value =
+  let qualName = Names.mkQualified (Names.Ident name) mn
    in Map.singleton qualName $ toValue value
 
 -- | The representation of values used by the interpreter - essentially, the

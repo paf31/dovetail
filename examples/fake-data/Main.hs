@@ -30,15 +30,16 @@ import Control.Monad.Trans.State (State, evalState, state)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
-import Data.Map.Strict qualified as Map
-import Data.Text (Text)
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector, (!))
-import Language.PureScript.CoreFn qualified as CoreFn
-import Language.PureScript.Interpreter (EvalT, runEvalT)
+import Language.PureScript qualified as P
+import Language.PureScript.Interpreter (EvalT, FFI(..), Value, runEvalT)
 import Language.PureScript.Interpreter qualified as Interpreter
 import Language.PureScript.Make.Simplified qualified as Make
 import Language.PureScript.Interpreter.JSON (JSON(..))
+import Language.PureScript.Interpreter.FFI ((-->))
+import Language.PureScript.Interpreter.FFI qualified as FFI
+import Language.PureScript.Interpreter.Prelude (prelude)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.Random qualified as Random
@@ -51,36 +52,27 @@ type M = State Random.StdGen
 -- Haskell side: the @choose@ function demonstrates the idea of using
 -- side-effects in the interpreter - @choose@ chooses randomly between one of
 -- its inputs, and returns the selected value
-env :: Interpreter.Env M
-env = Map.unions
-    [ Interpreter.builtIn "choose" choose
-    
-    , Interpreter.builtIn "map" _map
-    , Interpreter.builtIn "append" appendString
-    ]
+ffi :: FFI M
+ffi = 
+    FFI (P.ModuleName "Choose")
+      [ ( P.Ident "choose"
+        , FFI.forAll \a -> FFI.array a --> a
+        , Interpreter.toValue choose
+        )
+      ]
   where
-    choose 
-      :: Vector (Interpreter.Value M) 
-      -> EvalT M (Interpreter.Value M)
+    choose :: Vector (Value M) -> EvalT M (Value M)
     choose xs = do
       idx <- lift (state (Random.randomR (0, length xs - 1)))
       pure (xs ! idx)
-      
-    _map :: (Interpreter.Value M -> EvalT M (Interpreter.Value M))
-         -> Vector (Interpreter.Value M)
-         -> EvalT M (Vector (Interpreter.Value M))
-    _map = traverse
-    
-    appendString :: Text -> Text -> EvalT M Text
-    appendString xs ys = pure (xs <> ys)
 
 -- | Again, to aid comprehension, we provide a wrapper around the
--- 'Interpreter.run' function with an explicit type annotation.
+-- 'id' function with an explicit type annotation.
 --
 -- The interpretation of our PureScript module is a JSON value, whose
 -- computation may involve side-effects in the 'M' monad.
-run :: CoreFn.Module ann -> EvalT M (JSON Aeson.Value)
-run = Interpreter.run env
+run :: EvalT M (JSON Aeson.Value) -> EvalT M (JSON Aeson.Value)
+run = id
       
 main :: IO ()
 main = do
@@ -93,19 +85,16 @@ main = do
   -- direct style:
   let orDie e f = either (die . f) pure e
   
-  -- Compile the PureScript CoreFn output for the module
-  buildResult <- Make.buildSingleModule moduleFile moduleText
-  m <- buildResult `orDie` Make.renderBuildError
-  
   -- Interpret the main function of the PureScript module as a non-deterministic
   -- JSON result
-  let build = run m
+  buildResult <- Interpreter.runWithFFI [prelude] moduleFile moduleText
+  build <- buildResult `orDie` Make.renderBuildError
   
   -- Create a deterministic random generator from the seed input
   let gen = Random.mkStdGen seed
   
   -- Evaluate that function, then render the output as pretty-printed JSON on
   -- standard output.
-  output <- flip evalState gen (runExceptT (runEvalT build))
+  output <- flip evalState gen (runExceptT (runEvalT (run build)))
               `orDie` Interpreter.renderEvaluationError
   BL8.putStrLn (Pretty.encodePretty (getJSON output))

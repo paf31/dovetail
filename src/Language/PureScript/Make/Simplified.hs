@@ -6,6 +6,7 @@
 
 module Language.PureScript.Make.Simplified where
 
+import Control.Monad (foldM)
 import Control.Monad.Supply (evalSupplyT)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (runExceptT)
@@ -38,13 +39,13 @@ renderBuildError (UnableToCompile xs) =
 
 -- | Parse and build a single PureScript module, returning the compiled CoreFn
 -- module.
-buildSingleModule :: FilePath -> Text -> IO (Either BuildError (CoreFn.Module CoreFn.Ann))
-buildSingleModule moduleFile moduleText = do
+buildSingleModule :: [P.ExternsFile] -> FilePath -> Text -> IO (Either BuildError (CoreFn.Module CoreFn.Ann))
+buildSingleModule externs moduleFile moduleText = do
   case CST.parseFromFile moduleFile moduleText of
     (_, Left errs) ->
       pure (Left (UnableToParse errs))
     (_, Right m) -> 
-      buildCoreFnOnly Env.primEnv [] m >>= \case
+      buildCoreFnOnly externs m >>= \case
         Left errs ->
           pure (Left (UnableToCompile errs))
         Right (result, _) -> pure (Right result)
@@ -69,7 +70,7 @@ buildSingleExpression filename input = do
                    , AST.valdeclExpression = [AST.GuardedExpr [] expr]
                    }
           m = AST.Module AST.nullSourceSpan [] (P.ModuleName "Main") [P.ValueDeclaration decl] Nothing
-      buildCoreFnOnly Env.primEnv [] m >>= \case
+      buildCoreFnOnly [] m >>= \case
         Left errs ->
           pure (Left (UnableToCompile errs))
         Right (result, _) -> pure (Right result)
@@ -83,14 +84,13 @@ buildSingleExpression filename input = do
 -- single module without all of the additional capabilities and complexity of
 -- the upstream API.
 buildCoreFnOnly
-  :: Env.Env
-  -> [P.ExternsFile]
+  :: [P.ExternsFile]
   -> AST.Module
   -> IO (Either Errors.MultipleErrors (CoreFn.Module CoreFn.Ann, Errors.MultipleErrors))
-buildCoreFnOnly exEnv externs m@(AST.Module _ _ moduleName _ _) = runExceptT . runWriterT $ do
+buildCoreFnOnly externs m@(AST.Module _ _ moduleName _ _) = runExceptT . runWriterT $ do
   let withPrim = P.importPrim m
       env = foldl' (flip P.applyExternsFileToEnvironment) P.initEnvironment externs
-
+  exEnv <- fmap fst . runWriterT $ foldM P.externsEnv Env.primEnv externs
   evalSupplyT 0 $ do
     (desugared, (exEnv', _)) <- runStateT (P.desugar externs withPrim) (exEnv, mempty)
     let modulesExports = (\(_, _, exports) -> exports) <$> exEnv'

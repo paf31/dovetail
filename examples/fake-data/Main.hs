@@ -37,9 +37,8 @@ import Language.PureScript.Interpreter (EvalT, FFI(..), Value, runEvalT)
 import Language.PureScript.Interpreter qualified as Interpreter
 import Language.PureScript.Make.Simplified qualified as Make
 import Language.PureScript.Interpreter.JSON (JSON(..))
-import Language.PureScript.Interpreter.FFI ((-->))
-import Language.PureScript.Interpreter.FFI qualified as FFI
 import Language.PureScript.Interpreter.Prelude (prelude)
+import Language.PureScript.Types.Extra ((-->), array, forAll)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.Random qualified as Random
@@ -56,7 +55,7 @@ ffi :: FFI M
 ffi = 
     FFI (P.ModuleName "Choose")
       [ ( P.Ident "choose"
-        , FFI.forAll \a -> FFI.array a --> a
+        , forAll \a -> array a --> a
         , Interpreter.toValue choose
         )
       ]

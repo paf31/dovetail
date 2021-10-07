@@ -3,7 +3,7 @@ packages:
 - .
 extra-deps:
 - git: https://github.com/purescript/purescript.git
-  commit: 40dd447b2acd51c206c48cf3dcedada1e4b94594
+  commit: c2a4189338db8369064e06d06d98cf9ff3a3a13d
   subdirs:
     - .
     - lib/purescript-cst

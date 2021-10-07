@@ -50,8 +50,8 @@ main = do
   let orDie e f = either (die . f) pure e
   
   -- Compile the PureScript CoreFn output for the module
-  buildResult <- Interpreter.runWithFFI [prelude] moduleFile moduleText
-  build <- buildResult `orDie` Make.renderBuildError
+  build <- Interpreter.runWithFFI [prelude] moduleText
+             `orDie` Make.renderBuildError
   
   -- Read and parse the input JSON from standard input
   stdinBytes <- BL.hGetContents stdin

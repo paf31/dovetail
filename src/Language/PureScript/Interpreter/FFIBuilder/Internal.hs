@@ -2,10 +2,10 @@
 {-# LANGUAGE ImportQualifiedPost   #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module Language.PureScript.Types.Extra
+module Language.PureScript.Interpreter.FFIBuilder.Internal
   ( forAll
   , array
-  , (-->)
+  , function
   ) where
 
 import Data.List ((\\), nub)
@@ -29,9 +29,8 @@ boundTypeVars = nub . P.everythingOnTypes (++) go where
   go (P.ForAll _ name _ _ _) = [name]
   go _ = []
 
-infixr 0 -->
-(-->) :: P.SourceType -> P.SourceType -> P.SourceType
-a --> b = P.TypeApp P.nullSourceAnn (P.TypeApp P.nullSourceAnn P.tyFunction a) b
+function :: P.SourceType -> P.SourceType -> P.SourceType
+function a b = P.TypeApp P.nullSourceAnn (P.TypeApp P.nullSourceAnn P.tyFunction a) b
 
 array :: P.SourceType -> P.SourceType
 array = P.TypeApp P.nullSourceAnn P.tyArray

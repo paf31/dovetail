@@ -7,18 +7,48 @@
 @package runpurs-hs
 @version 0.1.0.0
 
+module Language.PureScript.Interpreter.FFIBuilder.Internal
+forAll :: (SourceType -> SourceType) -> SourceType
+array :: SourceType -> SourceType
+function :: SourceType -> SourceType -> SourceType
+
+module Language.PureScript.Make.Simplified
+data BuildError
+UnableToParse :: NonEmpty ParserError -> BuildError
+UnableToCompile :: MultipleErrors -> BuildError
+renderBuildError :: BuildError -> String
+
+-- | Parse and build a single PureScript module, returning the compiled
+--   CoreFn module.
+buildSingleModule :: [ExternsFile] -> Text -> Either BuildError (Module Ann, ExternsFile)
+
+-- | Compile a single <a>Module</a> into a CoreFn module.
+--   
+--   This function is based on the <a>rebuildModule</a> function.
+--   
+--   It is reproduced and modified here in order to make it simpler to
+--   build a single module without all of the additional capabilities and
+--   complexity of the upstream API.
+buildCoreFnOnly :: [ExternsFile] -> Module -> Either MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
+
 module Language.PureScript.Interpreter
 
--- | Evaluate a compiled PureScript <a>Module</a> in the specified
+-- | Build a compiled PureScript <a>Module</a> in the specified
 --   environment, returning the output from its main function as a Haskell
 --   value.
+buildAndEval :: (MonadFix m, ToValueRHS m a) => Env m -> Module ann -> Expr () -> a
+
+-- | Build a compiled PureScript <a>Module</a> in the specified
+--   environment, evaluating and returning the output from its main
+--   function as a Haskell value.
 --   
 --   A <a>Module</a> can be obtained by parsing the JSON output of the
 --   PureScript compiler (see <a>Language.PureScript.CoreFn.FromJSON</a>),
 --   or by using the helper functions in the
 --   <a>Language.PureScript.Make.Simplified</a> module to build a module
 --   from source.
-run :: (MonadFix m, ToValueRHS m a) => Env m -> Module ann -> a
+buildAndEvalMain :: (MonadFix m, ToValueRHS m a) => Env m -> Module ann -> a
+runWithFFI :: (MonadFix m, ToValueRHS m a) => [FFI m] -> Text -> Either BuildError a
 
 -- | Evaluate each of the bindings in a compiled PureScript module, and
 --   store the evaluated values in the environment, without evaluating any
@@ -50,7 +80,7 @@ build :: MonadFix m => Env m -> Module ann -> EvalT m (Env m)
 --   with monomorphic types. The type <a>Value</a> can always be used to
 --   represent values of unknown or polymorphic type, as in the
 --   <tt>map</tt> example above.
-builtIn :: ToValue m a => Text -> a -> Env m
+builtIn :: ToValue m a => ModuleName -> Text -> a -> Env m
 
 -- | The representation of values used by the interpreter - essentially,
 --   the semantic domain for a simple untyped lambda calculus with records
@@ -151,6 +181,15 @@ eval :: forall m. MonadFix m => ModuleName -> Env m -> Expr () -> EvalT m (Value
 
 -- | Apply a value which represents an unevaluated closure to an argument.
 apply :: MonadFix m => Value m -> Value m -> EvalT m (Value m)
+data FFI m
+FFI :: ModuleName -> [ForeignImport m] -> FFI m
+[ffi_moduleName] :: FFI m -> ModuleName
+[ffi_values] :: FFI m -> [ForeignImport m]
+data ForeignImport m
+ForeignImport :: Ident -> SourceType -> Value m -> ForeignImport m
+[fv_name] :: ForeignImport m -> Ident
+[fv_type] :: ForeignImport m -> SourceType
+[fv_value] :: ForeignImport m -> Value m
 
 -- | Values which can be communicated across the FFI boundary from Haskell
 --   to PureScript.
@@ -268,27 +307,27 @@ fromJSON :: Value -> Value m
 toJSON :: Value m -> Maybe Value
 instance (Control.Monad.Fix.MonadFix m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
 
-module Language.PureScript.Make.Simplified
-data BuildError
-UnableToParse :: NonEmpty ParserError -> BuildError
-UnableToCompile :: MultipleErrors -> BuildError
-renderBuildError :: BuildError -> String
+module Language.PureScript.Interpreter.FFIBuilder
+data FFIBuilder m a
+runFFIBuilder :: ModuleName -> FFIBuilder m a -> (a, FFI m)
+evalFFIBuilder :: ModuleName -> FFIBuilder m a -> FFI m
+foreignImport :: (MonadFix m, ToValue m a, ForAll m a ty) => Ident -> ty -> a -> FFIBuilder m ()
+data FunctionType m l r
+string :: FunctionType m Text (EvalT m Text)
+boolean :: FunctionType m Bool (EvalT m Bool)
+number :: FunctionType m Scientific (EvalT m Scientific)
+array :: FunctionType m l r -> FunctionType m (Vector l) (EvalT m (Vector l))
+(~>) :: FunctionType m al ar -> FunctionType m bl br -> FunctionType m (al -> br) (al -> br)
+infixr 0 ~>
+class ForAll m r a | a -> m r
+instance Control.Monad.Writer.Class.MonadWriter (Language.PureScript.Interpreter.FFIBuilder.FFI_ m) (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
+instance GHC.Base.Monad (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
+instance GHC.Base.Applicative (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
+instance GHC.Base.Functor (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
+instance GHC.Base.Semigroup (Language.PureScript.Interpreter.FFIBuilder.FFI_ m)
+instance GHC.Base.Monoid (Language.PureScript.Interpreter.FFIBuilder.FFI_ m)
+instance Language.PureScript.Interpreter.FFIBuilder.ForAll m a (Language.PureScript.Interpreter.FFIBuilder.FunctionType m a r_)
+instance (Language.PureScript.Interpreter.FFIBuilder.ForAll m r o, a GHC.Types.~ Language.PureScript.Interpreter.FFIBuilder.FunctionType m (Language.PureScript.Interpreter.Value m) (Language.PureScript.Interpreter.EvalT m (Language.PureScript.Interpreter.Value m))) => Language.PureScript.Interpreter.FFIBuilder.ForAll m r (a -> o)
 
--- | Parse and build a single PureScript module, returning the compiled
---   CoreFn module.
-buildSingleModule :: FilePath -> Text -> IO (Either BuildError (Module Ann))
-
--- | Parse and build a single PureScript expression, returning the compiled
---   CoreFn module. The expression will be used to create a placeholder
---   module with the name <tt>Main</tt>, and a single expression named
---   <tt>main</tt>, with the specified content.
-buildSingleExpression :: FilePath -> Text -> IO (Either BuildError (Module Ann))
-
--- | Compile a single <a>Module</a> into a CoreFn module.
---   
---   This function is based on the <a>rebuildModule</a> function.
---   
---   It is reproduced and modified here in order to make it simpler to
---   build a single module without all of the additional capabilities and
---   complexity of the upstream API.
-buildCoreFnOnly :: Env -> [ExternsFile] -> Module -> IO (Either MultipleErrors (Module Ann, MultipleErrors))
+module Language.PureScript.Interpreter.Prelude
+prelude :: MonadFix m => FFI m

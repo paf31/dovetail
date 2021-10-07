@@ -36,9 +36,10 @@ import Language.PureScript qualified as P
 import Language.PureScript.Interpreter (EvalT, FFI(..), Value, runEvalT)
 import Language.PureScript.Interpreter qualified as Interpreter
 import Language.PureScript.Make.Simplified qualified as Make
+import Language.PureScript.Interpreter.FFIBuilder (array, (~>))
+import Language.PureScript.Interpreter.FFIBuilder qualified as FFI
 import Language.PureScript.Interpreter.JSON (JSON(..))
 import Language.PureScript.Interpreter.Prelude (prelude)
-import Language.PureScript.Types.Extra ((-->), array, forAll)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.Random qualified as Random
@@ -53,12 +54,10 @@ type M = State Random.StdGen
 -- its inputs, and returns the selected value
 ffi :: FFI M
 ffi = 
-    FFI (P.ModuleName "Choose")
-      [ ( P.Ident "choose"
-        , forAll \a -> array a --> a
-        , Interpreter.toValue choose
-        )
-      ]
+    FFI.evalFFIBuilder (P.ModuleName "Choose") do
+      FFI.foreignImport (P.Ident "choose")
+        (\a -> array a ~> a)
+        choose
   where
     choose :: Vector (Value M) -> EvalT M (Value M)
     choose xs = do
@@ -86,8 +85,8 @@ main = do
   
   -- Interpret the main function of the PureScript module as a non-deterministic
   -- JSON result
-  buildResult <- Interpreter.runWithFFI [prelude] moduleFile moduleText
-  build <- buildResult `orDie` Make.renderBuildError
+  build <- Interpreter.runWithFFI [prelude] moduleText 
+             `orDie` Make.renderBuildError
   
   -- Create a deterministic random generator from the seed input
   let gen = Random.mkStdGen seed

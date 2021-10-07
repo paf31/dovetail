@@ -22,7 +22,8 @@
 module Language.PureScript.Interpreter
   ( 
   -- * High-level API
-    run
+    buildAndEval
+  , buildAndEvalMain
   , runWithFFI
   , build
   , builtIn
@@ -43,8 +44,9 @@ module Language.PureScript.Interpreter
   , eval
   , apply
   
-  -- **
+  -- ** Foreign function interface
   , FFI(..)
+  , ForeignImport(..)
   
   -- * Conversion to and from Haskell types
   , ToValue(..)
@@ -64,6 +66,7 @@ import Control.Monad.Fix (MonadFix, mfix)
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.Maybe (MaybeT(..))
+-- import Control.Monad.Trans.State (StateT, state)
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
 import Data.Functor (void)
@@ -91,7 +94,13 @@ import Language.PureScript.PSString qualified as PSString
 
 data FFI m = FFI
   { ffi_moduleName :: P.ModuleName
-  , ffi_values :: [(P.Ident, P.SourceType, Value m)]
+  , ffi_values :: [ForeignImport m]
+  }
+  
+data ForeignImport m = ForeignImport
+  { fv_name :: P.Ident
+  , fv_type :: P.SourceType
+  , fv_value :: Value m
   }
 
 toExterns :: FFI m -> P.ExternsFile
@@ -99,38 +108,68 @@ toExterns (FFI mn vals) =
   Externs.ExternsFile   
     { Externs.efVersion      = "0.14.2"
     , Externs.efModuleName   = mn
-    , Externs.efExports      = [P.ValueRef P.nullSourceSpan name | (name, _, _) <- vals]
+    , Externs.efExports      = [P.ValueRef P.nullSourceSpan name | ForeignImport name _ _ <- vals]
     , Externs.efImports      = [ P.ExternsImport (P.ModuleName "Prim") P.Implicit (Just (P.ModuleName "Prim"))
                                , P.ExternsImport (P.ModuleName "Prim") P.Implicit Nothing
                                ]
     , Externs.efFixities     = []
     , Externs.efTypeFixities = []
-    , Externs.efDeclarations = [Externs.EDValue name ty | (name, ty, _) <- vals]
+    , Externs.efDeclarations = [Externs.EDValue name ty | ForeignImport name ty _ <- vals]
     , Externs.efSourceSpan   = P.nullSourceSpan
     } 
 
 toEnv :: FFI m -> Env m
 toEnv (FFI mn vals) = 
-  Map.fromList [ (P.mkQualified name mn, val) | (name, _, val) <- vals ]
+  Map.fromList [ (P.mkQualified name mn, val) | ForeignImport name _ val <- vals ]
   
 -- TODO: can we do this without tangling together the Make module and this module?
-runWithFFI :: (MonadFix m, ToValueRHS m a) => [FFI m] -> FilePath -> Text -> IO (Either Make.BuildError a)
-runWithFFI ffi moduleFile moduleText = do
-  buildResult <- Make.buildSingleModule (map toExterns ffi) moduleFile moduleText
+runWithFFI :: (MonadFix m, ToValueRHS m a) => [FFI m] -> Text -> Either Make.BuildError a
+runWithFFI ffi moduleText = do
+  (coreFn, _) <- Make.buildSingleModule (map toExterns ffi) moduleText
   let env = Map.unions (map toEnv ffi)
-  pure (fmap (run env) buildResult)
+  pure (buildAndEvalMain env coreFn)
 
--- | Evaluate a compiled PureScript 'CoreFn.Module' in the specified environment,
--- returning the output from its main function as a Haskell value.
+-- type Interpret m = StateT ([P.ExternsFile], Env m)
+-- 
+-- ffi :: FFI m -> Interpret m ()
+-- ffi f = state \(externs, env) -> 
+--   ( ()
+--   , ( toExterns f : externs
+--     , env <> toEnv f
+--     )
+--   )
+-- 
+-- build :: Text -> Interpret ()
+-- build moduleText = state \(externs, env) ->
+--   let buildResult = Make.buildSingleModule (map toExterns ffi) moduleText
+--    in ( ()
+--       , c
+--       )
+-- 
+-- -- TODO sketch :: define a new monad for builds and evals
+-- -- ([Externs], Env) -> (a, (Env, Externs))
+-- -- 1. build a module from a file
+-- -- 2. build an ffi module
+-- -- 3. eval an expression
+-- -- all fit this pattern
+
+-- | Build a compiled PureScript 'CoreFn.Module' in the specified environment,
+-- evaluating and returning the output from its main function as a Haskell value.
 --
 -- A 'CoreFn.Module' can be obtained by parsing the JSON output of the PureScript
 -- compiler (see "Language.PureScript.CoreFn.FromJSON"), or by using the helper
 -- functions in the "Language.PureScript.Make.Simplified" module to build a
 -- module from source.
-run :: (MonadFix m, ToValueRHS m a) => Env m -> CoreFn.Module ann -> a
-run initialEnv CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = fromValueRHS do
-  env <- bind moduleName (Just moduleName) initialEnv (fmap void moduleDecls)
-  eval moduleName env (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
+buildAndEvalMain :: (MonadFix m, ToValueRHS m a) => Env m -> CoreFn.Module ann -> a
+buildAndEvalMain env m@CoreFn.Module{ CoreFn.moduleName = moduleName } =
+  buildAndEval env m (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
+  
+-- | Build a compiled PureScript 'CoreFn.Module' in the specified environment,
+-- returning the output from its main function as a Haskell value.  
+buildAndEval :: (MonadFix m, ToValueRHS m a) => Env m -> CoreFn.Module ann -> CoreFn.Expr () -> a
+buildAndEval initialEnv m@CoreFn.Module{ CoreFn.moduleName = moduleName } expr = fromValueRHS do
+  env <- build initialEnv m
+  eval moduleName env expr
   
 -- | Evaluate each of the bindings in a compiled PureScript module, and store
 -- the evaluated values in the environment, without evaluating any main

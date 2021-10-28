@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE NamedFieldPuns      #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -30,9 +31,10 @@ import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Text.IO qualified as Text
-import Language.PureScript.Interpreter (Eval, runEval)
+import Data.Traversable (for)
+import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Interpreter qualified as Interpreter
-import Language.PureScript.Make.Simplified qualified as Make
+import Language.PureScript.Interpreter.Monad (BuildError, build, evalMain, ffi, renderBuildError, runInterpret)
 import Language.PureScript.Interpreter.JSON (JSON(..))
 import Language.PureScript.Interpreter.Prelude (prelude)
 import System.Environment (getArgs)
@@ -45,24 +47,27 @@ main = do
   [moduleFile] <- getArgs
   moduleText <- Text.readFile moduleFile
   
+  -- Compile the PureScript CoreFn output for the module
+  let buildResult :: Either BuildError (JSON Aeson.Value -> Interpreter.Eval (JSON Aeson.Value))
+      buildResult = runInterpret do
+        ffi prelude
+        e <- build moduleText
+        for e \CoreFn.Module{ CoreFn.moduleName } ->
+          evalMain moduleName
+  
   -- This helper function assists in writing the following code in a more 
   -- direct style:
   let orDie e f = either (die . f) pure e
-  
-  -- Compile the PureScript CoreFn output for the module
-  build <- Interpreter.runWithFFI [prelude] moduleText
-             `orDie` Make.renderBuildError
+          
+  -- Interpret the main function of the PureScript module as a Haskell function
+  -- from JSON to JSON:
+  query <- buildResult `orDie` renderBuildError
   
   -- Read and parse the input JSON from standard input
   stdinBytes <- BL.hGetContents stdin
   input <- Aeson.eitherDecode stdinBytes `orDie` id
   
-  -- Interpret the main function of the PureScript module as a Haskell function
-  -- from JSON to JSON:
-  let query :: JSON Aeson.Value -> Eval (JSON Aeson.Value)
-      query = build
-  
   -- Evaluate that function, then render the output as pretty-printed JSON on
   -- standard output.
-  output <- runEval (query (JSON input)) `orDie` Interpreter.renderEvaluationError
+  output <- Interpreter.runEval (query (JSON input)) `orDie` Interpreter.renderEvaluationError
   BL8.putStrLn (Pretty.encodePretty (getJSON output))

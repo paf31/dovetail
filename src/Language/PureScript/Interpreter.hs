@@ -34,6 +34,7 @@ module Language.PureScript.Interpreter
   
   -- ** Evaluation monad
   , EvalT(..)
+  , runEvalT
   , Eval
   , runEval
   , EvaluationError(..)
@@ -47,6 +48,8 @@ module Language.PureScript.Interpreter
   -- ** Foreign function interface
   , FFI(..)
   , ForeignImport(..)
+  , toEnv
+  , toExterns
   
   -- * Conversion to and from Haskell types
   , ToValue(..)
@@ -66,7 +69,6 @@ import Control.Monad.Fix (MonadFix, mfix)
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.Maybe (MaybeT(..))
--- import Control.Monad.Trans.State (StateT, state)
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
 import Data.Functor (void)
@@ -128,30 +130,6 @@ runWithFFI ffi moduleText = do
   (coreFn, _) <- Make.buildSingleModule (map toExterns ffi) moduleText
   let env = Map.unions (map toEnv ffi)
   pure (buildAndEvalMain env coreFn)
-
--- type Interpret m = StateT ([P.ExternsFile], Env m)
--- 
--- ffi :: FFI m -> Interpret m ()
--- ffi f = state \(externs, env) -> 
---   ( ()
---   , ( toExterns f : externs
---     , env <> toEnv f
---     )
---   )
--- 
--- build :: Text -> Interpret ()
--- build moduleText = state \(externs, env) ->
---   let buildResult = Make.buildSingleModule (map toExterns ffi) moduleText
---    in ( ()
---       , c
---       )
--- 
--- -- TODO sketch :: define a new monad for builds and evals
--- -- ([Externs], Env) -> (a, (Env, Externs))
--- -- 1. build a module from a file
--- -- 2. build an ffi module
--- -- 3. eval an expression
--- -- all fit this pattern
 
 -- | Build a compiled PureScript 'CoreFn.Module' in the specified environment,
 -- evaluating and returning the output from its main function as a Haskell value.
@@ -240,7 +218,7 @@ type Env m = Map (Qualified Ident) (Value m)
 --
 -- The transformed monad is used to track any benign side effects that might be
 -- exposed via the foreign function interface to PureScript code.
-newtype EvalT m a = EvalT { runEvalT :: ExceptT EvaluationError m a }
+newtype EvalT m a = EvalT { unEvalT :: ExceptT EvaluationError m a }
   deriving newtype 
     ( Functor
     , Applicative
@@ -249,13 +227,16 @@ newtype EvalT m a = EvalT { runEvalT :: ExceptT EvaluationError m a }
     , MonadError EvaluationError
     , MonadFix
     )
-  
+
+runEvalT :: EvalT m a -> m (Either EvaluationError a)
+runEvalT = runExceptT . unEvalT
+
 -- | Non-transformer version of `EvalT`, useful in any settings where the FFI
 -- does not use any side effects during evaluation.
 type Eval = EvalT Identity
 
 runEval :: Eval a -> Either EvaluationError a
-runEval = runIdentity . runExceptT . runEvalT
+runEval = runIdentity . runEvalT
 
 -- | Errors which can occur during evaluation of PureScript code.
 -- 

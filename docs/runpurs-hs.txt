@@ -117,7 +117,8 @@ Constructor :: Qualified (ProperName 'ConstructorName) -> [Value m] -> Value m
 --   code.
 newtype EvalT m a
 EvalT :: ExceptT EvaluationError m a -> EvalT m a
-[runEvalT] :: EvalT m a -> ExceptT EvaluationError m a
+[unEvalT] :: EvalT m a -> ExceptT EvaluationError m a
+runEvalT :: EvalT m a -> m (Either EvaluationError a)
 
 -- | Non-transformer version of <a>EvalT</a>, useful in any settings where
 --   the FFI does not use any side effects during evaluation.
@@ -190,6 +191,8 @@ ForeignImport :: Ident -> SourceType -> Value m -> ForeignImport m
 [fv_name] :: ForeignImport m -> Ident
 [fv_type] :: ForeignImport m -> SourceType
 [fv_value] :: ForeignImport m -> Value m
+toEnv :: FFI m -> Env m
+toExterns :: FFI m -> ExternsFile
 
 -- | Values which can be communicated across the FFI boundary from Haskell
 --   to PureScript.
@@ -298,6 +301,21 @@ instance (GHC.TypeLits.KnownSymbol field, Language.PureScript.Interpreter.ToValu
 instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.ToObject m f) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.D t f)
 instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.ToObject m f) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
 instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.ToObject m f, Language.PureScript.Interpreter.ToObject m g) => Language.PureScript.Interpreter.ToObject m (f GHC.Generics.:*: g)
+
+module Language.PureScript.Interpreter.Monad
+data InterpretT m a
+runInterpretT :: Monad m => InterpretT m a -> m a
+runInterpret :: Interpret a -> a
+ffi :: Monad m => FFI m -> InterpretT m ()
+data BuildError
+renderBuildError :: BuildError -> String
+build :: MonadFix m => Text -> InterpretT m (Either BuildError (Module Ann))
+eval :: (MonadFix m, ToValueRHS m a) => Expr () -> InterpretT m a
+evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
+instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.Monad.InterpretT m)
+instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.Monad.InterpretT m)
+instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.Monad.InterpretT m)
+instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.Monad.InterpretT
 
 module Language.PureScript.Interpreter.JSON
 newtype JSON a

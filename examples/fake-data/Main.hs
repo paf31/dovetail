@@ -33,7 +33,6 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Text.IO qualified as Text
-import Data.Traversable (for)
 import Data.Vector (Vector, (!))
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
@@ -42,7 +41,7 @@ import Language.PureScript.Interpreter qualified as Interpreter
 import Language.PureScript.Interpreter.FFIBuilder (array, (~>))
 import Language.PureScript.Interpreter.FFIBuilder qualified as FFI
 import Language.PureScript.Interpreter.JSON (JSON(..))
-import Language.PureScript.Interpreter.Monad (BuildError, build, evalMain, ffi, renderBuildError, runInterpretT)
+import Language.PureScript.Interpreter.Monad (InterpretError, build, evalMain, ffi, renderInterpretError, runInterpretT)
 import Language.PureScript.Interpreter.Prelude (prelude)
 import System.Environment (getArgs)
 import System.Exit (die)
@@ -77,13 +76,12 @@ main = do
   -- computation may involve side-effects in the 'M' monad.
   let buildResult 
         :: (MonadState Random.StdGen m, MonadFix m)
-        => m (Either BuildError (EvalT m (JSON Aeson.Value)))
+        => m (Either InterpretError (EvalT m (JSON Aeson.Value)))
       buildResult = runInterpretT do
         ffi prelude
         ffi choose
-        e <- build moduleText
-        for e \CoreFn.Module{ CoreFn.moduleName } ->
-          evalMain moduleName
+        CoreFn.Module{ CoreFn.moduleName } <- build moduleText
+        evalMain moduleName
           
   let seed = read seedString :: Int
   
@@ -97,7 +95,7 @@ main = do
   flip evalStateT gen do
     -- Interpret the main function of the PureScript module as a non-deterministic
     -- JSON result
-    value <- buildResult `orDie` renderBuildError
+    value <- buildResult `orDie` renderInterpretError
   
     -- Evaluate that function, then render the output as pretty-printed JSON on
     -- standard output.

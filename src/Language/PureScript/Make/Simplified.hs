@@ -27,6 +27,7 @@ import Language.PureScript.TypeChecker.Monad qualified as TC
 data BuildError
   = UnableToParse (NonEmpty CST.ParserError)
   | UnableToCompile Errors.MultipleErrors
+  deriving Show
 
 renderBuildError :: BuildError -> String
 renderBuildError (UnableToParse xs) =

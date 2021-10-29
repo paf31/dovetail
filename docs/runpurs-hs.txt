@@ -7,53 +7,12 @@
 @package runpurs-hs
 @version 0.1.0.0
 
-module Language.PureScript.Interpreter.FFIBuilder.Internal
-forAll :: (SourceType -> SourceType) -> SourceType
-array :: SourceType -> SourceType
-function :: SourceType -> SourceType -> SourceType
-
-module Language.PureScript.Make.Simplified
-data BuildError
-UnableToParse :: NonEmpty ParserError -> BuildError
-UnableToCompile :: MultipleErrors -> BuildError
-renderBuildError :: BuildError -> String
-
--- | Parse and build a single PureScript module, returning the compiled
---   CoreFn module.
-buildSingleModule :: [ExternsFile] -> Text -> Either BuildError (Module Ann, ExternsFile)
-
--- | Compile a single <a>Module</a> into a CoreFn module.
---   
---   This function is based on the <a>rebuildModule</a> function.
---   
---   It is reproduced and modified here in order to make it simpler to
---   build a single module without all of the additional capabilities and
---   complexity of the upstream API.
-buildCoreFnOnly :: [ExternsFile] -> Module -> Either MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
-
 module Language.PureScript.Interpreter
-
--- | Build a compiled PureScript <a>Module</a> in the specified
---   environment, returning the output from its main function as a Haskell
---   value.
-buildAndEval :: (MonadFix m, ToValueRHS m a) => Env m -> Module ann -> Expr () -> a
-
--- | Build a compiled PureScript <a>Module</a> in the specified
---   environment, evaluating and returning the output from its main
---   function as a Haskell value.
---   
---   A <a>Module</a> can be obtained by parsing the JSON output of the
---   PureScript compiler (see <a>Language.PureScript.CoreFn.FromJSON</a>),
---   or by using the helper functions in the
---   <a>Language.PureScript.Make.Simplified</a> module to build a module
---   from source.
-buildAndEvalMain :: (MonadFix m, ToValueRHS m a) => Env m -> Module ann -> a
-runWithFFI :: (MonadFix m, ToValueRHS m a) => [FFI m] -> Text -> Either BuildError a
 
 -- | Evaluate each of the bindings in a compiled PureScript module, and
 --   store the evaluated values in the environment, without evaluating any
 --   main expression.
-build :: MonadFix m => Env m -> Module ann -> EvalT m (Env m)
+buildCoreFn :: MonadFix m => Env m -> Module ann -> EvalT m (Env m)
 
 -- | Create an environment from a Haskell value.
 --   
@@ -282,6 +241,7 @@ genericFromValue :: (MonadFix m, Generic a, ToObject m (Rep a)) => ObjectOptions
 class ToObject m f
 toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
 fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
+instance GHC.Show.Show Language.PureScript.Interpreter.EvaluationError
 instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Language.PureScript.Interpreter.EvalT m)
 instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError Language.PureScript.Interpreter.EvaluationError (Language.PureScript.Interpreter.EvalT m)
 instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.EvalT
@@ -302,28 +262,10 @@ instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Bas
 instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.ToObject m f) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
 instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.ToObject m f, Language.PureScript.Interpreter.ToObject m g) => Language.PureScript.Interpreter.ToObject m (f GHC.Generics.:*: g)
 
-module Language.PureScript.Interpreter.Monad
-data InterpretT m a
-runInterpretT :: Monad m => InterpretT m a -> m a
-runInterpret :: Interpret a -> a
-ffi :: Monad m => FFI m -> InterpretT m ()
-data BuildError
-renderBuildError :: BuildError -> String
-build :: MonadFix m => Text -> InterpretT m (Either BuildError (Module Ann))
-eval :: (MonadFix m, ToValueRHS m a) => Expr () -> InterpretT m a
-evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
-instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.Monad.InterpretT m)
-instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.Monad.InterpretT m)
-instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.Monad.InterpretT m)
-instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.Monad.InterpretT
-
-module Language.PureScript.Interpreter.JSON
-newtype JSON a
-JSON :: a -> JSON a
-[getJSON] :: JSON a -> a
-fromJSON :: Value -> Value m
-toJSON :: Value m -> Maybe Value
-instance (Control.Monad.Fix.MonadFix m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
+module Language.PureScript.Interpreter.FFIBuilder.Internal
+forAll :: (SourceType -> SourceType) -> SourceType
+array :: SourceType -> SourceType
+function :: SourceType -> SourceType -> SourceType
 
 module Language.PureScript.Interpreter.FFIBuilder
 data FFIBuilder m a
@@ -347,5 +289,117 @@ instance GHC.Base.Monoid (Language.PureScript.Interpreter.FFIBuilder.FFI_ m)
 instance Language.PureScript.Interpreter.FFIBuilder.ForAll m a (Language.PureScript.Interpreter.FFIBuilder.FunctionType m a r_)
 instance (Language.PureScript.Interpreter.FFIBuilder.ForAll m r o, a GHC.Types.~ Language.PureScript.Interpreter.FFIBuilder.FunctionType m (Language.PureScript.Interpreter.Value m) (Language.PureScript.Interpreter.EvalT m (Language.PureScript.Interpreter.Value m))) => Language.PureScript.Interpreter.FFIBuilder.ForAll m r (a -> o)
 
+module Language.PureScript.Interpreter.JSON
+newtype JSON a
+JSON :: a -> JSON a
+[getJSON] :: JSON a -> a
+fromJSON :: Value -> Value m
+toJSON :: Value m -> Maybe Value
+instance (Control.Monad.Fix.MonadFix m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
+
 module Language.PureScript.Interpreter.Prelude
 prelude :: MonadFix m => FFI m
+
+module Language.PureScript.Make.Simplified
+data BuildError
+UnableToParse :: NonEmpty ParserError -> BuildError
+UnableToCompile :: MultipleErrors -> BuildError
+renderBuildError :: BuildError -> String
+
+-- | Parse and build a single PureScript module, returning the compiled
+--   CoreFn module.
+buildSingleModule :: [ExternsFile] -> Text -> Either BuildError (Module Ann, ExternsFile)
+
+-- | Compile a single <a>Module</a> into a CoreFn module.
+--   
+--   This function is based on the <a>rebuildModule</a> function.
+--   
+--   It is reproduced and modified here in order to make it simpler to
+--   build a single module without all of the additional capabilities and
+--   complexity of the upstream API.
+buildCoreFnOnly :: [ExternsFile] -> Module -> Either MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
+instance GHC.Show.Show Language.PureScript.Make.Simplified.BuildError
+
+module Language.PureScript.Interpreter.Monad
+data InterpretT m a
+runInterpretT :: Monad m => InterpretT m a -> m (Either InterpretError a)
+runInterpret :: Interpret a -> Either InterpretError a
+data InterpretError
+EvaluationError :: EvaluationError -> InterpretError
+BuildError :: BuildError -> InterpretError
+renderInterpretError :: InterpretError -> String
+ffi :: Monad m => FFI m -> InterpretT m ()
+build :: MonadFix m => Text -> InterpretT m (Module Ann)
+buildCoreFn :: MonadFix m => Module Ann -> InterpretT m (Module Ann)
+eval :: (MonadFix m, ToValueRHS m a) => Expr () -> InterpretT m a
+evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
+
+-- | Monads having fixed points with a 'knot-tying' semantics. Instances of
+--   <a>MonadFix</a> should satisfy the following laws:
+--   
+--   <ul>
+--   <li><i>Purity</i> <tt><a>mfix</a> (<a>return</a> . h) = <a>return</a>
+--   (<a>fix</a> h)</tt></li>
+--   <li><i>Left shrinking (or Tightening)</i> <tt><a>mfix</a> (\x -&gt; a
+--   &gt;&gt;= \y -&gt; f x y) = a &gt;&gt;= \y -&gt; <a>mfix</a> (\x -&gt;
+--   f x y)</tt></li>
+--   <li><i>Sliding</i> <tt><a>mfix</a> (<a>liftM</a> h . f) = <a>liftM</a>
+--   h (<a>mfix</a> (f . h))</tt>, for strict <tt>h</tt>.</li>
+--   <li><i>Nesting</i> <tt><a>mfix</a> (\x -&gt; <a>mfix</a> (\y -&gt; f x
+--   y)) = <a>mfix</a> (\x -&gt; f x x)</tt></li>
+--   </ul>
+--   
+--   This class is used in the translation of the recursive <tt>do</tt>
+--   notation supported by GHC and Hugs.
+class Monad m => MonadFix (m :: Type -> Type)
+newtype ModuleName
+ModuleName :: Text -> ModuleName
+type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
+data Expr a
+data Module a
+
+-- | Errors which can occur during evaluation of PureScript code.
+--   
+--   PureScript is a typed language, and tries to prevent runtime errors.
+--   However, in the context of this interpreter, we can receive data from
+--   outside PureScript code, so it is possible that runtime errors can
+--   occur if we are not careful. This is similar to how PureScript code
+--   can fail at runtime due to errors in the FFI.
+data EvaluationError
+
+-- | A name was not found in the environment
+UnknownIdent :: Qualified Ident -> EvaluationError
+
+-- | The runtime representation of a value did not match the expected
+--   representation
+TypeMismatch :: Text -> EvaluationError
+
+-- | A record field did not exist in an <a>Object</a> value.
+FieldNotFound :: Text -> EvaluationError
+
+-- | A pattern match failed to match its argument
+InexhaustivePatternMatch :: EvaluationError
+
+-- | A pattern match received the wrong number of arguments
+InvalidNumberOfArguments :: Int -> Int -> EvaluationError
+
+-- | A pattern match occurred against a partially-applied data constructor
+UnsaturatedConstructorApplication :: EvaluationError
+
+-- | A PureScript string which contains lone surrogates which could not be
+--   decoded. See <a>PSString</a>.
+InvalidFieldName :: PSString -> EvaluationError
+
+-- | An error occurred in a foreign function which is not tracked by any of
+--   the other error types.
+--   
+--   TODO: remove this in favor of using monadic FFI functions
+OtherError :: Text -> EvaluationError
+data BuildError
+UnableToParse :: NonEmpty ParserError -> BuildError
+UnableToCompile :: MultipleErrors -> BuildError
+instance GHC.Show.Show Language.PureScript.Interpreter.Monad.InterpretError
+instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.Monad.InterpretT m)
+instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.Monad.InterpretT m)
+instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.Monad.InterpretT m)
+instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.Monad.InterpretT

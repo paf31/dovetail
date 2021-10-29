@@ -5,20 +5,32 @@
 {-# LANGUAGE OverloadedStrings          #-}
 
 module Language.PureScript.Interpreter.Monad
-  ( InterpretT
+  ( 
+  -- * High-level API
+    InterpretT
   , runInterpretT
   , runInterpret
+  
+  -- ** Error messages
+  , InterpretError(..)
+  , renderInterpretError
+  
+  -- ** Foreign function interface
   , ffi
-  , BuildError
-  , renderBuildError
+  
+  -- ** Building PureScript source
   , build
+  , buildCoreFn
+  
+  -- ** Evaluating values
   , eval
   , evalMain
   
-  -- TODO: reexports
+  -- * Re-exports
+  , module Reexports
   ) where
  
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.Fix as Reexports (MonadFix)
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.State (StateT, evalStateT, get, put, modify)
 import Control.Monad.Trans.Class (MonadTrans(..))
@@ -26,24 +38,28 @@ import Data.Bifunctor (first)
 import Data.Functor.Identity (Identity(..))
 import Data.Text (Text)
 import Language.PureScript qualified as P
+import Language.PureScript  as Reexports (ModuleName(..))
 import Language.PureScript.CoreFn qualified as CoreFn
+import Language.PureScript.CoreFn as Reexports (Module, Expr, Ann)
 import Language.PureScript.Interpreter (Env, FFI, ToValueRHS)
 import Language.PureScript.Interpreter qualified as Interpreter
+import Language.PureScript.Interpreter as Reexports (EvaluationError(..))
 import Language.PureScript.Make.Simplified qualified as Make
+import Language.PureScript.Make.Simplified as Reexports (BuildError(..))
 
-newtype InterpretT m a = InterpretT { unInterpretT :: StateT ([P.ExternsFile], Env m) m a }
+newtype InterpretT m a = InterpretT { unInterpretT :: StateT ([P.ExternsFile], Env m) (ExceptT InterpretError m) a }
   deriving newtype (Functor, Applicative, Monad)
   
 instance MonadTrans InterpretT where
-  lift = InterpretT . lift
-  
-runInterpret :: Interpret a -> a
-runInterpret = runIdentity . runInterpretT
+  lift = InterpretT . lift . lift
   
 type Interpret = InterpretT Identity
 
-runInterpretT :: Monad m => InterpretT m a -> m a
-runInterpretT = flip evalStateT ([], mempty) . unInterpretT
+runInterpret :: Interpret a -> Either InterpretError a
+runInterpret = runIdentity . runInterpretT
+
+runInterpretT :: Monad m => InterpretT m a -> m (Either InterpretError a)
+runInterpretT = runExceptT . flip evalStateT ([], mempty) . unInterpretT
 
 ffi :: Monad m => FFI m -> InterpretT m ()
 ffi f = InterpretT $ modify \(externs, env) -> 
@@ -51,24 +67,33 @@ ffi f = InterpretT $ modify \(externs, env) ->
   , env <> Interpreter.toEnv f
   )
 
-data BuildError
+data InterpretError
   = EvaluationError Interpreter.EvaluationError
   | BuildError Make.BuildError
+  deriving Show
 
-renderBuildError :: BuildError -> String
-renderBuildError (BuildError err) =
+renderInterpretError :: InterpretError -> String
+renderInterpretError (BuildError err) =
   "Build error: " <> Make.renderBuildError err
-renderBuildError (EvaluationError err) =
+renderInterpretError (EvaluationError err) =
   "Evaluation error: " <> Interpreter.renderEvaluationError err
 
-build :: MonadFix m => Text -> InterpretT m (Either BuildError (CoreFn.Module CoreFn.Ann))
+liftWith :: Monad m => (e -> InterpretError) -> m (Either e a) -> InterpretT m a
+liftWith f ma = InterpretT . lift . ExceptT $ fmap (first f) ma
+
+build :: MonadFix m => Text -> InterpretT m (CoreFn.Module CoreFn.Ann)
 build moduleText = do
   (externs, env) <- InterpretT get
-  runExceptT do
-    (m, newExts) <- ExceptT . pure . first BuildError $ Make.buildSingleModule externs moduleText
-    newEnv <- ExceptT . lift $ first EvaluationError <$> Interpreter.runEvalT (Interpreter.build env m)
-    lift . InterpretT $ put (newExts : externs, newEnv)
-    pure m
+  (m, newExterns) <- liftWith BuildError $ pure $ Make.buildSingleModule externs moduleText
+  InterpretT $ put (newExterns : externs, env)
+  buildCoreFn m
+
+buildCoreFn :: MonadFix m => CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
+buildCoreFn m = do
+  (externs, env) <- InterpretT get
+  newEnv <- liftWith EvaluationError (Interpreter.runEvalT (Interpreter.buildCoreFn env m))
+  InterpretT $ put (externs, newEnv)
+  pure m
 
 eval :: (MonadFix m, ToValueRHS m a) => CoreFn.Expr () -> InterpretT m a
 eval expr = do

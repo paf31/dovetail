@@ -31,10 +31,9 @@ import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Text.IO qualified as Text
-import Data.Traversable (for)
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Interpreter qualified as Interpreter
-import Language.PureScript.Interpreter.Monad (BuildError, build, evalMain, ffi, renderBuildError, runInterpret)
+import Language.PureScript.Interpreter.Monad (InterpretError, build, evalMain, ffi, renderInterpretError, runInterpret)
 import Language.PureScript.Interpreter.JSON (JSON(..))
 import Language.PureScript.Interpreter.Prelude (prelude)
 import System.Environment (getArgs)
@@ -48,12 +47,11 @@ main = do
   moduleText <- Text.readFile moduleFile
   
   -- Compile the PureScript CoreFn output for the module
-  let buildResult :: Either BuildError (JSON Aeson.Value -> Interpreter.Eval (JSON Aeson.Value))
+  let buildResult :: Either InterpretError (JSON Aeson.Value -> Interpreter.Eval (JSON Aeson.Value))
       buildResult = runInterpret do
         ffi prelude
-        e <- build moduleText
-        for e \CoreFn.Module{ CoreFn.moduleName } ->
-          evalMain moduleName
+        CoreFn.Module{ CoreFn.moduleName } <- build moduleText
+        evalMain moduleName
   
   -- This helper function assists in writing the following code in a more 
   -- direct style:
@@ -61,7 +59,7 @@ main = do
           
   -- Interpret the main function of the PureScript module as a Haskell function
   -- from JSON to JSON:
-  query <- buildResult `orDie` renderBuildError
+  query <- buildResult `orDie` renderInterpretError
   
   -- Read and parse the input JSON from standard input
   stdinBytes <- BL.hGetContents stdin
@@ -69,5 +67,6 @@ main = do
   
   -- Evaluate that function, then render the output as pretty-printed JSON on
   -- standard output.
-  output <- Interpreter.runEval (query (JSON input)) `orDie` Interpreter.renderEvaluationError
+  output <- Interpreter.runEval (query (JSON input)) 
+              `orDie` Interpreter.renderEvaluationError
   BL8.putStrLn (Pretty.encodePretty (getJSON output))

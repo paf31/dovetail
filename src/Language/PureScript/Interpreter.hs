@@ -22,10 +22,7 @@
 module Language.PureScript.Interpreter
   ( 
   -- * High-level API
-    buildAndEval
-  , buildAndEvalMain
-  , runWithFFI
-  , build
+    buildCoreFn
   , builtIn
   
   -- * Evaluation
@@ -91,7 +88,6 @@ import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Externs qualified as Externs
 import Language.PureScript.Names (Ident(..), Qualified(..))
 import Language.PureScript.Names qualified as Names
-import Language.PureScript.Make.Simplified qualified as Make
 import Language.PureScript.PSString qualified as PSString
 
 data FFI m = FFI
@@ -124,36 +120,11 @@ toEnv :: FFI m -> Env m
 toEnv (FFI mn vals) = 
   Map.fromList [ (P.mkQualified name mn, val) | ForeignImport name _ val <- vals ]
   
--- TODO: can we do this without tangling together the Make module and this module?
-runWithFFI :: (MonadFix m, ToValueRHS m a) => [FFI m] -> Text -> Either Make.BuildError a
-runWithFFI ffi moduleText = do
-  (coreFn, _) <- Make.buildSingleModule (map toExterns ffi) moduleText
-  let env = Map.unions (map toEnv ffi)
-  pure (buildAndEvalMain env coreFn)
-
--- | Build a compiled PureScript 'CoreFn.Module' in the specified environment,
--- evaluating and returning the output from its main function as a Haskell value.
---
--- A 'CoreFn.Module' can be obtained by parsing the JSON output of the PureScript
--- compiler (see "Language.PureScript.CoreFn.FromJSON"), or by using the helper
--- functions in the "Language.PureScript.Make.Simplified" module to build a
--- module from source.
-buildAndEvalMain :: (MonadFix m, ToValueRHS m a) => Env m -> CoreFn.Module ann -> a
-buildAndEvalMain env m@CoreFn.Module{ CoreFn.moduleName = moduleName } =
-  buildAndEval env m (CoreFn.Var () (Qualified (Just moduleName) (Ident "main")))
-  
--- | Build a compiled PureScript 'CoreFn.Module' in the specified environment,
--- returning the output from its main function as a Haskell value.  
-buildAndEval :: (MonadFix m, ToValueRHS m a) => Env m -> CoreFn.Module ann -> CoreFn.Expr () -> a
-buildAndEval initialEnv m@CoreFn.Module{ CoreFn.moduleName = moduleName } expr = fromValueRHS do
-  env <- build initialEnv m
-  eval moduleName env expr
-  
 -- | Evaluate each of the bindings in a compiled PureScript module, and store
 -- the evaluated values in the environment, without evaluating any main
 -- expression.
-build :: MonadFix m => Env m -> CoreFn.Module ann -> EvalT m (Env m)
-build env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = 
+buildCoreFn :: MonadFix m => Env m -> CoreFn.Module ann -> EvalT m (Env m)
+buildCoreFn env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = 
   bind moduleName (Just moduleName) env (fmap void moduleDecls)
   
 -- | Create an environment from a Haskell value.
@@ -267,6 +238,7 @@ data EvaluationError
   -- any of the other error types.
   --
   -- TODO: remove this in favor of using monadic FFI functions
+  deriving Show
 
 -- | Render an 'EvaluationError' as a human-readable string.
 renderEvaluationError :: EvaluationError -> String

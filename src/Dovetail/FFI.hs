@@ -1,7 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings   #-}
 
-module Language.PureScript.Interpreter.FFI 
+module Dovetail.FFI 
   ( 
   -- * Foreign function interface
     FFI(..)
@@ -11,9 +11,9 @@ module Language.PureScript.Interpreter.FFI
   ) where
 
 import Data.Map qualified as Map  
+import Dovetail.Types 
 import Language.PureScript qualified as P
 import Language.PureScript.Externs qualified as Externs
-import Language.PureScript.Interpreter.Types 
   
 -- | Describes a module which is implemented in Haskell, and made available
 -- to PureScript code using its foreign function interface. 
@@ -22,14 +22,14 @@ import Language.PureScript.Interpreter.Types
 -- the FFI supports other forms of interop.
 --
 -- Values of this type can be constructed directly, but in many cases it is
--- simpler to use the "Language.PureScript.Interpreter.FFI.Builder" module
+-- simpler to use the "Dovetail.FFI.Builder" module
 -- instead.
 --
 -- Values of this type can be consumed by the 'toExterns' and 'toEnv' functions,
 -- and their results passed to the PureScript APIs or the low-level functions in
--- "Language.PureScript.Interpreter.Evaluate" and "Language.PureScript.Make.Simplified", 
+-- "Dovetail.Evaluate" and "Dovetail.Build", 
 -- directly, but it is more likely that you will use values of this type with the 
--- higher-level 'Language.PureScript.Interpreter.ffi' function.
+-- higher-level 'Dovetail.ffi' function.
 data FFI m = FFI
   { ffi_moduleName :: P.ModuleName
   -- ^ The module name for the module being implemented in Haskell.
@@ -51,7 +51,7 @@ data ForeignImport m = ForeignImport
 -- separate compilation.
 --
 -- For advanced use cases, the result may be used with the functions in the 
--- "Language.PureScript.Make.Simplified" module.
+-- "Dovetail.Build" module.
 toExterns :: FFI m -> P.ExternsFile
 toExterns (FFI mn vals) =
   Externs.ExternsFile   
@@ -70,7 +70,7 @@ toExterns (FFI mn vals) =
 -- | Convert a foreign module into an evaluation environment.
 --
 -- For advanced use cases, the result may be used with the functions in the 
--- "Language.PureScript.Interpreter.Evaluate" module.
+-- "Dovetail.Evaluate" module.
 toEnv :: FFI m -> Env m
 toEnv (FFI mn vals) = 
   Map.fromList [ (P.mkQualified name mn, val) | ForeignImport name _ val <- vals ]

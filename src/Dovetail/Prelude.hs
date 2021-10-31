@@ -7,17 +7,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 -- | A tiny standard library.
-module Language.PureScript.Interpreter.Prelude where
+module Dovetail.Prelude where
   
 import Control.Monad.Fix (MonadFix)
 import Data.Char (chr, ord)
 import Data.Text qualified as Text
 import Data.Vector qualified as Vector
+import Dovetail.Evaluate (EvalT, ToValue, ToValueRHS)
+import Dovetail.FFI (FFI(..))
+import Dovetail.FFI.Builder (array, boolean, char, int, string, number, (~>))
+import Dovetail.FFI.Builder qualified as FFI
 import Language.PureScript qualified as P
-import Language.PureScript.Interpreter.Evaluate (EvalT, ToValue, ToValueRHS)
-import Language.PureScript.Interpreter.FFI (FFI(..))
-import Language.PureScript.Interpreter.FFI.Builder (array, boolean, char, int, string, number, (~>))
-import Language.PureScript.Interpreter.FFI.Builder qualified as FFI
 
 stdlib :: MonadFix m => [FFI m]
 stdlib = 

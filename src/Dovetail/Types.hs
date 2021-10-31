@@ -7,7 +7,7 @@
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeApplications           #-}
 
-module Language.PureScript.Interpreter.Types (
+module Dovetail.Types (
   -- * Evaluation
   -- ** Value types
     Value(..)
@@ -24,8 +24,8 @@ module Language.PureScript.Interpreter.Types (
   , renderEvaluationError
   ) where
   
-import Control.Monad.Fix (MonadFix(..))
 import Control.Monad.Error.Class (MonadError(..))
+import Control.Monad.Fix (MonadFix(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Data.Functor.Identity (Identity(..))

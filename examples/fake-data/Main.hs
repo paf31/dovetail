@@ -36,12 +36,10 @@ import Data.Text.IO qualified as Text
 import Data.Vector (Vector, (!))
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
-import Language.PureScript.Interpreter (EvalT, FFI(..), Value, runEvalT)
+import Language.PureScript.Interpreter
 import Language.PureScript.Interpreter qualified as Interpreter
-import Language.PureScript.Interpreter.FFIBuilder (array, (~>))
-import Language.PureScript.Interpreter.FFIBuilder qualified as FFI
+import Language.PureScript.Interpreter.FFI.Builder qualified as FFI
 import Language.PureScript.Interpreter.JSON (JSON(..))
-import Language.PureScript.Interpreter.Monad (InterpretError, build, evalMain, ffi, renderInterpretError, runInterpretT)
 import Language.PureScript.Interpreter.Prelude (prelude)
 import System.Environment (getArgs)
 import System.Exit (die)

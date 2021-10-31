@@ -7,39 +7,12 @@
 @package runpurs-hs
 @version 0.1.0.0
 
-module Language.PureScript.Interpreter
+module Language.PureScript.Interpreter.FFI.Internal
+forAll :: (SourceType -> SourceType) -> SourceType
+array :: SourceType -> SourceType
+function :: SourceType -> SourceType -> SourceType
 
--- | Evaluate each of the bindings in a compiled PureScript module, and
---   store the evaluated values in the environment, without evaluating any
---   main expression.
-buildCoreFn :: MonadFix m => Env m -> Module ann -> EvalT m (Env m)
-
--- | Create an environment from a Haskell value.
---   
---   It is recommended that a type annotation is given for the type of the
---   value being provided.
---   
---   For example:
---   
---   <pre>
---   builtIn "greeting" ("Hello, World!" :: Text)
---   builtIn "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
---   </pre>
---   
---   Functions can be provided as built-ins, but the <a>EvalT</a> monad
---   needs to be used to wrap any outputs (or values in positive position):
---   
---   <pre>
---   builtIn "strip" ((pure . Text.strip) :: Text -&gt; EvalT m Text)
---   builtIn "map" (traverse :: (Value -&gt; EvalT m Value) -&gt; Vector Value -&gt; EvalT m (Vector Value))
---   </pre>
---   
---   Polymorphic functions can also be provided as built-ins, but values
---   with polymoprhic types will need to be passed across the FFI boundary
---   with monomorphic types. The type <a>Value</a> can always be used to
---   represent values of unknown or polymorphic type, as in the
---   <tt>map</tt> example above.
-builtIn :: ToValue m a => ModuleName -> Text -> a -> Env m
+module Language.PureScript.Interpreter.Types
 
 -- | The representation of values used by the interpreter - essentially,
 --   the semantic domain for a simple untyped lambda calculus with records
@@ -66,7 +39,14 @@ Bool :: Bool -> Value m
 Closure :: (Value m -> EvalT m (Value m)) -> Value m
 
 -- | Fully-applied data constructors
-Constructor :: Qualified (ProperName 'ConstructorName) -> [Value m] -> Value m
+Constructor :: ProperName 'ConstructorName -> [Value m] -> Value m
+
+-- | An environment, i.e. a mapping from names to evaluated values.
+--   
+--   An environment for a single built-in function can be constructed using
+--   the <tt>builtIn</tt> function, and environments can be combined easily
+--   using the <a>Monoid</a> instance for <a>Map</a>.
+type Env m = Map (Qualified Ident) (Value m)
 
 -- | The monad used by the interpreter, which supports error reporting for
 --   errors which can occur during evaluation.
@@ -124,23 +104,15 @@ OtherError :: Text -> EvaluationError
 
 -- | Render an <a>EvaluationError</a> as a human-readable string.
 renderEvaluationError :: EvaluationError -> String
+instance GHC.Show.Show Language.PureScript.Interpreter.Types.EvaluationError
+instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Language.PureScript.Interpreter.Types.EvalT m)
+instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError Language.PureScript.Interpreter.Types.EvaluationError (Language.PureScript.Interpreter.Types.EvalT m)
+instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.Types.EvalT
+instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.Types.EvalT m)
+instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.Types.EvalT m)
+instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.Types.EvalT m)
 
--- | An environment, i.e. a mapping from names to evaluated values.
---   
---   An environment for a single built-in function can be constructed using
---   the <a>builtIn</a> function, and environments can be combined easily
---   using the <a>Monoid</a> instance for <a>Map</a>.
-type Env m = Map (Qualified Ident) (Value m)
-
--- | Evaluate a PureScript CoreFn expression in the given environment.
---   
---   Note: it should not be necessary to call this function directly in
---   most circumstances. It is provided as a helper function, for some more
---   advanced use cases, such as setting up a custom environment.
-eval :: forall m. MonadFix m => ModuleName -> Env m -> Expr () -> EvalT m (Value m)
-
--- | Apply a value which represents an unevaluated closure to an argument.
-apply :: MonadFix m => Value m -> Value m -> EvalT m (Value m)
+module Language.PureScript.Interpreter.FFI
 data FFI m
 FFI :: ModuleName -> [ForeignImport m] -> FFI m
 [ffi_moduleName] :: FFI m -> ModuleName
@@ -152,6 +124,50 @@ ForeignImport :: Ident -> SourceType -> Value m -> ForeignImport m
 [fv_value] :: ForeignImport m -> Value m
 toEnv :: FFI m -> Env m
 toExterns :: FFI m -> ExternsFile
+
+module Language.PureScript.Interpreter.Evaluate
+
+-- | Evaluate each of the bindings in a compiled PureScript module, and
+--   store the evaluated values in the environment, without evaluating any
+--   main expression.
+buildCoreFn :: MonadFix m => Env m -> Module ann -> EvalT m (Env m)
+
+-- | Create an environment from a Haskell value.
+--   
+--   It is recommended that a type annotation is given for the type of the
+--   value being provided.
+--   
+--   For example:
+--   
+--   <pre>
+--   builtIn "greeting" ("Hello, World!" :: Text)
+--   builtIn "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
+--   </pre>
+--   
+--   Functions can be provided as built-ins, but the <a>EvalT</a> monad
+--   needs to be used to wrap any outputs (or values in positive position):
+--   
+--   <pre>
+--   builtIn "strip" ((pure . Text.strip) :: Text -&gt; EvalT m Text)
+--   builtIn "map" (traverse :: (Value -&gt; EvalT m Value) -&gt; Vector Value -&gt; EvalT m (Vector Value))
+--   </pre>
+--   
+--   Polymorphic functions can also be provided as built-ins, but values
+--   with polymoprhic types will need to be passed across the FFI boundary
+--   with monomorphic types. The type <a>Value</a> can always be used to
+--   represent values of unknown or polymorphic type, as in the
+--   <tt>map</tt> example above.
+builtIn :: ToValue m a => ModuleName -> Text -> a -> Env m
+
+-- | Evaluate a PureScript CoreFn expression in the given environment.
+--   
+--   Note: it should not be necessary to call this function directly in
+--   most circumstances. It is provided as a helper function, for some more
+--   advanced use cases, such as setting up a custom environment.
+eval :: forall m. MonadFix m => Env m -> Expr () -> EvalT m (Value m)
+
+-- | Apply a value which represents an unevaluated closure to an argument.
+apply :: MonadFix m => Value m -> Value m -> EvalT m (Value m)
 
 -- | Values which can be communicated across the FFI boundary from Haskell
 --   to PureScript.
@@ -241,33 +257,29 @@ genericFromValue :: (MonadFix m, Generic a, ToObject m (Rep a)) => ObjectOptions
 class ToObject m f
 toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
 fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
-instance GHC.Show.Show Language.PureScript.Interpreter.EvaluationError
-instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Language.PureScript.Interpreter.EvalT m)
-instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError Language.PureScript.Interpreter.EvaluationError (Language.PureScript.Interpreter.EvalT m)
-instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.EvalT
-instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.EvalT m)
-instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.EvalT m)
-instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.EvalT m)
-instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.Value m)
-instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.ToValue m GHC.Integer.Type.Integer
-instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.ToValue m Data.Scientific.Scientific
-instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.ToValue m Data.Text.Internal.Text
-instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.ToValue m GHC.Types.Bool
-instance (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.ToValue m a, Language.PureScript.Interpreter.ToValueRHS m b) => Language.PureScript.Interpreter.ToValue m (a -> b)
-instance Language.PureScript.Interpreter.ToValue m a => Language.PureScript.Interpreter.ToValue m (Data.Vector.Vector a)
-instance (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.ToValue m a, Language.PureScript.Interpreter.ToValueRHS m b) => Language.PureScript.Interpreter.ToValueRHS m (a -> b)
-instance (Language.PureScript.Interpreter.ToValue m a, n GHC.Types.~ m) => Language.PureScript.Interpreter.ToValueRHS m (Language.PureScript.Interpreter.EvalT n a)
-instance (GHC.TypeLits.KnownSymbol field, Language.PureScript.Interpreter.ToValue m a) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.ToObject m f) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.D t f)
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.ToObject m f) => Language.PureScript.Interpreter.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
-instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.ToObject m f, Language.PureScript.Interpreter.ToObject m g) => Language.PureScript.Interpreter.ToObject m (f GHC.Generics.:*: g)
+instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m (Language.PureScript.Interpreter.Types.Value m)
+instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m GHC.Integer.Type.Integer
+instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m Data.Scientific.Scientific
+instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m Data.Text.Internal.Text
+instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m GHC.Types.Bool
+instance (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.Evaluate.ToValue m a, Language.PureScript.Interpreter.Evaluate.ToValueRHS m b) => Language.PureScript.Interpreter.Evaluate.ToValue m (a -> b)
+instance Language.PureScript.Interpreter.Evaluate.ToValue m a => Language.PureScript.Interpreter.Evaluate.ToValue m (Data.Vector.Vector a)
+instance (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.Evaluate.ToValue m a, Language.PureScript.Interpreter.Evaluate.ToValueRHS m b) => Language.PureScript.Interpreter.Evaluate.ToValueRHS m (a -> b)
+instance (Language.PureScript.Interpreter.Evaluate.ToValue m a, n GHC.Types.~ m) => Language.PureScript.Interpreter.Evaluate.ToValueRHS m (Language.PureScript.Interpreter.Types.EvalT n a)
+instance (GHC.TypeLits.KnownSymbol field, Language.PureScript.Interpreter.Evaluate.ToValue m a) => Language.PureScript.Interpreter.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))
+instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.Evaluate.ToObject m f) => Language.PureScript.Interpreter.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.D t f)
+instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.Evaluate.ToObject m f) => Language.PureScript.Interpreter.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
+instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.Evaluate.ToObject m f, Language.PureScript.Interpreter.Evaluate.ToObject m g) => Language.PureScript.Interpreter.Evaluate.ToObject m (f GHC.Generics.:*: g)
 
-module Language.PureScript.Interpreter.FFIBuilder.Internal
-forAll :: (SourceType -> SourceType) -> SourceType
-array :: SourceType -> SourceType
-function :: SourceType -> SourceType -> SourceType
+module Language.PureScript.Interpreter.JSON
+newtype JSON a
+JSON :: a -> JSON a
+[getJSON] :: JSON a -> a
+fromJSON :: Value -> Value m
+toJSON :: Value m -> Maybe Value
+instance (Control.Monad.Fix.MonadFix m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.Evaluate.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
 
-module Language.PureScript.Interpreter.FFIBuilder
+module Language.PureScript.Interpreter.FFI.Builder
 data FFIBuilder m a
 runFFIBuilder :: ModuleName -> FFIBuilder m a -> (a, FFI m)
 evalFFIBuilder :: ModuleName -> FFIBuilder m a -> FFI m
@@ -280,22 +292,14 @@ array :: FunctionType m l r -> FunctionType m (Vector l) (EvalT m (Vector l))
 (~>) :: FunctionType m al ar -> FunctionType m bl br -> FunctionType m (al -> br) (al -> br)
 infixr 0 ~>
 class ForAll m r a | a -> m r
-instance Control.Monad.Writer.Class.MonadWriter (Language.PureScript.Interpreter.FFIBuilder.FFI_ m) (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
-instance GHC.Base.Monad (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
-instance GHC.Base.Applicative (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
-instance GHC.Base.Functor (Language.PureScript.Interpreter.FFIBuilder.FFIBuilder m)
-instance GHC.Base.Semigroup (Language.PureScript.Interpreter.FFIBuilder.FFI_ m)
-instance GHC.Base.Monoid (Language.PureScript.Interpreter.FFIBuilder.FFI_ m)
-instance Language.PureScript.Interpreter.FFIBuilder.ForAll m a (Language.PureScript.Interpreter.FFIBuilder.FunctionType m a r_)
-instance (Language.PureScript.Interpreter.FFIBuilder.ForAll m r o, a GHC.Types.~ Language.PureScript.Interpreter.FFIBuilder.FunctionType m (Language.PureScript.Interpreter.Value m) (Language.PureScript.Interpreter.EvalT m (Language.PureScript.Interpreter.Value m))) => Language.PureScript.Interpreter.FFIBuilder.ForAll m r (a -> o)
-
-module Language.PureScript.Interpreter.JSON
-newtype JSON a
-JSON :: a -> JSON a
-[getJSON] :: JSON a -> a
-fromJSON :: Value -> Value m
-toJSON :: Value m -> Maybe Value
-instance (Control.Monad.Fix.MonadFix m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
+instance Control.Monad.Writer.Class.MonadWriter (Language.PureScript.Interpreter.FFI.Builder.ForeignImports m) (Language.PureScript.Interpreter.FFI.Builder.FFIBuilder m)
+instance GHC.Base.Monad (Language.PureScript.Interpreter.FFI.Builder.FFIBuilder m)
+instance GHC.Base.Applicative (Language.PureScript.Interpreter.FFI.Builder.FFIBuilder m)
+instance GHC.Base.Functor (Language.PureScript.Interpreter.FFI.Builder.FFIBuilder m)
+instance GHC.Base.Semigroup (Language.PureScript.Interpreter.FFI.Builder.ForeignImports m)
+instance GHC.Base.Monoid (Language.PureScript.Interpreter.FFI.Builder.ForeignImports m)
+instance Language.PureScript.Interpreter.FFI.Builder.ForAll m a (Language.PureScript.Interpreter.FFI.Builder.FunctionType m a r_)
+instance (Language.PureScript.Interpreter.FFI.Builder.ForAll m r o, a GHC.Types.~ Language.PureScript.Interpreter.FFI.Builder.FunctionType m (Language.PureScript.Interpreter.Types.Value m) (Language.PureScript.Interpreter.Types.EvalT m (Language.PureScript.Interpreter.Types.Value m))) => Language.PureScript.Interpreter.FFI.Builder.ForAll m r (a -> o)
 
 module Language.PureScript.Interpreter.Prelude
 prelude :: MonadFix m => FFI m
@@ -320,7 +324,10 @@ buildSingleModule :: [ExternsFile] -> Text -> Either BuildError (Module Ann, Ext
 buildCoreFnOnly :: [ExternsFile] -> Module -> Either MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
 instance GHC.Show.Show Language.PureScript.Make.Simplified.BuildError
 
-module Language.PureScript.Interpreter.Monad
+module Language.PureScript.Interpreter
+type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
+data Expr a
+data Module a
 data InterpretT m a
 runInterpretT :: Monad m => InterpretT m a -> m (Either InterpretError a)
 runInterpret :: Interpret a -> Either InterpretError a
@@ -334,72 +341,92 @@ buildCoreFn :: MonadFix m => Module Ann -> InterpretT m (Module Ann)
 eval :: (MonadFix m, ToValueRHS m a) => Expr () -> InterpretT m a
 evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
 
--- | Monads having fixed points with a 'knot-tying' semantics. Instances of
---   <a>MonadFix</a> should satisfy the following laws:
+-- | Non-transformer version of <a>EvalT</a>, useful in any settings where
+--   the FFI does not use any side effects during evaluation.
+type Eval = EvalT Identity
+
+-- | The monad used by the interpreter, which supports error reporting for
+--   errors which can occur during evaluation.
 --   
---   <ul>
---   <li><i>Purity</i> <tt><a>mfix</a> (<a>return</a> . h) = <a>return</a>
---   (<a>fix</a> h)</tt></li>
---   <li><i>Left shrinking (or Tightening)</i> <tt><a>mfix</a> (\x -&gt; a
---   &gt;&gt;= \y -&gt; f x y) = a &gt;&gt;= \y -&gt; <a>mfix</a> (\x -&gt;
---   f x y)</tt></li>
---   <li><i>Sliding</i> <tt><a>mfix</a> (<a>liftM</a> h . f) = <a>liftM</a>
---   h (<a>mfix</a> (f . h))</tt>, for strict <tt>h</tt>.</li>
---   <li><i>Nesting</i> <tt><a>mfix</a> (\x -&gt; <a>mfix</a> (\y -&gt; f x
---   y)) = <a>mfix</a> (\x -&gt; f x x)</tt></li>
---   </ul>
+--   The transformed monad is used to track any benign side effects that
+--   might be exposed via the foreign function interface to PureScript
+--   code.
+newtype EvalT m a
+EvalT :: ExceptT EvaluationError m a -> EvalT m a
+[unEvalT] :: EvalT m a -> ExceptT EvaluationError m a
+
+-- | An environment, i.e. a mapping from names to evaluated values.
 --   
---   This class is used in the translation of the recursive <tt>do</tt>
---   notation supported by GHC and Hugs.
-class Monad m => MonadFix (m :: Type -> Type)
-newtype ModuleName
-ModuleName :: Text -> ModuleName
-type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
-data Expr a
-data Module a
+--   An environment for a single built-in function can be constructed using
+--   the <tt>builtIn</tt> function, and environments can be combined easily
+--   using the <a>Monoid</a> instance for <a>Map</a>.
+type Env m = Map (Qualified Ident) (Value m)
+runEvalT :: EvalT m a -> m (Either EvaluationError a)
+runEval :: Eval a -> Either EvaluationError a
 
--- | Errors which can occur during evaluation of PureScript code.
+-- | <a>ToValue</a> should support functions with types such as
 --   
---   PureScript is a typed language, and tries to prevent runtime errors.
---   However, in the context of this interpreter, we can receive data from
---   outside PureScript code, so it is possible that runtime errors can
---   occur if we are not careful. This is similar to how PureScript code
---   can fail at runtime due to errors in the FFI.
-data EvaluationError
-
--- | A name was not found in the environment
-UnknownIdent :: Qualified Ident -> EvaluationError
-
--- | The runtime representation of a value did not match the expected
---   representation
-TypeMismatch :: Text -> EvaluationError
-
--- | A record field did not exist in an <a>Object</a> value.
-FieldNotFound :: Text -> EvaluationError
-
--- | A pattern match failed to match its argument
-InexhaustivePatternMatch :: EvaluationError
-
--- | A pattern match received the wrong number of arguments
-InvalidNumberOfArguments :: Int -> Int -> EvaluationError
-
--- | A pattern match occurred against a partially-applied data constructor
-UnsaturatedConstructorApplication :: EvaluationError
-
--- | A PureScript string which contains lone surrogates which could not be
---   decoded. See <a>PSString</a>.
-InvalidFieldName :: PSString -> EvaluationError
-
--- | An error occurred in a foreign function which is not tracked by any of
---   the other error types.
+--   <pre>
+--   a -&gt; EvalT m b
+--   a -&gt; b -&gt; EvalT m c
+--   a -&gt; b -&gt; c -&gt; EvalT m d
+--   (a -&gt; EvalT m b) -&gt; EvalT m c
+--   (a -&gt; b -&gt; EvalT m c) -&gt; EvalT m d
+--   </pre>
 --   
---   TODO: remove this in favor of using monadic FFI functions
-OtherError :: Text -> EvaluationError
+--   Note that every type in a return position is wrapped in the
+--   <a>EvalT</a> monad transformer. This is because evaluation in general
+--   may result in errors. However, a naive translation would result in too
+--   many applications of <a>EvalT</a>.
+--   
+--   Specifically, we do not want to require types such as these, in which
+--   <a>EvalT</a> appears on the right hand side of every function arrow:
+--   
+--   <pre>
+--   a -&gt; EvalT m b (b -&gt; EvalT m c)
+--   a -&gt; EvalT m b (b -&gt; EvalT m (c -&gt; EvalT m d))
+--   </pre>
+--   
+--   For this reason, the <a>ToValue</a> instance for functions delegates
+--   to this type class for the type on the right hand side of the
+--   function. It skips the application of <a>EvalT</a> for nested function
+--   types.
+class ToValueRHS m a
+toValueRHS :: ToValueRHS m a => a -> EvalT m (Value m)
+fromValueRHS :: ToValueRHS m a => EvalT m (Value m) -> a
+
+-- | Values which can be communicated across the FFI boundary from Haskell
+--   to PureScript.
+--   
+--   Instances should identify and document any valid representations as a
+--   subset of the semantic domain <a>Value</a>. Such a subset can be
+--   identified by an injective function <a>toValue</a>, and a partial
+--   inverse, <a>fromValue</a>, defined on the image of <a>toValue</a>.
+--   
+--   Laws:
+--   
+--   <pre>
+--   fromValue . toValue = pure
+--   </pre>
+class MonadFix m => ToValue m a
+
+-- | The default implementation uses generic deriving to identify a Haskell
+--   record type with a single data constructor with a PureScript record
+--   with the same field names.
+toValue :: ToValue m a => a -> Value m
+
+-- | The default implementation uses generic deriving to identify a Haskell
+--   record type with a single data constructor with a PureScript record
+--   with the same field names.
+toValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => a -> Value m
+fromValue :: ToValue m a => Value m -> EvalT m a
+fromValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => Value m -> EvalT m a
 data BuildError
 UnableToParse :: NonEmpty ParserError -> BuildError
 UnableToCompile :: MultipleErrors -> BuildError
-instance GHC.Show.Show Language.PureScript.Interpreter.Monad.InterpretError
-instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.Monad.InterpretT m)
-instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.Monad.InterpretT m)
-instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.Monad.InterpretT m)
-instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.Monad.InterpretT
+renderBuildError :: BuildError -> String
+instance GHC.Show.Show Language.PureScript.Interpreter.InterpretError
+instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.InterpretT m)
+instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.InterpretT m)
+instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.InterpretT m)
+instance Control.Monad.Trans.Class.MonadTrans Language.PureScript.Interpreter.InterpretT

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cdc66b5138d72a661693aac7b85359d6a8d3a1a5ef50a81d337fe73fb80902b2
+-- hash: c408e6178a19f07379e18248111c25b7fc618c8b8e3cfe5f6f9ccd69589fa3b6
 
 name:           runpurs-hs
 version:        0.1.0.0
@@ -27,11 +27,13 @@ source-repository head
 library
   exposed-modules:
       Language.PureScript.Interpreter
-      Language.PureScript.Interpreter.FFIBuilder
-      Language.PureScript.Interpreter.FFIBuilder.Internal
+      Language.PureScript.Interpreter.Evaluate
+      Language.PureScript.Interpreter.FFI
+      Language.PureScript.Interpreter.FFI.Builder
+      Language.PureScript.Interpreter.FFI.Internal
       Language.PureScript.Interpreter.JSON
-      Language.PureScript.Interpreter.Monad
       Language.PureScript.Interpreter.Prelude
+      Language.PureScript.Interpreter.Types
       Language.PureScript.Make.Simplified
   other-modules:
       Paths_runpurs_hs

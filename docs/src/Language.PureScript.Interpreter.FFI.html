@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings   #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Language.PureScript.Interpreter.FFI</span><span> </span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span>
+</span><span id="line-6"></span><span>  </span><span class="annot"><span class="hs-comment">-- * Foreign function interface</span></span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier">FFI</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#ForeignImport"><span class="hs-identifier">ForeignImport</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#toEnv"><span class="hs-identifier">toEnv</span></a></span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#toExterns"><span class="hs-identifier">toExterns</span></a></span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>  </span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.Externs</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Externs</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.Types.html"><span class="hs-identifier">Language.PureScript.Interpreter.Types</span></a></span><span> </span><span>
+</span><span id="line-17"></span><span>  </span><span>
+</span><span id="line-18"></span><span class="hs-keyword">data</span><span> </span><span id="FFI"><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-var">FFI</span></a></span></span><span> </span><span id="local-6989586621679115393"><span class="annot"><a href="#local-6989586621679115393"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="FFI"><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-var">FFI</span></a></span></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="ffi_moduleName"><span class="annot"><span class="annottext">FFI m -&gt; ModuleName
+</span><a href="Language.PureScript.Interpreter.FFI.html#ffi_moduleName"><span class="hs-identifier hs-var hs-var">ffi_moduleName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">,</span><span> </span><span id="ffi_values"><span class="annot"><span class="annottext">FFI m -&gt; [ForeignImport m]
+</span><a href="Language.PureScript.Interpreter.FFI.html#ffi_values"><span class="hs-identifier hs-var hs-var">ffi_values</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#ForeignImport"><span class="hs-identifier hs-type">ForeignImport</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115393"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-22"></span><span>  </span><span>
+</span><span id="line-23"></span><span class="hs-keyword">data</span><span> </span><span id="ForeignImport"><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#ForeignImport"><span class="hs-identifier hs-var">ForeignImport</span></a></span></span><span> </span><span id="local-6989586621679115389"><span class="annot"><a href="#local-6989586621679115389"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="ForeignImport"><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#ForeignImport"><span class="hs-identifier hs-var">ForeignImport</span></a></span></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="fv_name"><span class="annot"><span class="annottext">ForeignImport m -&gt; Ident
+</span><a href="Language.PureScript.Interpreter.FFI.html#fv_name"><span class="hs-identifier hs-var hs-var">fv_name</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.Ident</span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">,</span><span> </span><span id="fv_type"><span class="annot"><span class="annottext">ForeignImport m -&gt; SourceType
+</span><a href="Language.PureScript.Interpreter.FFI.html#fv_type"><span class="hs-identifier hs-var hs-var">fv_type</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">,</span><span> </span><span id="fv_value"><span class="annot"><span class="annottext">ForeignImport m -&gt; Value m
+</span><a href="Language.PureScript.Interpreter.FFI.html#fv_value"><span class="hs-identifier hs-var hs-var">fv_value</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.Types.html#Value"><span class="hs-identifier hs-type">Value</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115389"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span id="local-6989586621679115384"><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#toExterns"><span class="hs-identifier hs-type">toExterns</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115384"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.ExternsFile</span></span></span><span>
+</span><span id="line-30"></span><span id="toExterns"><span class="annot"><span class="annottext">toExterns :: FFI m -&gt; ExternsFile
+</span><a href="Language.PureScript.Interpreter.FFI.html#toExterns"><span class="hs-identifier hs-var hs-var">toExterns</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span id="local-6989586621679115383"><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679115383"><span class="hs-identifier hs-var">mn</span></a></span></span><span> </span><span id="local-6989586621679115382"><span class="annot"><span class="annottext">[ForeignImport m]
+</span><a href="#local-6989586621679115382"><span class="hs-identifier hs-var">vals</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-31"></span><span>  </span><span class="annot"><span class="annottext">ExternsFile :: Text
+-&gt; ModuleName
+-&gt; [DeclarationRef]
+-&gt; [ExternsImport]
+-&gt; [ExternsFixity]
+-&gt; [ExternsTypeFixity]
+-&gt; [ExternsDeclaration]
+-&gt; SourceSpan
+-&gt; ExternsFile
+</span><span class="hs-identifier hs-type">Externs.ExternsFile</span></span><span>   </span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">efVersion :: Text
+</span><span class="hs-identifier hs-var">Externs.efVersion</span></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;0.14.2&quot;</span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">efModuleName :: ModuleName
+</span><span class="hs-identifier hs-var">Externs.efModuleName</span></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679115383"><span class="hs-identifier hs-var">mn</span></a></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">efExports :: [DeclarationRef]
+</span><span class="hs-identifier hs-var">Externs.efExports</span></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">SourceSpan -&gt; Ident -&gt; DeclarationRef
+</span><span class="hs-identifier hs-var">P.ValueRef</span></span><span> </span><span class="annot"><span class="annottext">SourceSpan
+</span><span class="hs-identifier hs-var">P.nullSourceSpan</span></span><span> </span><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679115375"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#ForeignImport"><span class="hs-identifier hs-type">ForeignImport</span></a></span><span> </span><span id="local-6989586621679115375"><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679115375"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[ForeignImport m]
+</span><a href="#local-6989586621679115382"><span class="hs-identifier hs-var">vals</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">efImports :: [ExternsImport]
+</span><span class="hs-identifier hs-var">Externs.efImports</span></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; ImportDeclarationType -&gt; Maybe ModuleName -&gt; ExternsImport
+</span><span class="hs-identifier hs-var">P.ExternsImport</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">ImportDeclarationType
+</span><span class="hs-identifier hs-var">P.Implicit</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ModuleName -&gt; Maybe ModuleName
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>                               </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; ImportDeclarationType -&gt; Maybe ModuleName -&gt; ExternsImport
+</span><span class="hs-identifier hs-var">P.ExternsImport</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">ImportDeclarationType
+</span><span class="hs-identifier hs-var">P.Implicit</span></span><span> </span><span class="annot"><span class="annottext">Maybe ModuleName
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-37"></span><span>                               </span><span class="hs-special">]</span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">efFixities :: [ExternsFixity]
+</span><span class="hs-identifier hs-var">Externs.efFixities</span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">efTypeFixities :: [ExternsTypeFixity]
+</span><span class="hs-identifier hs-var">Externs.efTypeFixities</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">efDeclarations :: [ExternsDeclaration]
+</span><span class="hs-identifier hs-var">Externs.efDeclarations</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Ident -&gt; SourceType -&gt; ExternsDeclaration
+</span><span class="hs-identifier hs-var">Externs.EDValue</span></span><span> </span><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679115366"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679115365"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#ForeignImport"><span class="hs-identifier hs-type">ForeignImport</span></a></span><span> </span><span id="local-6989586621679115366"><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679115366"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span id="local-6989586621679115365"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679115365"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[ForeignImport m]
+</span><a href="#local-6989586621679115382"><span class="hs-identifier hs-var">vals</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">efSourceSpan :: SourceSpan
+</span><span class="hs-identifier hs-var">Externs.efSourceSpan</span></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SourceSpan
+</span><span class="hs-identifier hs-var">P.nullSourceSpan</span></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">}</span><span> </span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span id="local-6989586621679115363"><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#toEnv"><span class="hs-identifier hs-type">toEnv</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115363"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.Types.html#Env"><span class="hs-identifier hs-type">Env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115363"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-45"></span><span id="toEnv"><span class="annot"><span class="annottext">toEnv :: FFI m -&gt; Env m
+</span><a href="Language.PureScript.Interpreter.FFI.html#toEnv"><span class="hs-identifier hs-var hs-var">toEnv</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span id="local-6989586621679115362"><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679115362"><span class="hs-identifier hs-var">mn</span></a></span></span><span> </span><span id="local-6989586621679115361"><span class="annot"><span class="annottext">[ForeignImport m]
+</span><a href="#local-6989586621679115361"><span class="hs-identifier hs-var">vals</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-46"></span><span>  </span><span class="annot"><span class="annottext">[(Qualified Ident, Value m)] -&gt; Env m
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ident -&gt; ModuleName -&gt; Qualified Ident
+forall a. a -&gt; ModuleName -&gt; Qualified a
+</span><span class="hs-identifier hs-var">P.mkQualified</span></span><span> </span><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679115358"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679115362"><span class="hs-identifier hs-var">mn</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679115357"><span class="hs-identifier hs-var">val</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#ForeignImport"><span class="hs-identifier hs-type">ForeignImport</span></a></span><span> </span><span id="local-6989586621679115358"><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679115358"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679115357"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679115357"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[ForeignImport m]
+</span><a href="#local-6989586621679115361"><span class="hs-identifier hs-var">vals</span></a></span><span> </span><span class="hs-special">]</span></pre></body></html>

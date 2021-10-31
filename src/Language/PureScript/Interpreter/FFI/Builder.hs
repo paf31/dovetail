@@ -11,7 +11,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
-module Language.PureScript.Interpreter.FFIBuilder
+module Language.PureScript.Interpreter.FFI.Builder
   ( 
   -- * FFI Builder API
     FFIBuilder
@@ -36,9 +36,10 @@ import Data.Text (Text)
 import Data.Scientific (Scientific)
 import Data.Vector (Vector)
 import Language.PureScript qualified as P
-import Language.PureScript.Interpreter (EvalT, ForeignImport(..), Value)
-import Language.PureScript.Interpreter qualified as Interpreter
-import Language.PureScript.Interpreter.FFIBuilder.Internal qualified as Internal
+import Language.PureScript.Interpreter.Evaluate (EvalT, Value)
+import Language.PureScript.Interpreter.Evaluate qualified as Evaluate
+import Language.PureScript.Interpreter.FFI (FFI(..), ForeignImport(..))
+import Language.PureScript.Interpreter.FFI.Internal qualified as Internal
 
 data TypeScheme m a where
   Cons :: (FunctionType m (Value m) (EvalT m (Value m)) -> TypeScheme m a)
@@ -87,47 +88,46 @@ array :: FunctionType m l r
       -> FunctionType m (Vector l) (EvalT m (Vector l))
 array = Array
   
--- | TODO: better names
-data FFI_ m = FFI_
-  { ffi_values :: [ForeignImport m]
+data ForeignImports m = ForeignImports
+  { foreignImports_values :: [ForeignImport m]
   }
   
-instance Semigroup (FFI_ m) where
-  x <> y = FFI_
-    { ffi_values = ffi_values x <> ffi_values y
+instance Semigroup (ForeignImports m) where
+  x <> y = ForeignImports
+    { foreignImports_values = foreignImports_values x <> foreignImports_values y
     }
   
-instance Monoid (FFI_ m) where
-  mempty = FFI_ 
-    { ffi_values = mempty 
+instance Monoid (ForeignImports m) where
+  mempty = ForeignImports 
+    { foreignImports_values = mempty 
     }
   
-newtype FFIBuilder m a = FFIBuilder { unFFIBuilder :: Writer (FFI_ m) a }
-  deriving newtype (Functor, Applicative, Monad, MonadWriter (FFI_ m)) 
+newtype FFIBuilder m a = FFIBuilder { unFFIBuilder :: Writer (ForeignImports m) a }
+  deriving newtype (Functor, Applicative, Monad, MonadWriter (ForeignImports m)) 
   
-runFFIBuilder :: P.ModuleName -> FFIBuilder m a -> (a, Interpreter.FFI m)
+runFFIBuilder :: P.ModuleName -> FFIBuilder m a -> (a, FFI m)
 runFFIBuilder mn = fmap convert . runWriter . unFFIBuilder where
-  convert (FFI_ values) = Interpreter.FFI
-    { Interpreter.ffi_moduleName = mn
-    , Interpreter.ffi_values = values 
+  convert (ForeignImports values) = FFI
+    { ffi_moduleName = mn
+    , ffi_values = values 
     }
   
-evalFFIBuilder :: P.ModuleName -> FFIBuilder m a -> Interpreter.FFI m
+evalFFIBuilder :: P.ModuleName -> FFIBuilder m a -> FFI m
 evalFFIBuilder mn = snd . runFFIBuilder mn
   
 foreignImport 
-  :: (MonadFix m, Interpreter.ToValue m a, ForAll m a ty)
+  :: (MonadFix m, Evaluate.ToValue m a, ForAll m a ty)
   => P.Ident
   -> ty
   -> a
   -> FFIBuilder m ()
 foreignImport = 
-  \nm ty impl -> tell $ FFI_
-    { ffi_values = 
+  \nm ty impl -> tell $ ForeignImports
+    { foreignImports_values = 
         [ ForeignImport
             { fv_name = nm
             , fv_type = typeSchemeToSourceType (forAll ty)
-            , fv_value = Interpreter.toValue impl
+            , fv_value = Evaluate.toValue impl
             }
         ]
     }

@@ -2,7 +2,7 @@
 {-# LANGUAGE ImportQualifiedPost   #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module Language.PureScript.Interpreter.FFIBuilder.Internal
+module Language.PureScript.Interpreter.FFI.Internal
   ( forAll
   , array
   , function

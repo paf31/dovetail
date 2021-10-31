@@ -10,9 +10,9 @@ module Language.PureScript.Interpreter.Prelude where
 import Control.Monad.Fix (MonadFix)
 import Data.Vector qualified as Vector
 import Language.PureScript qualified as P
-import Language.PureScript.Interpreter (FFI(..))
-import Language.PureScript.Interpreter.FFIBuilder (array, boolean, string, number, (~>))
-import Language.PureScript.Interpreter.FFIBuilder qualified as FFI
+import Language.PureScript.Interpreter.FFI (FFI(..))
+import Language.PureScript.Interpreter.FFI.Builder (array, boolean, string, number, (~>))
+import Language.PureScript.Interpreter.FFI.Builder qualified as FFI
 
 prelude :: MonadFix m => FFI m
 prelude = FFI.evalFFIBuilder (P.ModuleName "Prelude") do

@@ -32,8 +32,8 @@ import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Text.IO qualified as Text
 import Language.PureScript.CoreFn qualified as CoreFn
+import Language.PureScript.Interpreter
 import Language.PureScript.Interpreter qualified as Interpreter
-import Language.PureScript.Interpreter.Monad (InterpretError, build, evalMain, ffi, renderInterpretError, runInterpret)
 import Language.PureScript.Interpreter.JSON (JSON(..))
 import Language.PureScript.Interpreter.Prelude (prelude)
 import System.Environment (getArgs)

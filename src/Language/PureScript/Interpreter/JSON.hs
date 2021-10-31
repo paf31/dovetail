@@ -3,6 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
+-- | This module is temporary and will be replaced or removed in a release shortly.
 module Language.PureScript.Interpreter.JSON 
   ( JSON(..)
   , fromJSON
@@ -13,32 +14,32 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.Fix (MonadFix)  
 import Data.Aeson qualified as Aeson
 import Data.String (fromString)
-import Language.PureScript.Interpreter qualified as Interpreter
+import Language.PureScript.Interpreter.Evaluate qualified as Evaluate
 
-fromJSON :: Aeson.Value -> Interpreter.Value m
-fromJSON (Aeson.Object x) = Interpreter.Object (fmap fromJSON x)
-fromJSON (Aeson.Array x) = Interpreter.Array (fmap fromJSON x)
-fromJSON (Aeson.String x) = Interpreter.String x
-fromJSON (Aeson.Number x) = Interpreter.Number x
-fromJSON (Aeson.Bool x) = Interpreter.Bool x
+fromJSON :: Aeson.Value -> Evaluate.Value m
+fromJSON (Aeson.Object x) = Evaluate.Object (fmap fromJSON x)
+fromJSON (Aeson.Array x) = Evaluate.Array (fmap fromJSON x)
+fromJSON (Aeson.String x) = Evaluate.String x
+fromJSON (Aeson.Number x) = Evaluate.Number (realToFrac x)
+fromJSON (Aeson.Bool x) = Evaluate.Bool x
 fromJSON Aeson.Null = error "TODO: not supported"
 
-toJSON :: Interpreter.Value m -> Maybe Aeson.Value
-toJSON (Interpreter.Object x) = Aeson.Object <$> traverse toJSON x
-toJSON (Interpreter.Array x) = Aeson.Array <$> traverse toJSON x
-toJSON (Interpreter.String x) = pure (Aeson.String x)
-toJSON (Interpreter.Number x) = pure (Aeson.Number x)
-toJSON (Interpreter.Bool x) = pure (Aeson.Bool x)
+toJSON :: Evaluate.Value m -> Maybe Aeson.Value
+toJSON (Evaluate.Object x) = Aeson.Object <$> traverse toJSON x
+toJSON (Evaluate.Array x) = Aeson.Array <$> traverse toJSON x
+toJSON (Evaluate.String x) = pure (Aeson.String x)
+toJSON (Evaluate.Number x) = pure (Aeson.Number (realToFrac x))
+toJSON (Evaluate.Bool x) = pure (Aeson.Bool x)
 toJSON _ = Nothing
  
 newtype JSON a = JSON { getJSON :: a }
 
-instance (MonadFix m, Aeson.ToJSON a, Aeson.FromJSON a) => Interpreter.ToValue m (JSON a) where
+instance (MonadFix m, Aeson.ToJSON a, Aeson.FromJSON a) => Evaluate.ToValue m (JSON a) where
   toValue = fromJSON . Aeson.toJSON . getJSON
   fromValue a =
     case toJSON a of
       Just value ->
         case Aeson.fromJSON value of
-          Aeson.Error err -> throwError . Interpreter.OtherError . fromString $ "Invalid JSON: " <> err
+          Aeson.Error err -> throwError . Evaluate.OtherError . fromString $ "Invalid JSON: " <> err
           Aeson.Success json -> pure (JSON json)
-      Nothing -> throwError (Interpreter.TypeMismatch "json")
+      Nothing -> throwError (Evaluate.TypeMismatch "json")

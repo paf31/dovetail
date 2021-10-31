@@ -6,9 +6,9 @@
 
 module Language.PureScript.Make.Simplified where
 
+import Control.Monad (foldM)
 import Control.Monad.Supply (evalSupplyT)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Except (runExceptT)
 import Control.Monad.Trans.State (runStateT)
 import Control.Monad.Trans.Writer (runWriterT)
 import Data.Foldable (foldl')
@@ -16,7 +16,6 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NEL
 import Data.Text (Text)
 import Language.PureScript qualified as P
-import Language.PureScript.AST.SourcePos qualified as AST
 import Language.PureScript.AST.Declarations qualified as AST
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.CST qualified as CST
@@ -28,6 +27,7 @@ import Language.PureScript.TypeChecker.Monad qualified as TC
 data BuildError
   = UnableToParse (NonEmpty CST.ParserError)
   | UnableToCompile Errors.MultipleErrors
+  deriving Show
 
 renderBuildError :: BuildError -> String
 renderBuildError (UnableToParse xs) =
@@ -38,41 +38,16 @@ renderBuildError (UnableToCompile xs) =
 
 -- | Parse and build a single PureScript module, returning the compiled CoreFn
 -- module.
-buildSingleModule :: FilePath -> Text -> IO (Either BuildError (CoreFn.Module CoreFn.Ann))
-buildSingleModule moduleFile moduleText = do
-  case CST.parseFromFile moduleFile moduleText of
+buildSingleModule :: [P.ExternsFile] -> Text -> Either BuildError (CoreFn.Module CoreFn.Ann, P.ExternsFile)
+buildSingleModule externs moduleText = do
+  case CST.parseFromFile "<input>" moduleText of
     (_, Left errs) ->
-      pure (Left (UnableToParse errs))
+      Left (UnableToParse errs)
     (_, Right m) -> 
-      buildCoreFnOnly Env.primEnv [] m >>= \case
+      case buildCoreFnOnly externs m of
         Left errs ->
-          pure (Left (UnableToCompile errs))
-        Right (result, _) -> pure (Right result)
-
--- | Parse and build a single PureScript expression, returning the compiled CoreFn
--- module. The expression will be used to create a placeholder module with the name
--- @Main@, and a single expression named @main@, with the specified content.
-buildSingleExpression :: FilePath -> Text -> IO (Either BuildError (CoreFn.Module CoreFn.Ann))
-buildSingleExpression filename input = do
-  let tokens = CST.lex input
-      (_, parseResult) = CST.runParser (CST.ParserState tokens [] []) CST.parseExpr
-  case parseResult of
-    Left errs ->
-      pure (Left (UnableToParse errs))
-    Right cst -> do
-      let expr = CST.convertExpr filename cst
-          decl = AST.ValueDeclarationData
-                   { AST.valdeclSourceAnn  = AST.nullSourceAnn
-                   , AST.valdeclIdent      = P.Ident "main"
-                   , AST.valdeclName       = P.Public
-                   , AST.valdeclBinders    = []
-                   , AST.valdeclExpression = [AST.GuardedExpr [] expr]
-                   }
-          m = AST.Module AST.nullSourceSpan [] (P.ModuleName "Main") [P.ValueDeclaration decl] Nothing
-      buildCoreFnOnly Env.primEnv [] m >>= \case
-        Left errs ->
-          pure (Left (UnableToCompile errs))
-        Right (result, _) -> pure (Right result)
+          Left (UnableToCompile errs)
+        Right (result, _) -> Right result
 
 -- | Compile a single 'AST.Module' into a CoreFn module.
 --
@@ -83,14 +58,13 @@ buildSingleExpression filename input = do
 -- single module without all of the additional capabilities and complexity of
 -- the upstream API.
 buildCoreFnOnly
-  :: Env.Env
-  -> [P.ExternsFile]
+  :: [P.ExternsFile]
   -> AST.Module
-  -> IO (Either Errors.MultipleErrors (CoreFn.Module CoreFn.Ann, Errors.MultipleErrors))
-buildCoreFnOnly exEnv externs m@(AST.Module _ _ moduleName _ _) = runExceptT . runWriterT $ do
+  -> Either Errors.MultipleErrors ((CoreFn.Module CoreFn.Ann, P.ExternsFile), Errors.MultipleErrors)
+buildCoreFnOnly externs m@(AST.Module _ _ moduleName _ _) = runWriterT $ do
   let withPrim = P.importPrim m
       env = foldl' (flip P.applyExternsFileToEnvironment) P.initEnvironment externs
-
+  exEnv <- fmap fst . runWriterT $ foldM P.externsEnv Env.primEnv externs
   evalSupplyT 0 $ do
     (desugared, (exEnv', _)) <- runStateT (P.desugar externs withPrim) (exEnv, mempty)
     let modulesExports = (\(_, _, exports) -> exports) <$> exEnv'
@@ -101,5 +75,6 @@ buildCoreFnOnly exEnv externs m@(AST.Module _ _ moduleName _ _) = runExceptT . r
     let mod' = AST.Module ss coms moduleName regrouped exps
         corefn = CoreFn.moduleToCoreFn checkEnv mod'
         optimized = CoreFn.optimizeCoreFn corefn
-        [renamed] = Renamer.renameInModules [optimized]
-    pure renamed
+        (renamedIdents, renamed) = Renamer.renameInModule optimized
+        newExterns = P.moduleToExternsFile mod' checkEnv renamedIdents
+    pure (renamed, newExterns)

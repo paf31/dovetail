@@ -28,8 +28,10 @@ module Language.PureScript.Interpreter.FFI.Builder
   -- * Supported FFI types
   , FunctionType
   , string
+  , char
   , boolean
   , number
+  , int
   , array
   , (~>)
   , ForAll
@@ -39,7 +41,6 @@ import Control.Monad.Fix (MonadFix)
 import Control.Monad.Writer.Class (MonadWriter(..))
 import Control.Monad.Writer.Strict (Writer, runWriter)
 import Data.Text (Text)
-import Data.Scientific (Scientific)
 import Data.Vector (Vector)
 import Language.PureScript qualified as P
 import Language.PureScript.Interpreter.Evaluate (EvalT, Value)
@@ -62,8 +63,10 @@ data FunctionType m l r where
   
 data MonoType m a where
   String   :: MonoType m Text
+  Char     :: MonoType m Char
   Boolean  :: MonoType m Bool
-  Number   :: MonoType m Scientific
+  Number   :: MonoType m Double
+  Int      :: MonoType m Integer
   Var      :: P.SourceType -> MonoType m (Value m)
   
 -- | This type class exists to facilitate the concise description of
@@ -118,14 +121,22 @@ infixr 0 ~>
 -- | The PureScript string type
 string  :: FunctionType m Text (EvalT m Text)
 string = MonoType String
+  
+-- | The PureScript char type
+char  :: FunctionType m Char (EvalT m Char)
+char = MonoType Char
 
 -- | The PureScript boolean type
 boolean :: FunctionType m Bool (EvalT m Bool)
 boolean = MonoType Boolean
 
 -- | The PureScript number type
-number :: FunctionType m Scientific (EvalT m Scientific)
+number :: FunctionType m Double (EvalT m Double)
 number = MonoType Number
+
+-- | The PureScript integer type
+int :: FunctionType m Integer (EvalT m Integer)
+int = MonoType Int
   
 -- | Construct a PureScript array type
 array :: FunctionType m l r
@@ -217,6 +228,8 @@ functionTypeToSourceType (MonoType t) = monoTypeToSourceType t
 
 monoTypeToSourceType :: MonadFix m => MonoType m a -> P.SourceType
 monoTypeToSourceType String = P.tyString
+monoTypeToSourceType Char = P.tyChar
 monoTypeToSourceType Boolean = P.tyBoolean
 monoTypeToSourceType Number = P.tyNumber
+monoTypeToSourceType Int = P.tyInt
 monoTypeToSourceType (Var a) = a

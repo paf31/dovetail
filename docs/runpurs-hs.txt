@@ -24,15 +24,11 @@ data Value m
 
 -- | Records are represented as hashmaps from their field names to values
 Object :: HashMap Text (Value m) -> Value m
-
--- | Arrays
 Array :: Vector (Value m) -> Value m
 String :: Text -> Value m
-
--- | Numeric values
---   
---   TODO: separate integers from floating-point values
-Number :: Scientific -> Value m
+Char :: Char -> Value m
+Number :: Double -> Value m
+Int :: Integer -> Value m
 Bool :: Bool -> Value m
 
 -- | Closures, represented in higher-order abstract syntax style.
@@ -300,8 +296,9 @@ toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
 fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
 instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m (Language.PureScript.Interpreter.Types.Value m)
 instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m GHC.Integer.Type.Integer
-instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m Data.Scientific.Scientific
+instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m GHC.Types.Double
 instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m Data.Text.Internal.Text
+instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m GHC.Types.Char
 instance Control.Monad.Fix.MonadFix m => Language.PureScript.Interpreter.Evaluate.ToValue m GHC.Types.Bool
 instance (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.Evaluate.ToValue m a, Language.PureScript.Interpreter.Evaluate.ToValueRHS m b) => Language.PureScript.Interpreter.Evaluate.ToValue m (a -> b)
 instance Language.PureScript.Interpreter.Evaluate.ToValue m a => Language.PureScript.Interpreter.Evaluate.ToValue m (Data.Vector.Vector a)
@@ -367,11 +364,17 @@ data FunctionType m l r
 -- | The PureScript string type
 string :: FunctionType m Text (EvalT m Text)
 
+-- | The PureScript char type
+char :: FunctionType m Char (EvalT m Char)
+
 -- | The PureScript boolean type
 boolean :: FunctionType m Bool (EvalT m Bool)
 
 -- | The PureScript number type
-number :: FunctionType m Scientific (EvalT m Scientific)
+number :: FunctionType m Double (EvalT m Double)
+
+-- | The PureScript integer type
+int :: FunctionType m Integer (EvalT m Integer)
 
 -- | Construct a PureScript array type
 array :: FunctionType m l r -> FunctionType m (Vector l) (EvalT m (Vector l))
@@ -427,8 +430,12 @@ stdlib :: MonadFix m => [FFI m]
 prelude :: MonadFix m => FFI m
 preludeArray :: MonadFix m => FFI m
 preludeString :: MonadFix m => FFI m
+preludeChar :: MonadFix m => FFI m
 preludeNumber :: MonadFix m => FFI m
+preludeInt :: MonadFix m => FFI m
 preludeBoolean :: MonadFix m => FFI m
+numOps :: (ToValue m a, ToValueRHS m (EvalT m a), Num a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
+ordOps :: (ToValue m a, ToValueRHS m (EvalT m a), Ord a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
 
 module Language.PureScript.Make.Simplified
 data BuildError

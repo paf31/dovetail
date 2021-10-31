@@ -31,7 +31,6 @@ import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Data.Functor.Identity (Identity(..))
 import Data.HashMap.Strict (HashMap)
 import Data.Map (Map)
-import Data.Scientific (Scientific)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
@@ -48,12 +47,10 @@ data Value m
   = Object (HashMap Text (Value m))
   -- ^ Records are represented as hashmaps from their field names to values
   | Array (Vector (Value m))
-  -- ^ Arrays
   | String Text
-  | Number Scientific
-  -- ^ Numeric values
-  -- 
-  -- TODO: separate integers from floating-point values
+  | Char Char
+  | Number Double
+  | Int Integer
   | Bool Bool
   | Closure (Value m -> EvalT m (Value m))
   -- ^ Closures, represented in higher-order abstract syntax style.

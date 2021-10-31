@@ -57,7 +57,6 @@ import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map qualified as Map
 import Data.Proxy (Proxy(..))
-import Data.Scientific (Scientific, floatingOrInteger)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.These (These(..))
@@ -222,7 +221,7 @@ matchLit
   => Value m
   -> CoreFn.Literal (CoreFn.Binder ())
   -> MaybeT (EvalT m) (Env m)
-matchLit (Number n) (CoreFn.NumericLiteral (Left i)) 
+matchLit (Int n) (CoreFn.NumericLiteral (Left i)) 
   | fromIntegral i == n = pure mempty
 matchLit (Number n) (CoreFn.NumericLiteral (Right d))
   | realToFrac d == n = pure mempty
@@ -230,8 +229,8 @@ matchLit (String s) (CoreFn.StringLiteral pss) = do
   s' <- lift (evalPSString pss)
   guard (s == s')
   pure mempty
-matchLit (String s) (CoreFn.CharLiteral chr)
-  | s == Text.singleton chr = pure mempty
+matchLit (Char c) (CoreFn.CharLiteral c')
+  | c == c' = pure mempty
 matchLit (Bool b) (CoreFn.BooleanLiteral b')
   | b == b' = pure mempty
 matchLit (Array xs) (CoreFn.ArrayLiteral bs)
@@ -251,13 +250,13 @@ matchLit _ _ = mzero
 
 evalLit :: MonadFix m => Env m -> CoreFn.Literal (CoreFn.Expr ()) -> EvalT m (Value m)
 evalLit _ (CoreFn.NumericLiteral (Left int)) =
-  pure $ Number (fromIntegral int)
+  pure $ Int (fromIntegral int)
 evalLit _ (CoreFn.NumericLiteral (Right dbl)) =
   pure $ Number (realToFrac dbl)
 evalLit _ (CoreFn.StringLiteral str) =
   String <$> evalPSString str
 evalLit _ (CoreFn.CharLiteral chr) =
-  pure $ String (Text.singleton chr)
+  pure $ Char chr
 evalLit _ (CoreFn.BooleanLiteral b) =
   pure $ Bool b
 evalLit env (CoreFn.ArrayLiteral xs) = do
@@ -330,15 +329,14 @@ instance MonadFix m => ToValue m (Value m) where
 
 -- | The Haskell 'Integer' type corresponds to PureScript's integer type.
 instance MonadFix m => ToValue m Integer where
-  toValue = Number . fromIntegral
+  toValue = Int
   fromValue = \case
-    Number s
-      | Right i <- floatingOrInteger @Double s -> pure i
+    Int i -> pure i
     _ -> throwError (TypeMismatch "integer")
   
--- | The Haskell 'Scientific' type corresponds to the subset of PureScript
--- values consisting of its Int and Number types.
-instance MonadFix m => ToValue m Scientific where
+-- | The Haskell 'Douvle' type corresponds to the subset of PureScript
+-- values consisting of its Number type.
+instance MonadFix m => ToValue m Double where
   toValue = Number
   fromValue = \case
     Number s -> pure s
@@ -351,6 +349,13 @@ instance MonadFix m => ToValue m Text where
   fromValue = \case
     String s -> pure s
     _ -> throwError (TypeMismatch "string")
+
+-- | The Haskell 'Char' type is represented by PureScript characters.
+instance MonadFix m => ToValue m Char where
+  toValue = Char
+  fromValue = \case
+    Char c -> pure c
+    _ -> throwError (TypeMismatch "char")
 
 -- | Haskell booleans are represented by boolean values.
 instance MonadFix m => ToValue m Bool where

@@ -98,3 +98,9 @@ tests:
     - -fwarn-unused-imports
     dependencies:
     - dovetail
+    - hspec
+    - purescript
+    - QuickCheck
+    - generic-arbitrary
+    - quickcheck-instances
+    - text

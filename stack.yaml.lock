@@ -31,6 +31,13 @@ packages:
     git: https://github.com/purescript/purescript.git
     commit: c2a4189338db8369064e06d06d98cf9ff3a3a13d
 - completed:
+    hackage: generic-arbitrary-0.2.0@sha256:5c8619724d64271725c89a479630279fde40825eed75e68960ed0f14ca682d78,1157
+    pantry-tree:
+      size: 294
+      sha256: 3db75dc923eaf51fcb7a27192a554e84e4bdedee0323eebc08831b8d5ced9834
+  original:
+    hackage: generic-arbitrary-0.2.0@sha256:5c8619724d64271725c89a479630279fde40825eed75e68960ed0f14ca682d78
+- completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
       size: 2244

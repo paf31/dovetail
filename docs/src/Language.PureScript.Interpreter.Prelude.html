@@ -5,24 +5,44 @@
 </span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE RankNTypes          #-}</span><span>
 </span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
 </span><span id="line-7"></span><span>
-</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Language.PureScript.Interpreter.Prelude</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-9"></span><span>  </span><span>
-</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Fix</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadFix</span></span><span class="hs-special">)</span><span>
-</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Vector</span></span><span>
-</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
-</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html"><span class="hs-identifier">Language.PureScript.Interpreter.FFI</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier">FFI</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html"><span class="hs-identifier">Language.PureScript.Interpreter.FFI.Builder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier">array</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier">boolean</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#string"><span class="hs-identifier">string</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier">number</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator">(~&gt;)</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html"><span class="hs-identifier">Language.PureScript.Interpreter.FFI.Builder</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FFI</span></span><span>
-</span><span id="line-16"></span><span>
-</span><span id="line-17"></span><span class="hs-comment">-- | A tiny standard library.</span><span>
-</span><span id="line-18"></span><span id="local-6989586621679116665"><span class="annot"><a href="Language.PureScript.Interpreter.Prelude.html#prelude"><span class="hs-identifier hs-type">prelude</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679116665"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679116665"><span class="hs-identifier hs-type">m</span></a></span></span><span>
-</span><span id="line-19"></span><span id="prelude"><span class="annot"><span class="annottext">prelude :: FFI m
+</span><span id="line-8"></span><span class="hs-comment">-- | A tiny standard library.</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Language.PureScript.Interpreter.Prelude</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>  </span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Fix</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadFix</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Vector</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html"><span class="hs-identifier">Language.PureScript.Interpreter.FFI</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier">FFI</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html"><span class="hs-identifier">Language.PureScript.Interpreter.FFI.Builder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier">array</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier">boolean</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#string"><span class="hs-identifier">string</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier">number</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator">(~&gt;)</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.Builder.html"><span class="hs-identifier">Language.PureScript.Interpreter.FFI.Builder</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FFI</span></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span id="local-6989586621679116898"><span class="annot"><a href="Language.PureScript.Interpreter.Prelude.html#stdlib"><span class="hs-identifier hs-type">stdlib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679116898"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679116898"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">]</span></span><span>
+</span><span id="line-19"></span><span id="stdlib"><span class="annot"><span class="annottext">stdlib :: [FFI m]
+</span><a href="Language.PureScript.Interpreter.Prelude.html#stdlib"><span class="hs-identifier hs-var hs-var">stdlib</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FFI m
+forall (m :: * -&gt; *). MonadFix m =&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#prelude"><span class="hs-identifier hs-var">prelude</span></a></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">FFI m
+forall (m :: * -&gt; *). MonadFix m =&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeArray"><span class="hs-identifier hs-var">preludeArray</span></a></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">FFI m
+forall (m :: * -&gt; *). MonadFix m =&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeString"><span class="hs-identifier hs-var">preludeString</span></a></span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">FFI m
+forall (m :: * -&gt; *). MonadFix m =&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeNumber"><span class="hs-identifier hs-var">preludeNumber</span></a></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">FFI m
+forall (m :: * -&gt; *). MonadFix m =&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeBoolean"><span class="hs-identifier hs-var">preludeBoolean</span></a></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">]</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span id="local-6989586621679116961"><span class="annot"><a href="Language.PureScript.Interpreter.Prelude.html#prelude"><span class="hs-identifier hs-type">prelude</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679116961"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679116961"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-28"></span><span id="prelude"><span class="annot"><span class="annottext">prelude :: FFI m
 </span><a href="Language.PureScript.Interpreter.Prelude.html#prelude"><span class="hs-identifier hs-var hs-var">prelude</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#evalFFIBuilder"><span class="hs-identifier hs-var">FFI.evalFFIBuilder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
 </span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;Prelude&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-20"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><span id="line-29"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; (FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType
          m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m)))
@@ -34,9 +54,9 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;identity&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-21"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116659"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116659"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116659"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-30"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116887"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116887"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116887"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -44,11 +64,11 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116659"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-22"></span><span>    </span><span class="annot"><span class="annottext">Value m -&gt; EvalT m (Value m)
+</span><a href="#local-6989586621679116887"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="annottext">Value m -&gt; EvalT m (Value m)
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span>
-</span><span id="line-23"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><span id="line-32"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; (FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType m (Value m) (EvalT m (Value m))
@@ -67,11 +87,11 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;flip&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-24"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116658"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116658"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116657"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116657"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679116656"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116656"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116658"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-33"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116886"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116886"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116885"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116885"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679116884"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116884"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116886"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -82,7 +102,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116657"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116885"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -90,7 +110,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116656"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679116884"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
@@ -108,7 +128,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116657"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116885"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -119,7 +139,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116658"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116886"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -127,13 +147,20 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116656"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-25"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
+</span><a href="#local-6989586621679116884"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
 -&gt; Value m -&gt; Value m -&gt; EvalT m (Value m)
 forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
 </span><span class="hs-identifier hs-var">flip</span></span><span>
-</span><span id="line-26"></span><span>    </span><span>
-</span><span id="line-27"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><span id="line-35"></span><span>    </span><span>
+</span><span id="line-36"></span><span id="local-6989586621679116882"><span class="annot"><a href="Language.PureScript.Interpreter.Prelude.html#preludeArray"><span class="hs-identifier hs-type">preludeArray</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679116882"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679116882"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-37"></span><span id="preludeArray"><span class="annot"><span class="annottext">preludeArray :: FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeArray"><span class="hs-identifier hs-var hs-var">preludeArray</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
+forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#evalFFIBuilder"><span class="hs-identifier hs-var">FFI.evalFFIBuilder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prelude.Array&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-38"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; (FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType
@@ -151,10 +178,10 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;map&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-28"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116654"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116654"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116653"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116653"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116654"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-39"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116881"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116881"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116880"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116880"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116881"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -162,7 +189,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116653"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679116880"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
      m
@@ -183,7 +210,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116654"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679116881"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -198,14 +225,14 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116653"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-29"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; EvalT m (Value m))
+</span><a href="#local-6989586621679116880"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; EvalT m (Value m))
 -&gt; Vector (Value m) -&gt; EvalT m (Vector (Value m))
 forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
 (Traversable t, Applicative f) =&gt;
 (a -&gt; f b) -&gt; t a -&gt; f (t b)
 </span><span class="hs-identifier hs-var">traverse</span></span><span>
-</span><span id="line-30"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><span id="line-41"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; (FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType
          m
@@ -222,9 +249,9 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;filter&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-31"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116651"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116651"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116651"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-42"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116878"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116878"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116878"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m Bool (EvalT m Bool)
 -&gt; FunctionType
      m (Value m -&gt; EvalT m Bool) (Value m -&gt; EvalT m Bool)
@@ -253,7 +280,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116651"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679116878"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -268,14 +295,14 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116651"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-32"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; EvalT m Bool)
+</span><a href="#local-6989586621679116878"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; EvalT m Bool)
 -&gt; Vector (Value m) -&gt; EvalT m (Vector (Value m))
 forall (m :: * -&gt; *) a.
 Monad m =&gt;
 (a -&gt; m Bool) -&gt; Vector a -&gt; m (Vector a)
 </span><span class="hs-identifier hs-var">Vector.filterM</span></span><span>
-</span><span id="line-33"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><span id="line-44"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; (FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType
@@ -293,10 +320,10 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;foldl&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-34"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116649"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116649"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116648"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116648"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116648"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-45"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116876"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116876"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116875"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116875"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116875"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -307,7 +334,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116649"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116876"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -315,7 +342,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116648"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679116875"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
@@ -333,7 +360,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116648"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116875"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m
      (Vector (Value m) -&gt; EvalT m (Value m))
@@ -351,7 +378,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116649"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679116876"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m
@@ -361,14 +388,14 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116648"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-35"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
+</span><a href="#local-6989586621679116875"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
 -&gt; Value m -&gt; Vector (Value m) -&gt; EvalT m (Value m)
 forall (m :: * -&gt; *) a b.
 Monad m =&gt;
 (a -&gt; b -&gt; m a) -&gt; a -&gt; Vector b -&gt; m a
 </span><span class="hs-identifier hs-var">Vector.foldM</span></span><span>
-</span><span id="line-36"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><span id="line-47"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; (FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType m (Value m) (EvalT m (Value m))
@@ -393,11 +420,11 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;zipWith&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-37"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116646"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116646"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116645"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116645"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679116644"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116644"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116646"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-48"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116873"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116873"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679116872"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116872"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679116871"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116871"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116873"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -408,7 +435,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116645"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116872"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -416,7 +443,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116644"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679116871"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
@@ -445,7 +472,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116646"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679116873"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
      (Vector (Value m) -&gt; EvalT m (Vector (Value m)))
@@ -465,7 +492,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116645"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679116872"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -480,8 +507,8 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116644"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-38"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
+</span><a href="#local-6989586621679116871"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
 -&gt; Vector (Value m)
 -&gt; Vector (Value m)
 -&gt; EvalT m (Vector (Value m))
@@ -489,7 +516,7 @@ forall (m :: * -&gt; *) a b c.
 Monad m =&gt;
 (a -&gt; b -&gt; m c) -&gt; Vector a -&gt; Vector b -&gt; m (Vector c)
 </span><span class="hs-identifier hs-var">Vector.zipWithM</span></span><span>
-</span><span id="line-39"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><span id="line-50"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; (FunctionType m (Value m) (EvalT m (Value m))
     -&gt; FunctionType
          m
@@ -506,14 +533,14 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;append&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-40"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116642"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116642"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-51"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116869"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679116869"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116642"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679116869"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
      (Vector (Value m) -&gt; EvalT m (Vector (Value m)))
@@ -533,7 +560,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116642"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679116869"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -548,18 +575,25 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679116642"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-41"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116641"><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679116641"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679116640"><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679116640"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; EvalT m (Vector (Value m))
+</span><a href="#local-6989586621679116869"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116868"><span class="annot"><span class="annottext">Vector (Value m)
+</span><a href="#local-6989586621679116868"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679116867"><span class="annot"><span class="annottext">Vector (Value m)
+</span><a href="#local-6989586621679116867"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; EvalT m (Vector (Value m))
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679116641"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; Vector (Value m) -&gt; Vector (Value m)
+</span><a href="#local-6989586621679116868"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; Vector (Value m) -&gt; Vector (Value m)
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679116640"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-42"></span><span>  </span><span>
-</span><span id="line-43"></span><span>  </span><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679116867"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>  </span><span>
+</span><span id="line-54"></span><span id="local-6989586621679116866"><span class="annot"><a href="Language.PureScript.Interpreter.Prelude.html#preludeString"><span class="hs-identifier hs-type">preludeString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679116866"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679116866"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-55"></span><span id="preludeString"><span class="annot"><span class="annottext">preludeString :: FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeString"><span class="hs-identifier hs-var hs-var">preludeString</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
+forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#evalFFIBuilder"><span class="hs-identifier hs-var">FFI.evalFFIBuilder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prelude.String&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-56"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType
      m (Text -&gt; Text -&gt; EvalT m Text) (Text -&gt; Text -&gt; EvalT m Text)
 -&gt; (Text -&gt; Text -&gt; EvalT m Text)
@@ -569,8 +603,8 @@ forall (m :: * -&gt; *) a ty.
 Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;appendString&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-44"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Text (EvalT m Text)
+</span><span class="hs-string">&quot;append&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Text (EvalT m Text)
 forall (m :: * -&gt; *). FunctionType m Text (EvalT m Text)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#string"><span class="hs-identifier hs-var">string</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Text (EvalT m Text)
 -&gt; FunctionType m (Text -&gt; EvalT m Text) (Text -&gt; EvalT m Text)
@@ -590,281 +624,23 @@ FunctionType m al ar
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Text (EvalT m Text)
 forall (m :: * -&gt; *). FunctionType m Text (EvalT m Text)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#string"><span class="hs-identifier hs-var">string</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-45"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116639"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679116639"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679116638"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679116638"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; EvalT m Text
+</span><span id="line-58"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116865"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679116865"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679116864"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679116864"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; EvalT m Text
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679116639"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+</span><a href="#local-6989586621679116865"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679116638"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-46"></span><span>    </span><span>
-</span><span id="line-47"></span><span>  </span><span class="annot"><span class="annottext">Ident
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; FFIBuilder m ()
-forall (m :: * -&gt; *) a ty.
-(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
-Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
-</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;add&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-48"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-49"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116637"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116637"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116636"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116636"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
-forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
-</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116637"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
-forall a. Num a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116636"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-50"></span><span>  </span><span class="annot"><span class="annottext">Ident
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; FFIBuilder m ()
-forall (m :: * -&gt; *) a ty.
-(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
-Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
-</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;sub&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-51"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-52"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116634"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116634"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116633"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116633"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
-forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
-</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116634"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
-forall a. Num a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116633"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-53"></span><span>  </span><span class="annot"><span class="annottext">Ident
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; FFIBuilder m ()
-forall (m :: * -&gt; *) a ty.
-(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
-Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
-</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;mul&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-54"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-55"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116632"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116632"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116631"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116631"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
-forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
-</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116632"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
-forall a. Num a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116631"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-56"></span><span>  </span><span class="annot"><span class="annottext">Ident
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; FFIBuilder m ()
-forall (m :: * -&gt; *) a ty.
-(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
-Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
-</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;div&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-57"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-58"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116629"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116629"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116628"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116628"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
-forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
-</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116629"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
-forall a. Fractional a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116628"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-59"></span><span>  </span><span class="annot"><span class="annottext">Ident
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
--&gt; FFIBuilder m ()
-forall (m :: * -&gt; *) a ty.
-(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
-Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
-</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;min&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-60"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType m Scientific (EvalT m Scientific)
--&gt; FunctionType
-     m
-     (Scientific -&gt; EvalT m Scientific)
-     (Scientific -&gt; EvalT m Scientific)
-forall (m :: * -&gt; *) al ar bl br.
-FunctionType m al ar
--&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
-forall (m :: * -&gt; *).
-FunctionType m Scientific (EvalT m Scientific)
-</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-61"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116626"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116626"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116625"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116625"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
-forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
-</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116626"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
-forall a. Ord a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-operator hs-var">`min`</span></span><span> </span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116625"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679116864"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>    </span><span>
+</span><span id="line-60"></span><span id="local-6989586621679116863"><span class="annot"><a href="Language.PureScript.Interpreter.Prelude.html#preludeNumber"><span class="hs-identifier hs-type">preludeNumber</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679116863"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679116863"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-61"></span><span id="preludeNumber"><span class="annot"><span class="annottext">preludeNumber :: FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeNumber"><span class="hs-identifier hs-var hs-var">preludeNumber</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
+forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#evalFFIBuilder"><span class="hs-identifier hs-var">FFI.evalFFIBuilder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prelude.Number&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-62"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType
      m
@@ -877,7 +653,7 @@ forall (m :: * -&gt; *) a ty.
 Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;max&quot;</span></span><span class="hs-special">)</span><span>
+</span><span class="hs-string">&quot;add&quot;</span></span><span class="hs-special">)</span><span>
 </span><span id="line-63"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
 forall (m :: * -&gt; *).
 FunctionType m Scientific (EvalT m Scientific)
@@ -909,27 +685,309 @@ FunctionType m al ar
 forall (m :: * -&gt; *).
 FunctionType m Scientific (EvalT m Scientific)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-64"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116623"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116623"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116622"><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116622"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
+</span><span id="line-64"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116862"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116862"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116861"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116861"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116623"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
-forall a. Ord a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-operator hs-var">`max`</span></span><span> </span><span class="annot"><span class="annottext">Scientific
-</span><a href="#local-6989586621679116622"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-65"></span><span>  </span><span>
-</span><span id="line-66"></span><span>  </span><span class="annot"><span class="annottext">Ident
--&gt; FunctionType m (Bool -&gt; EvalT m Bool) (Bool -&gt; EvalT m Bool)
--&gt; (Bool -&gt; EvalT m Bool)
+</span><a href="#local-6989586621679116862"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116861"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
 -&gt; FFIBuilder m ()
 forall (m :: * -&gt; *) a ty.
 (MonadFix m, ToValue m a, ForAll m a ty) =&gt;
 Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><span class="hs-string">&quot;not&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-67"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+</span><span class="hs-string">&quot;subtract&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116859"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116859"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116858"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116858"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116859"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116858"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; FFIBuilder m ()
+forall (m :: * -&gt; *) a ty.
+(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
+Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;multiply&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116857"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116857"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116856"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116856"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116857"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116856"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; FFIBuilder m ()
+forall (m :: * -&gt; *) a ty.
+(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
+Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;divide&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116854"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116854"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116853"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116853"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116854"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116853"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; FFIBuilder m ()
+forall (m :: * -&gt; *) a ty.
+(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
+Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;min&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116851"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116851"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116850"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116850"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116851"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">`min`</span></span><span> </span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116850"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+-&gt; FFIBuilder m ()
+forall (m :: * -&gt; *) a ty.
+(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
+Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;max&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType m Scientific (EvalT m Scientific)
+-&gt; FunctionType
+     m
+     (Scientific -&gt; EvalT m Scientific)
+     (Scientific -&gt; EvalT m Scientific)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Scientific (EvalT m Scientific)
+forall (m :: * -&gt; *).
+FunctionType m Scientific (EvalT m Scientific)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116848"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116848"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116847"><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116847"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; EvalT m Scientific
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116848"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Scientific -&gt; Scientific -&gt; Scientific
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">`max`</span></span><span> </span><span class="annot"><span class="annottext">Scientific
+</span><a href="#local-6989586621679116847"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>  </span><span>
+</span><span id="line-81"></span><span id="local-6989586621679116845"><span class="annot"><a href="Language.PureScript.Interpreter.Prelude.html#preludeBoolean"><span class="hs-identifier hs-type">preludeBoolean</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679116845"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Language.PureScript.Interpreter.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679116845"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-82"></span><span id="preludeBoolean"><span class="annot"><span class="annottext">preludeBoolean :: FFI m
+</span><a href="Language.PureScript.Interpreter.Prelude.html#preludeBoolean"><span class="hs-identifier hs-var hs-var">preludeBoolean</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
+forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#evalFFIBuilder"><span class="hs-identifier hs-var">FFI.evalFFIBuilder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prelude.Boolean&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-83"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType
+     m (Bool -&gt; Bool -&gt; EvalT m Bool) (Bool -&gt; Bool -&gt; EvalT m Bool)
+-&gt; (Bool -&gt; Bool -&gt; EvalT m Bool)
+-&gt; FFIBuilder m ()
+forall (m :: * -&gt; *) a ty.
+(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
+Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;and&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+-&gt; FunctionType m (Bool -&gt; EvalT m Bool) (Bool -&gt; EvalT m Bool)
+-&gt; FunctionType
+     m (Bool -&gt; Bool -&gt; EvalT m Bool) (Bool -&gt; Bool -&gt; EvalT m Bool)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
 forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
 -&gt; FunctionType m Bool (EvalT m Bool)
@@ -940,10 +998,78 @@ FunctionType m al ar
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
 forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
 </span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-68"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
+</span><span id="line-85"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116844"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116844"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116843"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116843"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116844"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116843"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType
+     m (Bool -&gt; Bool -&gt; EvalT m Bool) (Bool -&gt; Bool -&gt; EvalT m Bool)
+-&gt; (Bool -&gt; Bool -&gt; EvalT m Bool)
+-&gt; FFIBuilder m ()
+forall (m :: * -&gt; *) a ty.
+(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
+Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;or&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+-&gt; FunctionType m (Bool -&gt; EvalT m Bool) (Bool -&gt; EvalT m Bool)
+-&gt; FunctionType
+     m (Bool -&gt; Bool -&gt; EvalT m Bool) (Bool -&gt; Bool -&gt; EvalT m Bool)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+-&gt; FunctionType m Bool (EvalT m Bool)
+-&gt; FunctionType m (Bool -&gt; EvalT m Bool) (Bool -&gt; EvalT m Bool)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679116841"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116841"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679116840"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116840"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116841"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679116840"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>  </span><span class="annot"><span class="annottext">Ident
+-&gt; FunctionType m (Bool -&gt; EvalT m Bool) (Bool -&gt; EvalT m Bool)
+-&gt; (Bool -&gt; EvalT m Bool)
+-&gt; FFIBuilder m ()
+forall (m :: * -&gt; *) a ty.
+(MonadFix m, ToValue m a, ForAll m a ty) =&gt;
+Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;not&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+-&gt; FunctionType m Bool (EvalT m Bool)
+-&gt; FunctionType m (Bool -&gt; EvalT m Bool) (Bool -&gt; EvalT m Bool)
+forall (m :: * -&gt; *) al ar bl br.
+FunctionType m al ar
+-&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
+forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
+</span><a href="Language.PureScript.Interpreter.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; EvalT m Bool) -&gt; (Bool -&gt; Bool) -&gt; Bool -&gt; EvalT m Bool
 forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 </span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
 </span><span class="hs-identifier hs-var">not</span></span><span class="hs-special">)</span><span>
-</span><span id="line-69"></span></pre></body></html>
+</span><span id="line-92"></span></pre></body></html>

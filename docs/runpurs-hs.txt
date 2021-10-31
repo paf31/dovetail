@@ -420,10 +420,15 @@ instance GHC.Base.Monoid (Language.PureScript.Interpreter.FFI.Builder.ForeignImp
 instance Language.PureScript.Interpreter.FFI.Builder.ForAll m a (Language.PureScript.Interpreter.FFI.Builder.FunctionType m a r_)
 instance (Language.PureScript.Interpreter.FFI.Builder.ForAll m r o, a GHC.Types.~ Language.PureScript.Interpreter.FFI.Builder.FunctionType m (Language.PureScript.Interpreter.Types.Value m) (Language.PureScript.Interpreter.Types.EvalT m (Language.PureScript.Interpreter.Types.Value m))) => Language.PureScript.Interpreter.FFI.Builder.ForAll m r (a -> o)
 
-module Language.PureScript.Interpreter.Prelude
 
 -- | A tiny standard library.
+module Language.PureScript.Interpreter.Prelude
+stdlib :: MonadFix m => [FFI m]
 prelude :: MonadFix m => FFI m
+preludeArray :: MonadFix m => FFI m
+preludeString :: MonadFix m => FFI m
+preludeNumber :: MonadFix m => FFI m
+preludeBoolean :: MonadFix m => FFI m
 
 module Language.PureScript.Make.Simplified
 data BuildError

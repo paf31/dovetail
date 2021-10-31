@@ -34,12 +34,13 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
 import Data.ByteString.Lazy.Char8 qualified as BL8
+import Data.Foldable (traverse_)
 import Data.Text.IO qualified as Text
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Interpreter
 import Language.PureScript.Interpreter qualified as Interpreter
 import Language.PureScript.Interpreter.JSON (JSON(..))
-import Language.PureScript.Interpreter.Prelude (prelude)
+import Language.PureScript.Interpreter.Prelude (stdlib)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.IO (stdin)
@@ -53,7 +54,7 @@ main = do
   -- Compile the PureScript CoreFn output for the module
   let buildResult :: Either InterpretError (JSON Aeson.Value -> Interpreter.Eval (JSON Aeson.Value))
       buildResult = runInterpret do
-        ffi prelude
+        traverse_ ffi stdlib
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
         evalMain moduleName
   

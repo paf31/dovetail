@@ -21,6 +21,7 @@
 -- @
 --   cat build.purs
 --   module Main where
+--   import Choose (choose)
 --   main = { foo: choose [1, 2, 3] }
 --   ⏎
 --
@@ -36,6 +37,7 @@ import Control.Monad.Trans.State (evalStateT)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
+import Data.Foldable (traverse_)
 import Data.Text.IO qualified as Text
 import Data.Vector ((!))
 import Language.PureScript qualified as P
@@ -44,7 +46,7 @@ import Language.PureScript.Interpreter
 import Language.PureScript.Interpreter qualified as Interpreter
 import Language.PureScript.Interpreter.FFI.Builder qualified as FFI
 import Language.PureScript.Interpreter.JSON (JSON(..))
-import Language.PureScript.Interpreter.Prelude (prelude)
+import Language.PureScript.Interpreter.Prelude (stdlib)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.Random qualified as Random
@@ -61,7 +63,7 @@ main = do
         :: (MonadState Random.StdGen m, MonadFix m)
         => m (Either InterpretError (EvalT m (JSON Aeson.Value)))
       buildResult = runInterpretT do
-        ffi prelude
+        traverse_ ffi stdlib
         
         -- This example defines a single interesting function on the
         -- Haskell side: the @choose@ function demonstrates the idea of using

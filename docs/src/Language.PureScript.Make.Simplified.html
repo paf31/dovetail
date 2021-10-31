@@ -27,7 +27,7 @@
 </span><span id="line-27"></span><span class="hs-keyword">data</span><span> </span><span id="BuildError"><span class="annot"><a href="Language.PureScript.Make.Simplified.html#BuildError"><span class="hs-identifier hs-var">BuildError</span></a></span></span><span>
 </span><span id="line-28"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="UnableToParse"><span class="annot"><a href="Language.PureScript.Make.Simplified.html#UnableToParse"><span class="hs-identifier hs-var">UnableToParse</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">NonEmpty</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">CST.ParserError</span></span><span class="hs-special">)</span><span>
 </span><span id="line-29"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="UnableToCompile"><span class="annot"><a href="Language.PureScript.Make.Simplified.html#UnableToCompile"><span class="hs-identifier hs-var">UnableToCompile</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Errors.MultipleErrors</span></span><span>
-</span><span id="line-30"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span id="local-6989586621679116804"><span id="local-6989586621679116806"><span id="local-6989586621679116808"><span class="annot"><span class="annottext">Int -&gt; BuildError -&gt; ShowS
+</span><span id="line-30"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span id="local-6989586621679117043"><span id="local-6989586621679117045"><span id="local-6989586621679117047"><span class="annot"><span class="annottext">Int -&gt; BuildError -&gt; ShowS
 [BuildError] -&gt; ShowS
 BuildError -&gt; String
 (Int -&gt; BuildError -&gt; ShowS)
@@ -46,8 +46,8 @@ $cshowsPrec :: Int -&gt; BuildError -&gt; ShowS
 </span><span id="line-31"></span><span>
 </span><span id="line-32"></span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#renderBuildError"><span class="hs-identifier hs-type">renderBuildError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#BuildError"><span class="hs-identifier hs-type">BuildError</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
 </span><span id="line-33"></span><span id="renderBuildError"><span class="annot"><span class="annottext">renderBuildError :: BuildError -&gt; String
-</span><a href="Language.PureScript.Make.Simplified.html#renderBuildError"><span class="hs-identifier hs-var hs-var">renderBuildError</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#UnableToParse"><span class="hs-identifier hs-type">UnableToParse</span></a></span><span> </span><span id="local-6989586621679116801"><span class="annot"><span class="annottext">NonEmpty ParserError
-</span><a href="#local-6989586621679116801"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><a href="Language.PureScript.Make.Simplified.html#renderBuildError"><span class="hs-identifier hs-var hs-var">renderBuildError</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#UnableToParse"><span class="hs-identifier hs-type">UnableToParse</span></a></span><span> </span><span id="local-6989586621679117040"><span class="annot"><span class="annottext">NonEmpty ParserError
+</span><a href="#local-6989586621679117040"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
 </span><span id="line-34"></span><span>  </span><span class="annot"><span class="annottext">[String] -&gt; String
 </span><span class="hs-identifier hs-var">unlines</span></span><span> </span><span class="annot"><span class="annottext">([String] -&gt; String) -&gt; [String] -&gt; String
 forall a b. (a -&gt; b) -&gt; a -&gt; b
@@ -61,59 +61,59 @@ forall a. NonEmpty a -&gt; [a]
 forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
 </span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">ParserError -&gt; String
 </span><span class="hs-identifier hs-var">CST.prettyPrintError</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty ParserError
-</span><a href="#local-6989586621679116801"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-36"></span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#renderBuildError"><span class="hs-identifier hs-var">renderBuildError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#UnableToCompile"><span class="hs-identifier hs-type">UnableToCompile</span></a></span><span> </span><span id="local-6989586621679116797"><span class="annot"><span class="annottext">MultipleErrors
-</span><a href="#local-6989586621679116797"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><a href="#local-6989586621679117040"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#renderBuildError"><span class="hs-identifier hs-var">renderBuildError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#UnableToCompile"><span class="hs-identifier hs-type">UnableToCompile</span></a></span><span> </span><span id="local-6989586621679117036"><span class="annot"><span class="annottext">MultipleErrors
+</span><a href="#local-6989586621679117036"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
 </span><span id="line-37"></span><span>  </span><span class="annot"><span class="annottext">PPEOptions -&gt; MultipleErrors -&gt; String
 </span><span class="hs-identifier hs-var">Errors.prettyPrintMultipleErrors</span></span><span> </span><span class="annot"><span class="annottext">PPEOptions
 </span><span class="hs-identifier hs-var">Errors.defaultPPEOptions</span></span><span> </span><span class="annot"><span class="annottext">MultipleErrors
-</span><a href="#local-6989586621679116797"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><a href="#local-6989586621679117036"><span class="hs-identifier hs-var">xs</span></a></span><span>
 </span><span id="line-38"></span><span>
 </span><span id="line-39"></span><span class="hs-comment">-- | Parse and build a single PureScript module, returning the compiled CoreFn</span><span>
 </span><span id="line-40"></span><span class="hs-comment">-- module.</span><span>
 </span><span id="line-41"></span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#buildSingleModule"><span class="hs-identifier hs-type">buildSingleModule</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">P.ExternsFile</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Language.PureScript.Make.Simplified.html#BuildError"><span class="hs-identifier hs-type">BuildError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Module</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Ann</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.ExternsFile</span></span><span class="hs-special">)</span><span>
 </span><span id="line-42"></span><span id="buildSingleModule"><span class="annot"><span class="annottext">buildSingleModule :: [ExternsFile]
 -&gt; Text -&gt; Either BuildError (Module Ann, ExternsFile)
-</span><a href="Language.PureScript.Make.Simplified.html#buildSingleModule"><span class="hs-identifier hs-var hs-var">buildSingleModule</span></a></span></span><span> </span><span id="local-6989586621679116793"><span class="annot"><span class="annottext">[ExternsFile]
-</span><a href="#local-6989586621679116793"><span class="hs-identifier hs-var">externs</span></a></span></span><span> </span><span id="local-6989586621679116792"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679116792"><span class="hs-identifier hs-var">moduleText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><a href="Language.PureScript.Make.Simplified.html#buildSingleModule"><span class="hs-identifier hs-var hs-var">buildSingleModule</span></a></span></span><span> </span><span id="local-6989586621679117032"><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117032"><span class="hs-identifier hs-var">externs</span></a></span></span><span> </span><span id="local-6989586621679117031"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679117031"><span class="hs-identifier hs-var">moduleText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-43"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String
 -&gt; Text -&gt; ([ParserWarning], Either (NonEmpty ParserError) Module)
 </span><span class="hs-identifier hs-var">CST.parseFromFile</span></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;&lt;input&gt;&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679116792"><span class="hs-identifier hs-var">moduleText</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><a href="#local-6989586621679117031"><span class="hs-identifier hs-var">moduleText</span></a></span><span> </span><span class="hs-keyword">of</span><span>
 </span><span id="line-44"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[ParserWarning]
-</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679116790"><span class="annot"><span class="annottext">NonEmpty ParserError
-</span><a href="#local-6989586621679116790"><span class="hs-identifier hs-var">errs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679117029"><span class="annot"><span class="annottext">NonEmpty ParserError
+</span><a href="#local-6989586621679117029"><span class="hs-identifier hs-var">errs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
 </span><span id="line-45"></span><span>      </span><span class="annot"><span class="annottext">BuildError -&gt; Either BuildError (Module Ann, ExternsFile)
 forall a b. a -&gt; Either a b
 </span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonEmpty ParserError -&gt; BuildError
 </span><a href="Language.PureScript.Make.Simplified.html#UnableToParse"><span class="hs-identifier hs-var">UnableToParse</span></a></span><span> </span><span class="annot"><span class="annottext">NonEmpty ParserError
-</span><a href="#local-6989586621679116790"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679117029"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-46"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[ParserWarning]
-</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679116789"><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116789"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679117028"><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679117028"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
 </span><span id="line-47"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
 -&gt; Module
 -&gt; Either
      MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
 </span><a href="Language.PureScript.Make.Simplified.html#buildCoreFnOnly"><span class="hs-identifier hs-var">buildCoreFnOnly</span></a></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
-</span><a href="#local-6989586621679116793"><span class="hs-identifier hs-var">externs</span></a></span><span> </span><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116789"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-48"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679116787"><span class="annot"><span class="annottext">MultipleErrors
-</span><a href="#local-6989586621679116787"><span class="hs-identifier hs-var">errs</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><a href="#local-6989586621679117032"><span class="hs-identifier hs-var">externs</span></a></span><span> </span><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679117028"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-48"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679117026"><span class="annot"><span class="annottext">MultipleErrors
+</span><a href="#local-6989586621679117026"><span class="hs-identifier hs-var">errs</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
 </span><span id="line-49"></span><span>          </span><span class="annot"><span class="annottext">BuildError -&gt; Either BuildError (Module Ann, ExternsFile)
 forall a b. a -&gt; Either a b
 </span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MultipleErrors -&gt; BuildError
 </span><a href="Language.PureScript.Make.Simplified.html#UnableToCompile"><span class="hs-identifier hs-var">UnableToCompile</span></a></span><span> </span><span class="annot"><span class="annottext">MultipleErrors
-</span><a href="#local-6989586621679116787"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-50"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679116786"><span class="annot"><span class="annottext">(Module Ann, ExternsFile)
-</span><a href="#local-6989586621679116786"><span class="hs-identifier hs-var">result</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">MultipleErrors
+</span><a href="#local-6989586621679117026"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679117025"><span class="annot"><span class="annottext">(Module Ann, ExternsFile)
+</span><a href="#local-6989586621679117025"><span class="hs-identifier hs-var">result</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">MultipleErrors
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Module Ann, ExternsFile)
 -&gt; Either BuildError (Module Ann, ExternsFile)
 forall a b. b -&gt; Either a b
 </span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(Module Ann, ExternsFile)
-</span><a href="#local-6989586621679116786"><span class="hs-identifier hs-var">result</span></a></span><span>
+</span><a href="#local-6989586621679117025"><span class="hs-identifier hs-var">result</span></a></span><span>
 </span><span id="line-51"></span><span>
 </span><span id="line-52"></span><span class="hs-comment">-- | Compile a single 'AST.Module' into a CoreFn module.</span><span>
 </span><span id="line-53"></span><span class="hs-comment">--</span><span>
@@ -131,12 +131,12 @@ forall a b. b -&gt; Either a b
 -&gt; Module
 -&gt; Either
      MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
-</span><a href="Language.PureScript.Make.Simplified.html#buildCoreFnOnly"><span class="hs-identifier hs-var hs-var">buildCoreFnOnly</span></a></span></span><span> </span><span id="local-6989586621679116785"><span class="annot"><span class="annottext">[ExternsFile]
-</span><a href="#local-6989586621679116785"><span class="hs-identifier hs-var">externs</span></a></span></span><span> </span><span id="local-6989586621679116784"><span class="annot"><span class="annottext">m :: Module
-</span><a href="#local-6989586621679116784"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">AST.Module</span></span><span> </span><span class="annot"><span class="annottext">SourceSpan
+</span><a href="Language.PureScript.Make.Simplified.html#buildCoreFnOnly"><span class="hs-identifier hs-var hs-var">buildCoreFnOnly</span></a></span></span><span> </span><span id="local-6989586621679117024"><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117024"><span class="hs-identifier hs-var">externs</span></a></span></span><span> </span><span id="local-6989586621679117023"><span class="annot"><span class="annottext">m :: Module
+</span><a href="#local-6989586621679117023"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">AST.Module</span></span><span> </span><span class="annot"><span class="annottext">SourceSpan
 </span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">[Comment]
-</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679116782"><span class="annot"><span class="annottext">ModuleName
-</span><a href="#local-6989586621679116782"><span class="hs-identifier hs-var">moduleName</span></a></span></span><span> </span><span class="annot"><span class="annottext">[Declaration]
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679117021"><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679117021"><span class="hs-identifier hs-var">moduleName</span></a></span></span><span> </span><span class="annot"><span class="annottext">[Declaration]
 </span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Maybe [DeclarationRef]
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WriterT
   MultipleErrors (Either MultipleErrors) (Module Ann, ExternsFile)
@@ -153,12 +153,12 @@ forall w (m :: * -&gt; *) a. WriterT w m a -&gt; m (a, w)
      MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-65"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679116781"><span class="annot"><span class="annottext">withPrim :: Module
-</span><a href="#local-6989586621679116781"><span class="hs-identifier hs-var hs-var">withPrim</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module -&gt; Module
+</span><span id="line-65"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679117020"><span class="annot"><span class="annottext">withPrim :: Module
+</span><a href="#local-6989586621679117020"><span class="hs-identifier hs-var hs-var">withPrim</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module -&gt; Module
 </span><span class="hs-identifier hs-var">P.importPrim</span></span><span> </span><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116784"><span class="hs-identifier hs-var">m</span></a></span><span>
-</span><span id="line-66"></span><span>      </span><span id="local-6989586621679116779"><span class="annot"><span class="annottext">env :: Environment
-</span><a href="#local-6989586621679116779"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Environment -&gt; ExternsFile -&gt; Environment)
+</span><a href="#local-6989586621679117023"><span class="hs-identifier hs-var">m</span></a></span><span>
+</span><span id="line-66"></span><span>      </span><span id="local-6989586621679117018"><span class="annot"><span class="annottext">env :: Environment
+</span><a href="#local-6989586621679117018"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Environment -&gt; ExternsFile -&gt; Environment)
 -&gt; Environment -&gt; [ExternsFile] -&gt; Environment
 forall (t :: * -&gt; *) b a.
 Foldable t =&gt;
@@ -169,9 +169,9 @@ forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
 </span><span class="hs-identifier hs-var">flip</span></span><span> </span><span class="annot"><span class="annottext">ExternsFile -&gt; Environment -&gt; Environment
 </span><span class="hs-identifier hs-var">P.applyExternsFileToEnvironment</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Environment
 </span><span class="hs-identifier hs-var">P.initEnvironment</span></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
-</span><a href="#local-6989586621679116785"><span class="hs-identifier hs-var">externs</span></a></span><span>
-</span><span id="line-67"></span><span>  </span><span id="local-6989586621679116775"><span class="annot"><span class="annottext">Env
-</span><a href="#local-6989586621679116775"><span class="hs-identifier hs-var">exEnv</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">((Env, MultipleErrors) -&gt; Env)
+</span><a href="#local-6989586621679117024"><span class="hs-identifier hs-var">externs</span></a></span><span>
+</span><span id="line-67"></span><span>  </span><span id="local-6989586621679117014"><span class="annot"><span class="annottext">Env
+</span><a href="#local-6989586621679117014"><span class="hs-identifier hs-var">exEnv</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">((Env, MultipleErrors) -&gt; Env)
 -&gt; WriterT
      MultipleErrors (Either MultipleErrors) (Env, MultipleErrors)
 -&gt; WriterT MultipleErrors (Either MultipleErrors) Env
@@ -223,7 +223,7 @@ forall (m :: * -&gt; *).
 Env -&gt; ExternsFile -&gt; m Env
 </span><span class="hs-identifier hs-var">P.externsEnv</span></span><span> </span><span class="annot"><span class="annottext">Env
 </span><span class="hs-identifier hs-var">Env.primEnv</span></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
-</span><a href="#local-6989586621679116785"><span class="hs-identifier hs-var">externs</span></a></span><span>
+</span><a href="#local-6989586621679117024"><span class="hs-identifier hs-var">externs</span></a></span><span>
 </span><span id="line-68"></span><span>  </span><span class="annot"><span class="annottext">Integer
 -&gt; SupplyT
      (WriterT MultipleErrors (Either MultipleErrors))
@@ -244,9 +244,9 @@ forall (m :: * -&gt; *) a. Functor m =&gt; Integer -&gt; SupplyT m a -&gt; m a
      MultipleErrors (Either MultipleErrors) (Module Ann, ExternsFile)
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-69"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679116771"><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116771"><span class="hs-identifier hs-var">desugared</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679116770"><span class="annot"><span class="annottext">Env
-</span><a href="#local-6989586621679116770"><span class="hs-identifier hs-var">exEnv'</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">UsedImports
+</span><span id="line-69"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679117010"><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679117010"><span class="hs-identifier hs-var">desugared</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679117009"><span class="annot"><span class="annottext">Env
+</span><a href="#local-6989586621679117009"><span class="hs-identifier hs-var">exEnv'</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">UsedImports
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT
   (Env, UsedImports)
   (SupplyT (WriterT MultipleErrors (Either MultipleErrors)))
@@ -267,23 +267,23 @@ forall (m :: * -&gt; *).
  MonadWriter MultipleErrors m, MonadState (Env, UsedImports) m) =&gt;
 [ExternsFile] -&gt; Module -&gt; m Module
 </span><span class="hs-identifier hs-var">P.desugar</span></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
-</span><a href="#local-6989586621679116785"><span class="hs-identifier hs-var">externs</span></a></span><span> </span><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116781"><span class="hs-identifier hs-var">withPrim</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Env
-</span><a href="#local-6989586621679116775"><span class="hs-identifier hs-var">exEnv</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">UsedImports
+</span><a href="#local-6989586621679117024"><span class="hs-identifier hs-var">externs</span></a></span><span> </span><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679117020"><span class="hs-identifier hs-var">withPrim</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Env
+</span><a href="#local-6989586621679117014"><span class="hs-identifier hs-var">exEnv</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">UsedImports
 forall a. Monoid a =&gt; a
 </span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
-</span><span id="line-70"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679116768"><span class="annot"><span class="annottext">modulesExports :: Map ModuleName Exports
-</span><a href="#local-6989586621679116768"><span class="hs-identifier hs-var hs-var">modulesExports</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceSpan
+</span><span id="line-70"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679117007"><span class="annot"><span class="annottext">modulesExports :: Map ModuleName Exports
+</span><a href="#local-6989586621679117007"><span class="hs-identifier hs-var hs-var">modulesExports</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceSpan
 </span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Imports
-</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679116767"><span class="annot"><span class="annottext">Exports
-</span><a href="#local-6989586621679116767"><span class="hs-identifier hs-var">exports</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Exports
-</span><a href="#local-6989586621679116767"><span class="hs-identifier hs-var">exports</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((SourceSpan, Imports, Exports) -&gt; Exports)
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117006"><span class="annot"><span class="annottext">Exports
+</span><a href="#local-6989586621679117006"><span class="hs-identifier hs-var">exports</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Exports
+</span><a href="#local-6989586621679117006"><span class="hs-identifier hs-var">exports</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((SourceSpan, Imports, Exports) -&gt; Exports)
 -&gt; Env -&gt; Map ModuleName Exports
 forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
 </span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Env
-</span><a href="#local-6989586621679116770"><span class="hs-identifier hs-var">exEnv'</span></a></span><span>
-</span><span id="line-71"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679116765"><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116765"><span class="hs-identifier hs-var">checked</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TC.CheckState</span></span><span class="hs-special">{</span><span id="local-6989586621679116755"><span id="local-6989586621679116756"><span id="local-6989586621679116757"><span id="local-6989586621679116758"><span id="local-6989586621679116759"><span id="local-6989586621679116760"><span id="local-6989586621679116761"><span id="local-6989586621679116762"><span id="local-6989586621679116763"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117009"><span class="hs-identifier hs-var">exEnv'</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679117004"><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679117004"><span class="hs-identifier hs-var">checked</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TC.CheckState</span></span><span class="hs-special">{</span><span id="local-6989586621679116994"><span id="local-6989586621679116995"><span id="local-6989586621679116996"><span id="local-6989586621679116997"><span id="local-6989586621679116998"><span id="local-6989586621679116999"><span id="local-6989586621679117000"><span id="local-6989586621679117001"><span id="local-6989586621679117002"><span class="annot"><span class="annottext">Int
 [(SourceAnn, ModuleName, ImportDeclarationType, Maybe ModuleName,
   Map
     (ProperName 'TypeName)
@@ -340,8 +340,8 @@ forall (m :: * -&gt; *).
  MonadError MultipleErrors m, MonadWriter MultipleErrors m) =&gt;
 Map ModuleName Exports -&gt; Module -&gt; m Module
 </span><span class="hs-identifier hs-var">P.typeCheckModule</span></span><span> </span><span class="annot"><span class="annottext">Map ModuleName Exports
-</span><a href="#local-6989586621679116768"><span class="hs-identifier hs-var">modulesExports</span></a></span><span> </span><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116771"><span class="hs-identifier hs-var">desugared</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(CheckState
+</span><a href="#local-6989586621679117007"><span class="hs-identifier hs-var">modulesExports</span></a></span><span> </span><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679117010"><span class="hs-identifier hs-var">desugared</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(CheckState
  -&gt; SupplyT
       (WriterT MultipleErrors (Either MultipleErrors))
       (Module, CheckState))
@@ -352,25 +352,25 @@ Map ModuleName Exports -&gt; Module -&gt; m Module
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Environment -&gt; CheckState
 </span><span class="hs-identifier hs-var">TC.emptyCheckState</span></span><span> </span><span class="annot"><span class="annottext">Environment
-</span><a href="#local-6989586621679116779"><span class="hs-identifier hs-var">env</span></a></span><span>
-</span><span id="line-72"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span class="annot"><span class="hs-identifier hs-type">AST.Module</span></span><span> </span><span id="local-6989586621679116743"><span class="annot"><span class="annottext">SourceSpan
-</span><a href="#local-6989586621679116743"><span class="hs-identifier hs-var">ss</span></a></span></span><span> </span><span id="local-6989586621679116742"><span class="annot"><span class="annottext">[Comment]
-</span><a href="#local-6989586621679116742"><span class="hs-identifier hs-var">coms</span></a></span></span><span> </span><span class="annot"><span class="annottext">ModuleName
-</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679116741"><span class="annot"><span class="annottext">[Declaration]
-</span><a href="#local-6989586621679116741"><span class="hs-identifier hs-var">elaborated</span></a></span></span><span> </span><span id="local-6989586621679116740"><span class="annot"><span class="annottext">Maybe [DeclarationRef]
-</span><a href="#local-6989586621679116740"><span class="hs-identifier hs-var">exps</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116765"><span class="hs-identifier hs-var">checked</span></a></span><span>
-</span><span id="line-73"></span><span>    </span><span id="local-6989586621679116739"><span class="annot"><span class="annottext">[Declaration]
-</span><a href="#local-6989586621679116739"><span class="hs-identifier hs-var">deguarded</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Declaration]
+</span><a href="#local-6989586621679117018"><span class="hs-identifier hs-var">env</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span class="annot"><span class="hs-identifier hs-type">AST.Module</span></span><span> </span><span id="local-6989586621679116982"><span class="annot"><span class="annottext">SourceSpan
+</span><a href="#local-6989586621679116982"><span class="hs-identifier hs-var">ss</span></a></span></span><span> </span><span id="local-6989586621679116981"><span class="annot"><span class="annottext">[Comment]
+</span><a href="#local-6989586621679116981"><span class="hs-identifier hs-var">coms</span></a></span></span><span> </span><span class="annot"><span class="annottext">ModuleName
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679116980"><span class="annot"><span class="annottext">[Declaration]
+</span><a href="#local-6989586621679116980"><span class="hs-identifier hs-var">elaborated</span></a></span></span><span> </span><span id="local-6989586621679116979"><span class="annot"><span class="annottext">Maybe [DeclarationRef]
+</span><a href="#local-6989586621679116979"><span class="hs-identifier hs-var">exps</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679117004"><span class="hs-identifier hs-var">checked</span></a></span><span>
+</span><span id="line-73"></span><span>    </span><span id="local-6989586621679116978"><span class="annot"><span class="annottext">[Declaration]
+</span><a href="#local-6989586621679116978"><span class="hs-identifier hs-var">deguarded</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Declaration]
 -&gt; SupplyT
      (WriterT MultipleErrors (Either MultipleErrors)) [Declaration]
 forall (m :: * -&gt; *).
 (MonadSupply m, MonadError MultipleErrors m) =&gt;
 [Declaration] -&gt; m [Declaration]
 </span><span class="hs-identifier hs-var">P.desugarCaseGuards</span></span><span> </span><span class="annot"><span class="annottext">[Declaration]
-</span><a href="#local-6989586621679116741"><span class="hs-identifier hs-var">elaborated</span></a></span><span>
-</span><span id="line-74"></span><span>    </span><span id="local-6989586621679116737"><span class="annot"><span class="annottext">[Declaration]
-</span><a href="#local-6989586621679116737"><span class="hs-identifier hs-var">regrouped</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">WriterT MultipleErrors (Either MultipleErrors) [Declaration]
+</span><a href="#local-6989586621679116980"><span class="hs-identifier hs-var">elaborated</span></a></span><span>
+</span><span id="line-74"></span><span>    </span><span id="local-6989586621679116976"><span class="annot"><span class="annottext">[Declaration]
+</span><a href="#local-6989586621679116976"><span class="hs-identifier hs-var">regrouped</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">WriterT MultipleErrors (Either MultipleErrors) [Declaration]
 -&gt; SupplyT
      (WriterT MultipleErrors (Either MultipleErrors)) [Declaration]
 forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
@@ -392,7 +392,7 @@ forall (m :: * -&gt; *).
 MonadError MultipleErrors m =&gt;
 ModuleName -&gt; [Declaration] -&gt; m [Declaration]
 </span><span class="hs-identifier hs-var">P.createBindingGroups</span></span><span> </span><span class="annot"><span class="annottext">ModuleName
-</span><a href="#local-6989586621679116782"><span class="hs-identifier hs-var">moduleName</span></a></span><span> </span><span class="annot"><span class="annottext">([Declaration]
+</span><a href="#local-6989586621679117021"><span class="hs-identifier hs-var">moduleName</span></a></span><span> </span><span class="annot"><span class="annottext">([Declaration]
  -&gt; WriterT MultipleErrors (Either MultipleErrors) [Declaration])
 -&gt; ([Declaration] -&gt; [Declaration])
 -&gt; [Declaration]
@@ -407,45 +407,45 @@ forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
      (WriterT MultipleErrors (Either MultipleErrors)) [Declaration]
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Declaration]
-</span><a href="#local-6989586621679116739"><span class="hs-identifier hs-var">deguarded</span></a></span><span>
-</span><span id="line-75"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679116734"><span class="annot"><span class="annottext">mod' :: Module
-</span><a href="#local-6989586621679116734"><span class="hs-identifier hs-var hs-var">mod'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SourceSpan
+</span><a href="#local-6989586621679116978"><span class="hs-identifier hs-var">deguarded</span></a></span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679116973"><span class="annot"><span class="annottext">mod' :: Module
+</span><a href="#local-6989586621679116973"><span class="hs-identifier hs-var hs-var">mod'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SourceSpan
 -&gt; [Comment]
 -&gt; ModuleName
 -&gt; [Declaration]
 -&gt; Maybe [DeclarationRef]
 -&gt; Module
 </span><span class="hs-identifier hs-var">AST.Module</span></span><span> </span><span class="annot"><span class="annottext">SourceSpan
-</span><a href="#local-6989586621679116743"><span class="hs-identifier hs-var">ss</span></a></span><span> </span><span class="annot"><span class="annottext">[Comment]
-</span><a href="#local-6989586621679116742"><span class="hs-identifier hs-var">coms</span></a></span><span> </span><span class="annot"><span class="annottext">ModuleName
-</span><a href="#local-6989586621679116782"><span class="hs-identifier hs-var">moduleName</span></a></span><span> </span><span class="annot"><span class="annottext">[Declaration]
-</span><a href="#local-6989586621679116737"><span class="hs-identifier hs-var">regrouped</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe [DeclarationRef]
-</span><a href="#local-6989586621679116740"><span class="hs-identifier hs-var">exps</span></a></span><span>
-</span><span id="line-76"></span><span>        </span><span id="local-6989586621679116733"><span class="annot"><span class="annottext">corefn :: Module Ann
-</span><a href="#local-6989586621679116733"><span class="hs-identifier hs-var hs-var">corefn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Environment -&gt; Module -&gt; Module Ann
+</span><a href="#local-6989586621679116982"><span class="hs-identifier hs-var">ss</span></a></span><span> </span><span class="annot"><span class="annottext">[Comment]
+</span><a href="#local-6989586621679116981"><span class="hs-identifier hs-var">coms</span></a></span><span> </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679117021"><span class="hs-identifier hs-var">moduleName</span></a></span><span> </span><span class="annot"><span class="annottext">[Declaration]
+</span><a href="#local-6989586621679116976"><span class="hs-identifier hs-var">regrouped</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe [DeclarationRef]
+</span><a href="#local-6989586621679116979"><span class="hs-identifier hs-var">exps</span></a></span><span>
+</span><span id="line-76"></span><span>        </span><span id="local-6989586621679116972"><span class="annot"><span class="annottext">corefn :: Module Ann
+</span><a href="#local-6989586621679116972"><span class="hs-identifier hs-var hs-var">corefn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Environment -&gt; Module -&gt; Module Ann
 </span><span class="hs-identifier hs-var">CoreFn.moduleToCoreFn</span></span><span> </span><span class="annot"><span class="annottext">Environment
-</span><a href="#local-6989586621679116763"><span class="hs-identifier hs-var">checkEnv</span></a></span><span> </span><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116734"><span class="hs-identifier hs-var">mod'</span></a></span><span>
-</span><span id="line-77"></span><span>        </span><span id="local-6989586621679116731"><span class="annot"><span class="annottext">optimized :: Module Ann
-</span><a href="#local-6989586621679116731"><span class="hs-identifier hs-var hs-var">optimized</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module Ann -&gt; Module Ann
+</span><a href="#local-6989586621679117002"><span class="hs-identifier hs-var">checkEnv</span></a></span><span> </span><span class="annot"><span class="annottext">Module
+</span><a href="#local-6989586621679116973"><span class="hs-identifier hs-var">mod'</span></a></span><span>
+</span><span id="line-77"></span><span>        </span><span id="local-6989586621679116970"><span class="annot"><span class="annottext">optimized :: Module Ann
+</span><a href="#local-6989586621679116970"><span class="hs-identifier hs-var hs-var">optimized</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module Ann -&gt; Module Ann
 </span><span class="hs-identifier hs-var">CoreFn.optimizeCoreFn</span></span><span> </span><span class="annot"><span class="annottext">Module Ann
-</span><a href="#local-6989586621679116733"><span class="hs-identifier hs-var">corefn</span></a></span><span>
-</span><span id="line-78"></span><span>        </span><span class="hs-special">(</span><span id="local-6989586621679116729"><span class="annot"><span class="annottext">Map Ident Ident
-</span><a href="#local-6989586621679116729"><span class="hs-identifier hs-var">renamedIdents</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679116728"><span class="annot"><span class="annottext">Module Ann
-</span><a href="#local-6989586621679116728"><span class="hs-identifier hs-var">renamed</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module Ann -&gt; (Map Ident Ident, Module Ann)
+</span><a href="#local-6989586621679116972"><span class="hs-identifier hs-var">corefn</span></a></span><span>
+</span><span id="line-78"></span><span>        </span><span class="hs-special">(</span><span id="local-6989586621679116968"><span class="annot"><span class="annottext">Map Ident Ident
+</span><a href="#local-6989586621679116968"><span class="hs-identifier hs-var">renamedIdents</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679116967"><span class="annot"><span class="annottext">Module Ann
+</span><a href="#local-6989586621679116967"><span class="hs-identifier hs-var">renamed</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module Ann -&gt; (Map Ident Ident, Module Ann)
 </span><span class="hs-identifier hs-var">Renamer.renameInModule</span></span><span> </span><span class="annot"><span class="annottext">Module Ann
-</span><a href="#local-6989586621679116731"><span class="hs-identifier hs-var">optimized</span></a></span><span>
-</span><span id="line-79"></span><span>        </span><span id="local-6989586621679116726"><span class="annot"><span class="annottext">newExterns :: ExternsFile
-</span><a href="#local-6989586621679116726"><span class="hs-identifier hs-var hs-var">newExterns</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module -&gt; Environment -&gt; Map Ident Ident -&gt; ExternsFile
+</span><a href="#local-6989586621679116970"><span class="hs-identifier hs-var">optimized</span></a></span><span>
+</span><span id="line-79"></span><span>        </span><span id="local-6989586621679116965"><span class="annot"><span class="annottext">newExterns :: ExternsFile
+</span><a href="#local-6989586621679116965"><span class="hs-identifier hs-var hs-var">newExterns</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Module -&gt; Environment -&gt; Map Ident Ident -&gt; ExternsFile
 </span><span class="hs-identifier hs-var">P.moduleToExternsFile</span></span><span> </span><span class="annot"><span class="annottext">Module
-</span><a href="#local-6989586621679116734"><span class="hs-identifier hs-var">mod'</span></a></span><span> </span><span class="annot"><span class="annottext">Environment
-</span><a href="#local-6989586621679116763"><span class="hs-identifier hs-var">checkEnv</span></a></span><span> </span><span class="annot"><span class="annottext">Map Ident Ident
-</span><a href="#local-6989586621679116729"><span class="hs-identifier hs-var">renamedIdents</span></a></span><span>
+</span><a href="#local-6989586621679116973"><span class="hs-identifier hs-var">mod'</span></a></span><span> </span><span class="annot"><span class="annottext">Environment
+</span><a href="#local-6989586621679117002"><span class="hs-identifier hs-var">checkEnv</span></a></span><span> </span><span class="annot"><span class="annottext">Map Ident Ident
+</span><a href="#local-6989586621679116968"><span class="hs-identifier hs-var">renamedIdents</span></a></span><span>
 </span><span id="line-80"></span><span>    </span><span class="annot"><span class="annottext">(Module Ann, ExternsFile)
 -&gt; SupplyT
      (WriterT MultipleErrors (Either MultipleErrors))
      (Module Ann, ExternsFile)
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Module Ann
-</span><a href="#local-6989586621679116728"><span class="hs-identifier hs-var">renamed</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ExternsFile
-</span><a href="#local-6989586621679116726"><span class="hs-identifier hs-var">newExterns</span></a></span><span class="hs-special">)</span></pre></body></html>
+</span><a href="#local-6989586621679116967"><span class="hs-identifier hs-var">renamed</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ExternsFile
+</span><a href="#local-6989586621679116965"><span class="hs-identifier hs-var">newExterns</span></a></span><span class="hs-special">)</span></pre></body></html>

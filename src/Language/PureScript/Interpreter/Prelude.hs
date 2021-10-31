@@ -5,6 +5,7 @@
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- | A tiny standard library.
 module Language.PureScript.Interpreter.Prelude where
   
 import Control.Monad.Fix (MonadFix)
@@ -14,7 +15,15 @@ import Language.PureScript.Interpreter.FFI (FFI(..))
 import Language.PureScript.Interpreter.FFI.Builder (array, boolean, string, number, (~>))
 import Language.PureScript.Interpreter.FFI.Builder qualified as FFI
 
--- | A tiny standard library.
+stdlib :: MonadFix m => [FFI m]
+stdlib = 
+  [ prelude
+  , preludeArray
+  , preludeString
+  , preludeNumber
+  , preludeBoolean
+  ]
+
 prelude :: MonadFix m => FFI m
 prelude = FFI.evalFFIBuilder (P.ModuleName "Prelude") do
   FFI.foreignImport (P.Ident "identity") 
@@ -24,6 +33,8 @@ prelude = FFI.evalFFIBuilder (P.ModuleName "Prelude") do
     (\a b c -> (a ~> b ~> c) ~> b ~> a ~> c)
     flip
     
+preludeArray :: MonadFix m => FFI m
+preludeArray = FFI.evalFFIBuilder (P.ModuleName "Prelude.Array") do
   FFI.foreignImport (P.Ident "map") 
     (\a b -> (a ~> b) ~> array a ~> array b)
     traverse
@@ -40,20 +51,24 @@ prelude = FFI.evalFFIBuilder (P.ModuleName "Prelude") do
     (\a -> array a ~> array a ~> array a)
     (\xs ys -> pure (xs <> ys))
   
-  FFI.foreignImport (P.Ident "appendString")
+preludeString :: MonadFix m => FFI m
+preludeString = FFI.evalFFIBuilder (P.ModuleName "Prelude.String") do
+  FFI.foreignImport (P.Ident "append")
     (string ~> string ~> string)
     (\xs ys -> pure (xs <> ys))
     
+preludeNumber :: MonadFix m => FFI m
+preludeNumber = FFI.evalFFIBuilder (P.ModuleName "Prelude.Number") do
   FFI.foreignImport (P.Ident "add")
     (number ~> number ~> number)
     (\x y -> pure (x + y))
-  FFI.foreignImport (P.Ident "sub")
+  FFI.foreignImport (P.Ident "subtract")
     (number ~> number ~> number)
     (\x y -> pure (x - y))
-  FFI.foreignImport (P.Ident "mul")
+  FFI.foreignImport (P.Ident "multiply")
     (number ~> number ~> number)
     (\x y -> pure (x * y))
-  FFI.foreignImport (P.Ident "div")
+  FFI.foreignImport (P.Ident "divide")
     (number ~> number ~> number)
     (\x y -> pure (x / y))
   FFI.foreignImport (P.Ident "min")
@@ -63,6 +78,14 @@ prelude = FFI.evalFFIBuilder (P.ModuleName "Prelude") do
     (number ~> number ~> number)
     (\x y -> pure (x `max` y))
   
+preludeBoolean :: MonadFix m => FFI m
+preludeBoolean = FFI.evalFFIBuilder (P.ModuleName "Prelude.Boolean") do
+  FFI.foreignImport (P.Ident "and")
+    (boolean ~> boolean ~> boolean)
+    (\x y -> pure (x && y))
+  FFI.foreignImport (P.Ident "or")
+    (boolean ~> boolean ~> boolean)
+    (\x y -> pure (x || y))
   FFI.foreignImport (P.Ident "not")
     (boolean ~> boolean)
     (pure . not)

@@ -40,13 +40,12 @@ import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Foldable (traverse_)
 import Data.Text.IO qualified as Text
 import Data.Vector ((!))
+import Dovetail
+import Dovetail.FFI.Builder qualified as FFI
+import Dovetail.JSON (JSON(..))
+import Dovetail.Prelude (stdlib)
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
-import Language.PureScript.Interpreter
-import Language.PureScript.Interpreter qualified as Interpreter
-import Language.PureScript.Interpreter.FFI.Builder qualified as FFI
-import Language.PureScript.Interpreter.JSON (JSON(..))
-import Language.PureScript.Interpreter.Prelude (stdlib)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.Random qualified as Random
@@ -98,6 +97,5 @@ main = do
   
     -- Evaluate that function, then render the output as pretty-printed JSON on
     -- standard output.
-    output <- runEvalT value
-                `orDie` Interpreter.renderEvaluationError
+    output <- runEvalT value `orDie` renderEvaluationError
     lift (BL8.putStrLn (Pretty.encodePretty (getJSON output)))

@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 
 -- | This module is temporary and will be replaced or removed in a release shortly.
-module Language.PureScript.Interpreter.JSON 
+module Dovetail.JSON 
   ( JSON(..)
   , fromJSON
   , toJSON
@@ -14,7 +14,7 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.Fix (MonadFix)  
 import Data.Aeson qualified as Aeson
 import Data.String (fromString)
-import Language.PureScript.Interpreter.Evaluate qualified as Evaluate
+import Dovetail.Evaluate qualified as Evaluate
 
 fromJSON :: Aeson.Value -> Evaluate.Value m
 fromJSON (Aeson.Object x) = Evaluate.Object (fmap fromJSON x)

@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
 
-module Language.PureScript.Make.Simplified where
+module Dovetail.Build where
 
 import Control.Monad (foldM)
 import Control.Monad.Supply (evalSupplyT)

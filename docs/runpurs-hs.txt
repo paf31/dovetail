@@ -309,6 +309,9 @@ instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Bas
 instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Language.PureScript.Interpreter.Evaluate.ToObject m f) => Language.PureScript.Interpreter.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
 instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Language.PureScript.Interpreter.Evaluate.ToObject m f, Language.PureScript.Interpreter.Evaluate.ToObject m g) => Language.PureScript.Interpreter.Evaluate.ToObject m (f GHC.Generics.:*: g)
 
+
+-- | This module is temporary and will be replaced or removed in a release
+--   shortly.
 module Language.PureScript.Interpreter.JSON
 newtype JSON a
 JSON :: a -> JSON a

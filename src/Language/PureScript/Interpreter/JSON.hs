@@ -3,6 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
+-- | This module is temporary and will be replaced or removed in a release shortly.
 module Language.PureScript.Interpreter.JSON 
   ( JSON(..)
   , fromJSON

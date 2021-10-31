@@ -4,10 +4,10 @@
 {-# LANGUAGE ImportQualifiedPost        #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
-module Language.PureScript.Interpreter
-  ( module Language.PureScript.Interpreter.Types
-  , module Language.PureScript.Interpreter.FFI
-  , module Language.PureScript.Interpreter.FFI.Builder
+module Dovetail
+  ( module Dovetail.Types
+  , module Dovetail.FFI
+  , module Dovetail.FFI.Builder
   
   -- * High-level API
   , InterpretT
@@ -29,8 +29,8 @@ module Language.PureScript.Interpreter
   , eval
   , evalMain
   
-  , module Language.PureScript.Interpreter.Evaluate
-  , module Language.PureScript.Make.Simplified
+  , module Dovetail.Evaluate
+  , module Dovetail.Build
   , module Language.PureScript.CoreFn
   , module Language.PureScript.Names
   ) where
@@ -42,20 +42,18 @@ import Control.Monad.Trans.State (StateT, evalStateT, get, put, modify)
 import Data.Bifunctor (first)
 import Data.Functor.Identity (Identity(..))
 import Data.Text (Text)
+import Dovetail.Build (BuildError(..), renderBuildError)
+import Dovetail.Build qualified as Make
+import Dovetail.Evaluate (Env, EvalT(..), runEvalT, Eval, runEval, 
+                          ToValue(..), ToValueRHS(..))
+import Dovetail.Evaluate qualified as Evaluate
+import Dovetail.FFI
+import Dovetail.FFI qualified as FFI
+import Dovetail.FFI.Builder
+import Dovetail.Types 
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn (Ann, Expr, Module)
 import Language.PureScript.CoreFn qualified as CoreFn
-import Language.PureScript.Interpreter.Evaluate (Env, 
-                                                 EvalT(..), runEvalT, 
-                                                 Eval, runEval, 
-                                                 ToValue(..), ToValueRHS(..))
-import Language.PureScript.Interpreter.Evaluate qualified as Evaluate
-import Language.PureScript.Interpreter.FFI
-import Language.PureScript.Interpreter.FFI qualified as FFI
-import Language.PureScript.Interpreter.FFI.Builder
-import Language.PureScript.Interpreter.Types 
-import Language.PureScript.Make.Simplified (BuildError(..), renderBuildError)
-import Language.PureScript.Make.Simplified qualified as Make
 import Language.PureScript.Names
 
 -- | A monad transformer for high-level tasks involving PureScript code, including separate 
@@ -105,10 +103,10 @@ runInterpret = runIdentity . runInterpretT
 
 -- | Make an 'FFI' module available for use to subsequent operations.
 --
--- For example, to make the 'Language.PureScript.Interpreter.Prelude.prelude' available:
+-- For example, to make the 'Dovetail.Prelude.prelude' available:
 --
 -- @
--- ffi 'Language.PureScript.Interpreter.Prelude.prelude'
+-- ffi 'Dovetail.Prelude.prelude'
 -- @
 ffi :: Monad m => FFI m -> InterpretT m ()
 ffi f = InterpretT $ modify \(externs, env) -> 
@@ -147,7 +145,7 @@ build moduleText = do
 -- during subsequent evaluations.
 --
 -- The corefn module may be preprepared, for example by compiling from source text using the
--- functions in the "Language.PureScript.Make.Simplified" module.
+-- functions in the "Dovetail.Build" module.
 buildCoreFn :: MonadFix m => CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
 buildCoreFn m = do
   (externs, env) <- InterpretT get

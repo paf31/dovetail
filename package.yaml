@@ -1,6 +1,6 @@
-name:                runpurs-hs
+name:                dovetail
 version:             0.1.0.0
-github:              "paf31/runpurs-hs"
+github:              "paf31/dovetail"
 license:             BSD3
 author:              "Phil Freeman"
 maintainer:          "freeman.phil@gmail.com"
@@ -9,7 +9,9 @@ copyright:           "2021 Phil Freeman"
 extra-source-files:
 - README.md
 
-description:         Please see the README on GitHub at <https://github.com/paf31/runpurs-hs#readme>
+description:         Dovetail is a general-purpose PureScript corefn interpreter with an FFI to Haskell. 
+                     Please see the README on GitHub at <https://github.com/paf31/dovetail#readme>, or 
+                     check out the examples directory, to learn how to use the library.
 
 dependencies:
 - base >= 4.7 && < 5
@@ -49,7 +51,7 @@ executables:
     - -Werror
     - -fwarn-unused-imports
     dependencies:
-    - runpurs-hs
+    - dovetail
     - aeson
     - aeson-pretty
     - bytestring
@@ -72,7 +74,7 @@ executables:
     - -Werror
     - -fwarn-unused-imports
     dependencies:
-    - runpurs-hs
+    - dovetail
     - aeson
     - aeson-pretty
     - bytestring
@@ -86,7 +88,7 @@ executables:
     - vector
     
 tests:
-  runpurs-hs-test:
+  dovetail-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -95,4 +97,4 @@ tests:
     - -with-rtsopts=-N
     - -fwarn-unused-imports
     dependencies:
-    - runpurs-hs
+    - dovetail

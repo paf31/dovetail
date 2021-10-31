@@ -36,11 +36,10 @@ import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Foldable (traverse_)
 import Data.Text.IO qualified as Text
+import Dovetail
+import Dovetail.JSON (JSON(..))
+import Dovetail.Prelude (stdlib)
 import Language.PureScript.CoreFn qualified as CoreFn
-import Language.PureScript.Interpreter
-import Language.PureScript.Interpreter qualified as Interpreter
-import Language.PureScript.Interpreter.JSON (JSON(..))
-import Language.PureScript.Interpreter.Prelude (stdlib)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.IO (stdin)
@@ -52,7 +51,7 @@ main = do
   moduleText <- Text.readFile moduleFile
   
   -- Compile the PureScript CoreFn output for the module
-  let buildResult :: Either InterpretError (JSON Aeson.Value -> Interpreter.Eval (JSON Aeson.Value))
+  let buildResult :: Either InterpretError (JSON Aeson.Value -> Eval (JSON Aeson.Value))
       buildResult = runInterpret do
         traverse_ ffi stdlib
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
@@ -72,6 +71,5 @@ main = do
   
   -- Evaluate that function, then render the output as pretty-printed JSON on
   -- standard output.
-  output <- Interpreter.runEval (query (JSON input)) 
-              `orDie` Interpreter.renderEvaluationError
+  output <- runEval (query (JSON input)) `orDie` renderEvaluationError
   BL8.putStrLn (Pretty.encodePretty (getJSON output))

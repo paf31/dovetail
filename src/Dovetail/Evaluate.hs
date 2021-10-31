@@ -19,7 +19,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
-module Language.PureScript.Interpreter.Evaluate
+module Dovetail.Evaluate
   ( 
   -- * High-level API
     buildCoreFn
@@ -42,7 +42,7 @@ module Language.PureScript.Interpreter.Evaluate
   , genericFromValue
   , ToObject(..)
   
-  , module Language.PureScript.Interpreter.Types
+  , module Dovetail.Types
   ) where
  
 import Control.Monad (guard, foldM, join, mzero, zipWithM)
@@ -62,10 +62,10 @@ import Data.Text qualified as Text
 import Data.These (These(..))
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
+import Dovetail.Types
 import GHC.Generics qualified as G
 import GHC.TypeLits (KnownSymbol, symbolVal)
 import Language.PureScript.CoreFn qualified as CoreFn
-import Language.PureScript.Interpreter.Types
 import Language.PureScript.Names (Qualified(..))
 import Language.PureScript.Names qualified as Names
 import Language.PureScript.PSString qualified as PSString

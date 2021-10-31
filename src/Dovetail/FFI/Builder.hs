@@ -12,12 +12,12 @@
 {-# LANGUAGE UndecidableInstances       #-}
 
 -- | This module provides a higher-level API on top of the 
--- "Language.PureScript.Interpreter.FFI" module. It is not as expressive as the
+-- "Dovetail.FFI" module. It is not as expressive as the
 -- functions in that module, but has the benefit that it is much harder to use
 -- this module to construct an FFI which will result in runtime errors, since
 -- it attempts to synthesize the types of the Haskell implementations from the
 -- types of the declared PureScript foreign imports.
-module Language.PureScript.Interpreter.FFI.Builder
+module Dovetail.FFI.Builder
   ( 
   -- * FFI Builder API
     FFIBuilder
@@ -42,11 +42,11 @@ import Control.Monad.Writer.Class (MonadWriter(..))
 import Control.Monad.Writer.Strict (Writer, runWriter)
 import Data.Text (Text)
 import Data.Vector (Vector)
+import Dovetail.Evaluate (EvalT, Value)
+import Dovetail.Evaluate qualified as Evaluate
+import Dovetail.FFI (FFI(..), ForeignImport(..))
+import Dovetail.FFI.Internal qualified as Internal
 import Language.PureScript qualified as P
-import Language.PureScript.Interpreter.Evaluate (EvalT, Value)
-import Language.PureScript.Interpreter.Evaluate qualified as Evaluate
-import Language.PureScript.Interpreter.FFI (FFI(..), ForeignImport(..))
-import Language.PureScript.Interpreter.FFI.Internal qualified as Internal
 
 data TypeScheme m a where
   Cons :: (FunctionType m (Value m) (EvalT m (Value m)) -> TypeScheme m a)

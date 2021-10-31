@@ -11,6 +11,12 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
+-- | This module provides a higher-level API on top of the 
+-- "Language.PureScript.Interpreter.FFI" module. It is not as expressive as the
+-- functions in that module, but has the benefit that it is much harder to use
+-- this module to construct an FFI which will result in runtime errors, since
+-- it attempts to synthesize the types of the Haskell implementations from the
+-- types of the declared PureScript foreign imports.
 module Language.PureScript.Interpreter.FFI.Builder
   ( 
   -- * FFI Builder API
@@ -60,7 +66,39 @@ data MonoType m a where
   Number   :: MonoType m Scientific
   Var      :: P.SourceType -> MonoType m (Value m)
   
+-- | This type class exists to facilitate the concise description of
+-- PureScript type schemes using the 'foreignImport' function.
+-- It is best understood via its examples:
+--
+-- @
+-- foreignImport (Ident "identity") \a -> a ~> a
+--   :: MonadFix m 
+--   => (Value m -> EvalT m (Value m)) 
+--   -> FFIBuilder m ()
+--
+-- foreignImport (Ident "flip") \a b c -> (a ~> b ~> c) ~> b ~> a ~> c
+--   :: MonadFix m 
+--   => ((Value m -> Value m -> EvalT m (Value m))
+--   ->   Value m -> Value m -> EvalT m (Value m))
+--   -> FFIBuilder m ()
+-- @
+--
+-- These Haskell functions applications describe the PureScript type schemes for the 
+-- @identity@ and @flip@ functions respectively.
+--
+-- Notice that the result type of these applications indicates the corresponding
+-- Haskell type which must be implemented in order to satisfy the contract of the
+-- FFI. Note, these types have been are inferred, which highlights why this 
+-- type class is worth its seeming complexity: the goal is to allow the user to
+-- express the PureScript type, and have the compiler compute the Haskell type for
+-- us. This is about as simple as things can get - we cannot simply specify the
+-- Haskell implementation and infer the PureScript type, because there is not a
+-- single best PureScript type for every given Haskell type.
 class ForAll m r a | a -> m r where
+  
+  -- | Create a 'TypeScheme' which describes a PureScript type from a Haskell 
+  -- function, where type bindings in PureScript types are represented by
+  -- function arguments in the Haskell code.
   forAll :: a -> TypeScheme m r
   
 instance ForAll m a (FunctionType m a r_) where
@@ -70,20 +108,26 @@ instance (ForAll m r o, a ~ FunctionType m (Value m) (EvalT m (Value m))) => For
   forAll f = Cons (forAll . f)
   
 infixr 0 ~>
+
+-- | Construct a PureScript function type
 (~>) :: FunctionType m al ar
       -> FunctionType m bl br 
       -> FunctionType m (al -> br) (al -> br)
 (~>) = Function
   
+-- | The PureScript string type
 string  :: FunctionType m Text (EvalT m Text)
 string = MonoType String
 
+-- | The PureScript boolean type
 boolean :: FunctionType m Bool (EvalT m Bool)
 boolean = MonoType Boolean
 
+-- | The PureScript number type
 number :: FunctionType m Scientific (EvalT m Scientific)
 number = MonoType Number
   
+-- | Construct a PureScript array type
 array :: FunctionType m l r
       -> FunctionType m (Vector l) (EvalT m (Vector l))
 array = Array
@@ -102,9 +146,26 @@ instance Monoid (ForeignImports m) where
     { foreignImports_values = mempty 
     }
   
+-- | A monad for constructing 'FFI' data structures.
+--
+-- For example:
+--
+-- @
+-- FFI.'evalFFIBuilder' ('P.ModuleName' \"Example\") do
+--   FFI.'foreignImport' (P.Ident \"example\")
+--     (\a -> a ~> a)
+--     pure
+-- @
 newtype FFIBuilder m a = FFIBuilder { unFFIBuilder :: Writer (ForeignImports m) a }
   deriving newtype (Functor, Applicative, Monad, MonadWriter (ForeignImports m)) 
   
+-- | Run a computation in the 'FFIBuilder' monad, returning only the constructed
+-- 'FFI'.
+evalFFIBuilder :: P.ModuleName -> FFIBuilder m a -> FFI m
+evalFFIBuilder mn = snd . runFFIBuilder mn
+  
+-- | Run a computation in the 'FFIBuilder' monad, returning the result of the
+-- computation alongside the constructed 'FFI'.
 runFFIBuilder :: P.ModuleName -> FFIBuilder m a -> (a, FFI m)
 runFFIBuilder mn = fmap convert . runWriter . unFFIBuilder where
   convert (ForeignImports values) = FFI
@@ -112,9 +173,17 @@ runFFIBuilder mn = fmap convert . runWriter . unFFIBuilder where
     , ffi_values = values 
     }
   
-evalFFIBuilder :: P.ModuleName -> FFIBuilder m a -> FFI m
-evalFFIBuilder mn = snd . runFFIBuilder mn
-  
+-- | Define a value which will be implemented in Haskell.
+--
+-- The first argument gives a name to the value on the PureScript side.
+-- 
+-- The second argument is a function which describes its PureScript type.
+-- See 'ForAll' for an explanation of its purpose.
+--
+-- The final argument is the Haskell implementation of the value.
+--
+-- The type checker will ensure that the PureScript and Haskell types are
+-- compatible.
 foreignImport 
   :: (MonadFix m, Evaluate.ToValue m a, ForAll m a ty)
   => P.Ident

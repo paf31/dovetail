@@ -86,16 +86,16 @@ buildCoreFn env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } =
 -- For example:
 --
 -- @
---    builtIn "greeting" ("Hello, World!" :: Text)
---    builtIn "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
+-- builtIn "greeting" ("Hello, World!" :: Text)
+-- builtIn "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
 -- @
 --
 -- Functions can be provided as built-ins, but the 'EvalT' monad needs to be
 -- used to wrap any outputs (or values in positive position):
 --
 -- @
---    builtIn "strip" ((pure . Text.strip) :: Text -> EvalT m Text)
---    builtIn "map" (traverse :: (Value -> EvalT m Value) -> Vector Value -> EvalT m (Vector Value))
+-- builtIn "strip" ((pure . Text.strip) :: Text -> EvalT m Text)
+-- builtIn "map" (traverse :: (Value -> EvalT m Value) -> Vector Value -> EvalT m (Vector Value))
 -- @
 --
 -- Polymorphic functions can also be provided as built-ins, but values with 
@@ -308,7 +308,7 @@ apply _ _ = throwError (TypeMismatch "closure")
 -- Laws:
 --
 -- @
---    fromValue . toValue = pure
+-- fromValue . toValue = pure
 -- @
 class MonadFix m => ToValue m a where
   toValue :: a -> Value m
@@ -377,11 +377,11 @@ instance ToValue m a => ToValue m (Vector a) where
 -- | 'ToValue' should support functions with types such as
 --
 -- @
---    a -> EvalT m b
---    a -> b -> EvalT m c
---    a -> b -> c -> EvalT m d
---    (a -> EvalT m b) -> EvalT m c
---    (a -> b -> EvalT m c) -> EvalT m d
+-- a -> EvalT m b
+-- a -> b -> EvalT m c
+-- a -> b -> c -> EvalT m d
+-- (a -> EvalT m b) -> EvalT m c
+-- (a -> b -> EvalT m c) -> EvalT m d
 -- @
 --
 -- Note that every type in a return position is wrapped in the 'EvalT' monad
@@ -392,8 +392,8 @@ instance ToValue m a => ToValue m (Vector a) where
 -- appears on the right hand side of every function arrow:
 --
 -- @
---    a -> EvalT m b (b -> EvalT m c)
---    a -> EvalT m b (b -> EvalT m (c -> EvalT m d))
+-- a -> EvalT m b (b -> EvalT m c)
+-- a -> EvalT m b (b -> EvalT m (c -> EvalT m d))
 -- @
 --
 -- For this reason, the 'ToValue' instance for functions delegates to this

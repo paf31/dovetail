@@ -18,7 +18,11 @@
 -- It can be run on the command line as follows:
 -- 
 -- @
---   echo '\input -> input.foo' > query.purs
+--   cat query.purs
+--   module Main where
+--   main input = input.foo
+--   ⏎
+--
 --   echo '{ "foo": 42, "bar": "baz" }' | query-json query.purs 
 -- @
 --

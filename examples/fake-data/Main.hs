@@ -19,7 +19,11 @@
 -- It can be run on the command line as follows:
 -- 
 -- @
---   echo '{ foo: choose [1, 2, 3] }' > build.purs
+--   cat build.purs
+--   module Main where
+--   main = { foo: choose [1, 2, 3] }
+--   ⏎
+--
 --   fake-data build.purs 12345
 -- @
 
@@ -33,7 +37,7 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Text.IO qualified as Text
-import Data.Vector (Vector, (!))
+import Data.Vector ((!))
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Interpreter
@@ -45,25 +49,6 @@ import System.Environment (getArgs)
 import System.Exit (die)
 import System.Random qualified as Random
 
--- | This example defines a single interesting function on the
--- Haskell side: the @choose@ function demonstrates the idea of using
--- side-effects in the interpreter - @choose@ chooses randomly between one of
--- its inputs, and returns the selected value
---
--- For random number generation, we use a state monad whose state tracks a
--- standard deterministic generator.
-choose :: forall m. (MonadState Random.StdGen m, MonadFix m) => FFI m
-choose = 
-    FFI.evalFFIBuilder (P.ModuleName "Choose") do
-      FFI.foreignImport (P.Ident "choose")
-        (\a -> array a ~> a)
-        choose_
-  where
-    choose_ :: Vector (Value m) -> EvalT m (Value m)
-    choose_ xs = do
-      idx <- lift (state (Random.randomR (0, length xs - 1)))
-      pure (xs ! idx)
-      
 main :: IO ()
 main = do
   -- Read the module filename from the CLI arguments, and read the module source
@@ -77,7 +62,21 @@ main = do
         => m (Either InterpretError (EvalT m (JSON Aeson.Value)))
       buildResult = runInterpretT do
         ffi prelude
-        ffi choose
+        
+        -- This example defines a single interesting function on the
+        -- Haskell side: the @choose@ function demonstrates the idea of using
+        -- side-effects in the interpreter - @choose@ chooses randomly between one of
+        -- its inputs, and returns the selected value
+        --
+        -- For random number generation, we use a state monad whose state tracks a
+        -- standard deterministic generator.
+        ffi $ FFI.evalFFIBuilder (P.ModuleName "Choose") do
+          FFI.foreignImport (P.Ident "choose")
+            (\a -> array a ~> a)
+            \xs -> do
+              idx <- lift (state (Random.randomR (0, length xs - 1)))
+              pure (xs ! idx)
+              
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
         evalMain moduleName
           

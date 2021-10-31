@@ -113,16 +113,57 @@ instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpret
 instance GHC.Base.Functor m => GHC.Base.Functor (Language.PureScript.Interpreter.Types.EvalT m)
 
 module Language.PureScript.Interpreter.FFI
+
+-- | Describes a module which is implemented in Haskell, and made available
+--   to PureScript code using its foreign function interface.
+--   
+--   Right now, this consists only of foreign value declarations, even
+--   though the FFI supports other forms of interop.
+--   
+--   Values of this type can be constructed directly, but in many cases it
+--   is simpler to use the
+--   <a>Language.PureScript.Interpreter.FFI.Builder</a> module instead.
+--   
+--   Values of this type can be consumed by the <a>toExterns</a> and
+--   <a>toEnv</a> functions, and their results passed to the PureScript
+--   APIs or the low-level functions in
+--   <a>Language.PureScript.Interpreter.Evaluate</a> and
+--   <a>Language.PureScript.Make.Simplified</a>, directly, but it is more
+--   likely that you will use values of this type with the higher-level
+--   <a>ffi</a> function.
 data FFI m
 FFI :: ModuleName -> [ForeignImport m] -> FFI m
+
+-- | The module name for the module being implemented in Haskell.
 [ffi_moduleName] :: FFI m -> ModuleName
+
+-- | A list of values implemented in Haskell in this module.
 [ffi_values] :: FFI m -> [ForeignImport m]
+
+-- | A single value implemented in a foreign Haskell module.
 data ForeignImport m
 ForeignImport :: Ident -> SourceType -> Value m -> ForeignImport m
+
+-- | The name of this value in PureScript code
 [fv_name] :: ForeignImport m -> Ident
+
+-- | The PureScript type of this value
 [fv_type] :: ForeignImport m -> SourceType
+
+-- | The value itself
 [fv_value] :: ForeignImport m -> Value m
+
+-- | Convert a foreign module into an evaluation environment.
+--   
+--   For advanced use cases, the result may be used with the functions in
+--   the <a>Language.PureScript.Interpreter.Evaluate</a> module.
 toEnv :: FFI m -> Env m
+
+-- | Convert a foreign module into a PureScript externs file, for use
+--   during separate compilation.
+--   
+--   For advanced use cases, the result may be used with the functions in
+--   the <a>Language.PureScript.Make.Simplified</a> module.
 toExterns :: FFI m -> ExternsFile
 
 module Language.PureScript.Interpreter.Evaluate
@@ -279,18 +320,96 @@ fromJSON :: Value -> Value m
 toJSON :: Value m -> Maybe Value
 instance (Control.Monad.Fix.MonadFix m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Language.PureScript.Interpreter.Evaluate.ToValue m (Language.PureScript.Interpreter.JSON.JSON a)
 
+
+-- | This module provides a higher-level API on top of the
+--   <a>Language.PureScript.Interpreter.FFI</a> module. It is not as
+--   expressive as the functions in that module, but has the benefit that
+--   it is much harder to use this module to construct an FFI which will
+--   result in runtime errors, since it attempts to synthesize the types of
+--   the Haskell implementations from the types of the declared PureScript
+--   foreign imports.
 module Language.PureScript.Interpreter.FFI.Builder
+
+-- | A monad for constructing <a>FFI</a> data structures.
+--   
+--   For example:
+--   
+--   <pre>
+--   FFI.<a>evalFFIBuilder</a> (<a>ModuleName</a> "Example") do
+--     FFI.<a>foreignImport</a> (P.Ident "example")
+--       (a -&gt; a ~&gt; a)
+--       pure
+--   </pre>
 data FFIBuilder m a
+
+-- | Run a computation in the <a>FFIBuilder</a> monad, returning the result
+--   of the computation alongside the constructed <a>FFI</a>.
 runFFIBuilder :: ModuleName -> FFIBuilder m a -> (a, FFI m)
+
+-- | Run a computation in the <a>FFIBuilder</a> monad, returning only the
+--   constructed <a>FFI</a>.
 evalFFIBuilder :: ModuleName -> FFIBuilder m a -> FFI m
+
+-- | Define a value which will be implemented in Haskell.
+--   
+--   The first argument gives a name to the value on the PureScript side.
+--   
+--   The second argument is a function which describes its PureScript type.
+--   See <a>ForAll</a> for an explanation of its purpose.
+--   
+--   The final argument is the Haskell implementation of the value.
+--   
+--   The type checker will ensure that the PureScript and Haskell types are
+--   compatible.
 foreignImport :: (MonadFix m, ToValue m a, ForAll m a ty) => Ident -> ty -> a -> FFIBuilder m ()
 data FunctionType m l r
+
+-- | The PureScript string type
 string :: FunctionType m Text (EvalT m Text)
+
+-- | The PureScript boolean type
 boolean :: FunctionType m Bool (EvalT m Bool)
+
+-- | The PureScript number type
 number :: FunctionType m Scientific (EvalT m Scientific)
+
+-- | Construct a PureScript array type
 array :: FunctionType m l r -> FunctionType m (Vector l) (EvalT m (Vector l))
+
+-- | Construct a PureScript function type
 (~>) :: FunctionType m al ar -> FunctionType m bl br -> FunctionType m (al -> br) (al -> br)
 infixr 0 ~>
+
+-- | This type class exists to facilitate the concise description of
+--   PureScript type schemes using the <a>foreignImport</a> function. It is
+--   best understood via its examples:
+--   
+--   <pre>
+--   foreignImport (Ident "identity") a -&gt; a ~&gt; a
+--     :: MonadFix m 
+--     =&gt; (Value m -&gt; EvalT m (Value m)) 
+--     -&gt; FFIBuilder m ()
+--   
+--   foreignImport (Ident "flip") a b c -&gt; (a ~&gt; b ~&gt; c) ~&gt; b ~&gt; a ~&gt; c
+--     :: MonadFix m 
+--     =&gt; ((Value m -&gt; Value m -&gt; EvalT m (Value m))
+--     -&gt;   Value m -&gt; Value m -&gt; EvalT m (Value m))
+--     -&gt; FFIBuilder m ()
+--   </pre>
+--   
+--   These Haskell functions applications describe the PureScript type
+--   schemes for the <tt>identity</tt> and <tt>flip</tt> functions
+--   respectively.
+--   
+--   Notice that the result type of these applications indicates the
+--   corresponding Haskell type which must be implemented in order to
+--   satisfy the contract of the FFI. Note, these types have been are
+--   inferred, which highlights why this type class is worth its seeming
+--   complexity: the goal is to allow the user to express the PureScript
+--   type, and have the compiler compute the Haskell type for us. This is
+--   about as simple as things can get - we cannot simply specify the
+--   Haskell implementation and infer the PureScript type, because there is
+--   not a single best PureScript type for every given Haskell type.
 class ForAll m r a | a -> m r
 instance Control.Monad.Writer.Class.MonadWriter (Language.PureScript.Interpreter.FFI.Builder.ForeignImports m) (Language.PureScript.Interpreter.FFI.Builder.FFIBuilder m)
 instance GHC.Base.Monad (Language.PureScript.Interpreter.FFI.Builder.FFIBuilder m)
@@ -302,6 +421,8 @@ instance Language.PureScript.Interpreter.FFI.Builder.ForAll m a (Language.PureSc
 instance (Language.PureScript.Interpreter.FFI.Builder.ForAll m r o, a GHC.Types.~ Language.PureScript.Interpreter.FFI.Builder.FunctionType m (Language.PureScript.Interpreter.Types.Value m) (Language.PureScript.Interpreter.Types.EvalT m (Language.PureScript.Interpreter.Types.Value m))) => Language.PureScript.Interpreter.FFI.Builder.ForAll m r (a -> o)
 
 module Language.PureScript.Interpreter.Prelude
+
+-- | A tiny standard library.
 prelude :: MonadFix m => FFI m
 
 module Language.PureScript.Make.Simplified
@@ -325,20 +446,84 @@ buildCoreFnOnly :: [ExternsFile] -> Module -> Either MultipleErrors ((Module Ann
 instance GHC.Show.Show Language.PureScript.Make.Simplified.BuildError
 
 module Language.PureScript.Interpreter
-type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
-data Expr a
-data Module a
+
+-- | A monad transformer for high-level tasks involving PureScript code,
+--   including separate compilation. Its job is to keep track of available
+--   modules, any foreign imports from Haskell code, and run PureScript
+--   code.
+--   
+--   Note: do not confuse this monad transformer with <a>EvalT</a>, which
+--   is only responsible for powering evaluation of PureScript expressions.
+--   
+--   The transformed monad is used to track any benign side effects that
+--   might be exposed via the foreign function interface to PureScript
+--   code, in the same sense as <a>EvalT</a>.
 data InterpretT m a
+
+-- | Run a computation in the <a>InterpretT</a> monad, possibly returning
+--   an error. Note: errors can occur during module building or evaluation
+--   (i.e. module loading).
+--   
+--   The <a>runInterpret</a> function is a simpler alternative in the case
+--   where benign side-effects are not needed.
+--   
+--   For example:
+--   
+--   <pre>
+--   runInterpret <tt>Module do
+--     -- Load the prelude
+--     <a>ffi</a> <tt>prelude</tt>
+--     -- Build a module from source
+--     <a>build</a> "module Main where main = \"example\"" --
+--   
+--   runInterpret </tt>(Eval Text) do
+--     <a>ffi</a> <tt>prelude</tt>
+--     _ &lt;- <a>build</a> "module Main where main = \"example\""
+--     -- Evaluate the main function
+--     <a>evalMain</a> (<a>ModuleName</a> "Main")
+--   </pre>
 runInterpretT :: Monad m => InterpretT m a -> m (Either InterpretError a)
 runInterpret :: Interpret a -> Either InterpretError a
+
+-- | The type of errors that can occur in the <a>InterpretT</a> monad.
 data InterpretError
+
+-- | Evaluation errors can occur during the initial evaluation of the
+--   module when it is loaded into the environment.
 EvaluationError :: EvaluationError -> InterpretError
+
+-- | Build errors can occur if we are building modules from source or
+--   corefn.
 BuildError :: BuildError -> InterpretError
 renderInterpretError :: InterpretError -> String
+
+-- | Make an <a>FFI</a> module available for use to subsequent operations.
+--   
+--   For example, to make the <a>prelude</a> available:
+--   
+--   <pre>
+--   ffi <a>prelude</a>
+--   </pre>
 ffi :: Monad m => FFI m -> InterpretT m ()
+
+-- | Build a PureScript module from source, and make its exported functions
+--   available during subsequent evaluations.
 build :: MonadFix m => Text -> InterpretT m (Module Ann)
+
+-- | Build a PureScript module from corefn, and make its exported functions
+--   available during subsequent evaluations.
+--   
+--   The corefn module may be preprepared, for example by compiling from
+--   source text using the functions in the
+--   <a>Language.PureScript.Make.Simplified</a> module.
 buildCoreFn :: MonadFix m => Module Ann -> InterpretT m (Module Ann)
+
+-- | Evaluate a PureScript corefn expression and return the result. Note:
+--   The expression is not type-checked by the PureScript typechecker. See
+--   the documentation for <a>ToValueRHS</a> for valid result types.
 eval :: (MonadFix m, ToValueRHS m a) => Expr () -> InterpretT m a
+
+-- | Evaluate <tt>main</tt> in the specified module and return the result.
 evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
 
 -- | Non-transformer version of <a>EvalT</a>, useful in any settings where
@@ -425,6 +610,9 @@ data BuildError
 UnableToParse :: NonEmpty ParserError -> BuildError
 UnableToCompile :: MultipleErrors -> BuildError
 renderBuildError :: BuildError -> String
+type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
+data Expr a
+data Module a
 instance GHC.Show.Show Language.PureScript.Interpreter.InterpretError
 instance GHC.Base.Monad m => GHC.Base.Monad (Language.PureScript.Interpreter.InterpretT m)
 instance GHC.Base.Monad m => GHC.Base.Applicative (Language.PureScript.Interpreter.InterpretT m)

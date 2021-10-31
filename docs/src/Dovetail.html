@@ -1,0 +1,627 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments             #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE DerivingStrategies         #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE GeneralizedNewtypeDeriving #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost        #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings          #-}</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Dovetail.Types.html"><span class="hs-identifier">Dovetail.Types</span></a></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Dovetail.FFI.html"><span class="hs-identifier">Dovetail.FFI</span></a></span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html"><span class="hs-identifier">Dovetail.FFI.Builder</span></a></span><span>
+</span><span id="line-11"></span><span>  </span><span>
+</span><span id="line-12"></span><span>  </span><span class="annot"><span class="hs-comment">-- * High-level API</span></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier">InterpretT</span></a></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#runInterpretT"><span class="hs-identifier">runInterpretT</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#runInterpret"><span class="hs-identifier">runInterpret</span></a></span><span>
+</span><span id="line-16"></span><span>  </span><span>
+</span><span id="line-17"></span><span>  </span><span class="annot"><span class="hs-comment">-- ** Error messages</span></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretError"><span class="hs-identifier">InterpretError</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#renderInterpretError"><span class="hs-identifier">renderInterpretError</span></a></span><span>
+</span><span id="line-20"></span><span>  </span><span>
+</span><span id="line-21"></span><span>  </span><span class="annot"><span class="hs-comment">-- ** Foreign function interface</span></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#ffi"><span class="hs-identifier">ffi</span></a></span><span>
+</span><span id="line-23"></span><span>  </span><span>
+</span><span id="line-24"></span><span>  </span><span class="annot"><span class="hs-comment">-- ** Building PureScript source</span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#build"><span class="hs-identifier">build</span></a></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#buildCoreFn"><span class="hs-identifier">buildCoreFn</span></a></span><span>
+</span><span id="line-27"></span><span>  </span><span>
+</span><span id="line-28"></span><span>  </span><span class="annot"><span class="hs-comment">-- ** Evaluating values</span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#eval"><span class="hs-identifier">eval</span></a></span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.html#evalMain"><span class="hs-identifier">evalMain</span></a></span><span>
+</span><span id="line-31"></span><span>  </span><span>
+</span><span id="line-32"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html"><span class="hs-identifier">Dovetail.Evaluate</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Dovetail.Build.html"><span class="hs-identifier">Dovetail.Build</span></a></span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.CoreFn</span></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.Names</span></span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-37"></span><span> </span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Fix</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadFix</span></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Class</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadTrans</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Except</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ExceptT</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">runExceptT</span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.State</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">StateT</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">evalStateT</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">get</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">put</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">modify</span></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Bifunctor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">first</span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Functor.Identity</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Identity</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Build.html"><span class="hs-identifier">Dovetail.Build</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Build.html#BuildError"><span class="hs-identifier">BuildError</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Build.html#renderBuildError"><span class="hs-identifier">renderBuildError</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Build.html"><span class="hs-identifier">Dovetail.Build</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Make</span></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html"><span class="hs-identifier">Dovetail.Evaluate</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#Env"><span class="hs-identifier">Env</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier">EvalT</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Types.html#runEvalT"><span class="hs-identifier">runEvalT</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Types.html#Eval"><span class="hs-identifier">Eval</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Types.html#runEval"><span class="hs-identifier">runEval</span></a></span><span class="hs-special">,</span><span> </span><span>
+</span><span id="line-48"></span><span>                          </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValue"><span class="hs-identifier">ToValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValueRHS"><span class="hs-identifier">ToValueRHS</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html"><span class="hs-identifier">Dovetail.Evaluate</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Evaluate</span></span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.FFI.html"><span class="hs-identifier">Dovetail.FFI</span></a></span><span>
+</span><span id="line-51"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.FFI.html"><span class="hs-identifier">Dovetail.FFI</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FFI</span></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html"><span class="hs-identifier">Dovetail.FFI.Builder</span></a></span><span>
+</span><span id="line-53"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Types.html"><span class="hs-identifier">Dovetail.Types</span></a></span><span> </span><span>
+</span><span id="line-54"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.CoreFn</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Ann</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Expr</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Module</span></span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.CoreFn</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">CoreFn</span></span><span>
+</span><span id="line-57"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.Names</span></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- | A monad transformer for high-level tasks involving PureScript code, including separate </span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- compilation. Its job is to keep track of available modules, any foreign imports</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- from Haskell code, and run PureScript code.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- Note: do not confuse this monad transformer with 'EvalT', which is only</span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- responsible for powering evaluation of PureScript expressions.</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- The transformed monad is used to track any benign side effects that might be</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- exposed via the foreign function interface to PureScript code, in the same sense</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- as 'EvalT'.</span><span>
+</span><span id="line-69"></span><span class="hs-keyword">newtype</span><span> </span><span id="InterpretT"><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span></span><span> </span><span id="local-6989586621679118126"><span class="annot"><a href="#local-6989586621679118126"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679118125"><span class="annot"><a href="#local-6989586621679118125"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="InterpretT"><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span></span><span> </span><span class="hs-special">{</span><span> </span><span id="unInterpretT"><span class="annot"><span class="annottext">InterpretT m a
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+</span><a href="Dovetail.html#unInterpretT"><span class="hs-identifier hs-var hs-var">unInterpretT</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateT</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">P.ExternsFile</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Types.html#Env"><span class="hs-identifier hs-type">Env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118126"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExceptT</span></span><span> </span><span class="annot"><a href="Dovetail.html#InterpretError"><span class="hs-identifier hs-type">InterpretError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118126"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679118125"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">newtype</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679118017"><span id="local-6989586621679118019"><span class="annot"><span class="annottext">a -&gt; InterpretT m b -&gt; InterpretT m a
+(a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+(forall a b. (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b)
+-&gt; (forall a b. a -&gt; InterpretT m b -&gt; InterpretT m a)
+-&gt; Functor (InterpretT m)
+forall a b. a -&gt; InterpretT m b -&gt; InterpretT m a
+forall a b. (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+forall (m :: * -&gt; *) a b.
+Functor m =&gt;
+a -&gt; InterpretT m b -&gt; InterpretT m a
+forall (m :: * -&gt; *) a b.
+Functor m =&gt;
+(a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+forall (f :: * -&gt; *).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+&lt;$ :: a -&gt; InterpretT m b -&gt; InterpretT m a
+$c&lt;$ :: forall (m :: * -&gt; *) a b.
+Functor m =&gt;
+a -&gt; InterpretT m b -&gt; InterpretT m a
+fmap :: (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+$cfmap :: forall (m :: * -&gt; *) a b.
+Functor m =&gt;
+(a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679118005"><span id="local-6989586621679118007"><span id="local-6989586621679118009"><span id="local-6989586621679118011"><span id="local-6989586621679118013"><span class="annot"><span class="annottext">Functor (InterpretT m)
+a -&gt; InterpretT m a
+Functor (InterpretT m)
+-&gt; (forall a. a -&gt; InterpretT m a)
+-&gt; (forall a b.
+    InterpretT m (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b)
+-&gt; (forall a b c.
+    (a -&gt; b -&gt; c)
+    -&gt; InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m c)
+-&gt; (forall a b. InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b)
+-&gt; (forall a b. InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m a)
+-&gt; Applicative (InterpretT m)
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m a
+InterpretT m (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+(a -&gt; b -&gt; c) -&gt; InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m c
+forall a. a -&gt; InterpretT m a
+forall a b. InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m a
+forall a b. InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+forall a b.
+InterpretT m (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+forall a b c.
+(a -&gt; b -&gt; c) -&gt; InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m c
+forall (m :: * -&gt; *). Monad m =&gt; Functor (InterpretT m)
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; InterpretT m a
+forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m a
+forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+forall (m :: * -&gt; *) a b c.
+Monad m =&gt;
+(a -&gt; b -&gt; c) -&gt; InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m c
+forall (f :: * -&gt; *).
+Functor f
+-&gt; (forall a. a -&gt; f a)
+-&gt; (forall a b. f (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b c. (a -&gt; b -&gt; c) -&gt; f a -&gt; f b -&gt; f c)
+-&gt; (forall a b. f a -&gt; f b -&gt; f b)
+-&gt; (forall a b. f a -&gt; f b -&gt; f a)
+-&gt; Applicative f
+&lt;* :: InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m a
+$c&lt;* :: forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m a
+*&gt; :: InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+$c*&gt; :: forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+liftA2 :: (a -&gt; b -&gt; c) -&gt; InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m c
+$cliftA2 :: forall (m :: * -&gt; *) a b c.
+Monad m =&gt;
+(a -&gt; b -&gt; c) -&gt; InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m c
+&lt;*&gt; :: InterpretT m (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+$c&lt;*&gt; :: forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m (a -&gt; b) -&gt; InterpretT m a -&gt; InterpretT m b
+pure :: a -&gt; InterpretT m a
+$cpure :: forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; InterpretT m a
+$cp1Applicative :: forall (m :: * -&gt; *). Monad m =&gt; Functor (InterpretT m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Applicative</span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117997"><span id="local-6989586621679117999"><span id="local-6989586621679118001"><span class="annot"><span class="annottext">Applicative (InterpretT m)
+a -&gt; InterpretT m a
+Applicative (InterpretT m)
+-&gt; (forall a b.
+    InterpretT m a -&gt; (a -&gt; InterpretT m b) -&gt; InterpretT m b)
+-&gt; (forall a b. InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b)
+-&gt; (forall a. a -&gt; InterpretT m a)
+-&gt; Monad (InterpretT m)
+InterpretT m a -&gt; (a -&gt; InterpretT m b) -&gt; InterpretT m b
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+forall a. a -&gt; InterpretT m a
+forall a b. InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+forall a b.
+InterpretT m a -&gt; (a -&gt; InterpretT m b) -&gt; InterpretT m b
+forall (m :: * -&gt; *). Monad m =&gt; Applicative (InterpretT m)
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; InterpretT m a
+forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; (a -&gt; InterpretT m b) -&gt; InterpretT m b
+forall (m :: * -&gt; *).
+Applicative m
+-&gt; (forall a b. m a -&gt; (a -&gt; m b) -&gt; m b)
+-&gt; (forall a b. m a -&gt; m b -&gt; m b)
+-&gt; (forall a. a -&gt; m a)
+-&gt; Monad m
+return :: a -&gt; InterpretT m a
+$creturn :: forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; InterpretT m a
+&gt;&gt; :: InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+$c&gt;&gt; :: forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; InterpretT m b -&gt; InterpretT m b
+&gt;&gt;= :: InterpretT m a -&gt; (a -&gt; InterpretT m b) -&gt; InterpretT m b
+$c&gt;&gt;= :: forall (m :: * -&gt; *) a b.
+Monad m =&gt;
+InterpretT m a -&gt; (a -&gt; InterpretT m b) -&gt; InterpretT m b
+$cp1Monad :: forall (m :: * -&gt; *). Monad m =&gt; Applicative (InterpretT m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monad</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>  </span><span>
+</span><span id="line-72"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadTrans</span></span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-73"></span><span>  </span><span id="local-6989586621679117993"><span class="annot"><span class="annottext">lift :: m a -&gt; InterpretT m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">lift</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">(StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+ -&gt; InterpretT m a)
+-&gt; (m a
+    -&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a)
+-&gt; m a
+-&gt; InterpretT m a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ExceptT InterpretError m a
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(ExceptT InterpretError m a
+ -&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a)
+-&gt; (m a -&gt; ExceptT InterpretError m a)
+-&gt; m a
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">m a -&gt; ExceptT InterpretError m a
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- | Run a computation in the 'InterpretT' monad, possibly returning an error.</span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- Note: errors can occur during module building or evaluation (i.e. module loading).</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- The 'runInterpret' function is a simpler alternative in the case where benign</span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- side-effects are not needed.</span><span>
+</span><span id="line-80"></span><span class="hs-comment">--</span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- For example:</span><span>
+</span><span id="line-82"></span><span class="hs-comment">--</span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- runInterpret @Module do</span><span>
+</span><span id="line-85"></span><span class="hs-comment">--   -- Load the prelude</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--   'ffi' 'prelude'</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--   -- Build a module from source</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--   'build' &quot;module Main where main = \\\&quot;example\\\&quot;&quot; --</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--</span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- runInterpret @(Eval Text) do</span><span>
+</span><span id="line-91"></span><span class="hs-comment">--   'ffi' 'prelude'</span><span>
+</span><span id="line-92"></span><span class="hs-comment">--   _ &lt;- 'build' &quot;module Main where main = \\\&quot;example\\\&quot;&quot;</span><span>
+</span><span id="line-93"></span><span class="hs-comment">--   -- Evaluate the main function</span><span>
+</span><span id="line-94"></span><span class="hs-comment">--   'evalMain' ('P.ModuleName' \&quot;Main\&quot;)</span><span>
+</span><span id="line-95"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-96"></span><span id="local-6989586621679118103"><span id="local-6989586621679118104"><span class="annot"><a href="Dovetail.html#runInterpretT"><span class="hs-identifier hs-type">runInterpretT</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679118104"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118104"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118103"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679118104"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Dovetail.html#InterpretError"><span class="hs-identifier hs-type">InterpretError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118103"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-97"></span><span id="runInterpretT"><span class="annot"><span class="annottext">runInterpretT :: InterpretT m a -&gt; m (Either InterpretError a)
+</span><a href="Dovetail.html#runInterpretT"><span class="hs-identifier hs-var hs-var">runInterpretT</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ExceptT InterpretError m a -&gt; m (Either InterpretError a)
+forall e (m :: * -&gt; *) a. ExceptT e m a -&gt; m (Either e a)
+</span><span class="hs-identifier hs-var">runExceptT</span></span><span> </span><span class="annot"><span class="annottext">(ExceptT InterpretError m a -&gt; m (Either InterpretError a))
+-&gt; (InterpretT m a -&gt; ExceptT InterpretError m a)
+-&gt; InterpretT m a
+-&gt; m (Either InterpretError a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+ -&gt; ([ExternsFile], Env m) -&gt; ExceptT InterpretError m a)
+-&gt; ([ExternsFile], Env m)
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; ExceptT InterpretError m a
+forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
+</span><span class="hs-identifier hs-var">flip</span></span><span> </span><span class="annot"><span class="annottext">StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; ([ExternsFile], Env m) -&gt; ExceptT InterpretError m a
+forall (m :: * -&gt; *) s a. Monad m =&gt; StateT s m a -&gt; s -&gt; m a
+</span><span class="hs-identifier hs-var">evalStateT</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Env m
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+ -&gt; ExceptT InterpretError m a)
+-&gt; (InterpretT m a
+    -&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a)
+-&gt; InterpretT m a
+-&gt; ExceptT InterpretError m a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">InterpretT m a
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+forall (m :: * -&gt; *) a.
+InterpretT m a
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+</span><a href="Dovetail.html#unInterpretT"><span class="hs-identifier hs-var hs-var">unInterpretT</span></a></span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="hs-keyword">type</span><span> </span><span id="Interpret"><span class="annot"><a href="Dovetail.html#Interpret"><span class="hs-identifier hs-var">Interpret</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Identity</span></span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span id="local-6989586621679117989"><span class="annot"><a href="Dovetail.html#runInterpret"><span class="hs-identifier hs-type">runInterpret</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Dovetail.html#Interpret"><span class="hs-identifier hs-type">Interpret</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117989"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Dovetail.html#InterpretError"><span class="hs-identifier hs-type">InterpretError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117989"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-102"></span><span id="runInterpret"><span class="annot"><span class="annottext">runInterpret :: Interpret a -&gt; Either InterpretError a
+</span><a href="Dovetail.html#runInterpret"><span class="hs-identifier hs-var hs-var">runInterpret</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Identity (Either InterpretError a) -&gt; Either InterpretError a
+forall a. Identity a -&gt; a
+</span><span class="hs-identifier hs-var hs-var">runIdentity</span></span><span> </span><span class="annot"><span class="annottext">(Identity (Either InterpretError a) -&gt; Either InterpretError a)
+-&gt; (Interpret a -&gt; Identity (Either InterpretError a))
+-&gt; Interpret a
+-&gt; Either InterpretError a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Interpret a -&gt; Identity (Either InterpretError a)
+forall (m :: * -&gt; *) a.
+Monad m =&gt;
+InterpretT m a -&gt; m (Either InterpretError a)
+</span><a href="Dovetail.html#runInterpretT"><span class="hs-identifier hs-var">runInterpretT</span></a></span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- | Make an 'FFI' module available for use to subsequent operations.</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- For example, to make the 'Dovetail.Prelude.prelude' available:</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--</span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-109"></span><span class="hs-comment">-- ffi 'Dovetail.Prelude.prelude'</span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-111"></span><span id="local-6989586621679117987"><span class="annot"><a href="Dovetail.html#ffi"><span class="hs-identifier hs-type">ffi</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679117987"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117987"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117987"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-112"></span><span id="ffi"><span class="annot"><span class="annottext">ffi :: FFI m -&gt; InterpretT m ()
+</span><a href="Dovetail.html#ffi"><span class="hs-identifier hs-var hs-var">ffi</span></a></span></span><span> </span><span id="local-6989586621679117986"><span class="annot"><span class="annottext">FFI m
+</span><a href="#local-6989586621679117986"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+-&gt; InterpretT m ()
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">(StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+ -&gt; InterpretT m ())
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+-&gt; InterpretT m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(([ExternsFile], Env m) -&gt; ([ExternsFile], Env m))
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+forall (m :: * -&gt; *) s. Monad m =&gt; (s -&gt; s) -&gt; StateT s m ()
+</span><span class="hs-identifier hs-var">modify</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679117985"><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117985"><span class="hs-identifier hs-var">externs</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117984"><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117984"><span class="hs-identifier hs-var">env</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-113"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">FFI m -&gt; ExternsFile
+forall (m :: * -&gt; *). FFI m -&gt; ExternsFile
+</span><a href="Dovetail.FFI.html#toExterns"><span class="hs-identifier hs-var">FFI.toExterns</span></a></span><span> </span><span class="annot"><span class="annottext">FFI m
+</span><a href="#local-6989586621679117986"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">ExternsFile -&gt; [ExternsFile] -&gt; [ExternsFile]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117985"><span class="hs-identifier hs-var">externs</span></a></span><span>
+</span><span id="line-114"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117984"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="annot"><span class="annottext">Env m -&gt; Env m -&gt; Env m
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">FFI m -&gt; Env m
+forall (m :: * -&gt; *). FFI m -&gt; Env m
+</span><a href="Dovetail.FFI.html#toEnv"><span class="hs-identifier hs-var">FFI.toEnv</span></a></span><span> </span><span class="annot"><span class="annottext">FFI m
+</span><a href="#local-6989586621679117986"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-115"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span>
+</span><span id="line-117"></span><span class="hs-comment">-- | The type of errors that can occur in the 'InterpretT' monad.</span><span>
+</span><span id="line-118"></span><span class="hs-keyword">data</span><span> </span><span id="InterpretError"><span class="annot"><a href="Dovetail.html#InterpretError"><span class="hs-identifier hs-var">InterpretError</span></a></span></span><span>
+</span><span id="line-119"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="EvaluationError"><span class="annot"><a href="Dovetail.html#EvaluationError"><span class="hs-identifier hs-var">EvaluationError</span></a></span></span><span> </span><span class="annot"><a href="Dovetail.Types.html#EvaluationError"><span class="hs-identifier hs-type">Evaluate.EvaluationError</span></a></span><span>
+</span><span id="line-120"></span><span>  </span><span class="hs-comment">-- ^ Evaluation errors can occur during the initial evaluation of the module</span><span>
+</span><span id="line-121"></span><span>  </span><span class="hs-comment">-- when it is loaded into the environment.</span><span>
+</span><span id="line-122"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="BuildError"><span class="annot"><a href="Dovetail.html#BuildError"><span class="hs-identifier hs-var">BuildError</span></a></span></span><span> </span><span class="annot"><a href="Dovetail.Build.html#BuildError"><span class="hs-identifier hs-type">Make.BuildError</span></a></span><span>
+</span><span id="line-123"></span><span>  </span><span class="hs-comment">-- ^ Build errors can occur if we are building modules from source or corefn.</span><span>
+</span><span id="line-124"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span id="local-6989586621679117974"><span id="local-6989586621679117976"><span id="local-6989586621679117978"><span class="annot"><span class="annottext">Int -&gt; InterpretError -&gt; ShowS
+[InterpretError] -&gt; ShowS
+InterpretError -&gt; String
+(Int -&gt; InterpretError -&gt; ShowS)
+-&gt; (InterpretError -&gt; String)
+-&gt; ([InterpretError] -&gt; ShowS)
+-&gt; Show InterpretError
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [InterpretError] -&gt; ShowS
+$cshowList :: [InterpretError] -&gt; ShowS
+show :: InterpretError -&gt; String
+$cshow :: InterpretError -&gt; String
+showsPrec :: Int -&gt; InterpretError -&gt; ShowS
+$cshowsPrec :: Int -&gt; InterpretError -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-125"></span><span>
+</span><span id="line-126"></span><span class="annot"><a href="Dovetail.html#renderInterpretError"><span class="hs-identifier hs-type">renderInterpretError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretError"><span class="hs-identifier hs-type">InterpretError</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-127"></span><span id="renderInterpretError"><span class="annot"><span class="annottext">renderInterpretError :: InterpretError -&gt; String
+</span><a href="Dovetail.html#renderInterpretError"><span class="hs-identifier hs-var hs-var">renderInterpretError</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.html#BuildError"><span class="hs-identifier hs-type">BuildError</span></a></span><span> </span><span id="local-6989586621679117972"><span class="annot"><span class="annottext">BuildError
+</span><a href="#local-6989586621679117972"><span class="hs-identifier hs-var">err</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-128"></span><span>  </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Build error: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">BuildError -&gt; String
+</span><a href="Dovetail.Build.html#renderBuildError"><span class="hs-identifier hs-var">Make.renderBuildError</span></a></span><span> </span><span class="annot"><span class="annottext">BuildError
+</span><a href="#local-6989586621679117972"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-129"></span><span class="annot"><a href="Dovetail.html#renderInterpretError"><span class="hs-identifier hs-var">renderInterpretError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.html#EvaluationError"><span class="hs-identifier hs-type">EvaluationError</span></a></span><span> </span><span id="local-6989586621679117971"><span class="annot"><span class="annottext">EvaluationError
+</span><a href="#local-6989586621679117971"><span class="hs-identifier hs-var">err</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-130"></span><span>  </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Evaluation error: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">EvaluationError -&gt; String
+</span><a href="Dovetail.Types.html#renderEvaluationError"><span class="hs-identifier hs-var">Evaluate.renderEvaluationError</span></a></span><span> </span><span class="annot"><span class="annottext">EvaluationError
+</span><a href="#local-6989586621679117971"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span id="local-6989586621679118068"><span id="local-6989586621679118069"><span id="local-6989586621679118070"><span class="annot"><a href="Dovetail.html#liftWith"><span class="hs-identifier hs-type">liftWith</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679118070"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679118069"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretError"><span class="hs-identifier hs-type">InterpretError</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679118070"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679118069"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118068"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118070"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118068"><span class="hs-identifier hs-type">a</span></a></span></span></span></span><span>
+</span><span id="line-133"></span><span id="liftWith"><span class="annot"><span class="annottext">liftWith :: (e -&gt; InterpretError) -&gt; m (Either e a) -&gt; InterpretT m a
+</span><a href="Dovetail.html#liftWith"><span class="hs-identifier hs-var hs-var">liftWith</span></a></span></span><span> </span><span id="local-6989586621679117968"><span class="annot"><span class="annottext">e -&gt; InterpretError
+</span><a href="#local-6989586621679117968"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679117967"><span class="annot"><span class="annottext">m (Either e a)
+</span><a href="#local-6989586621679117967"><span class="hs-identifier hs-var">ma</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">(StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+ -&gt; InterpretT m a)
+-&gt; (m (Either InterpretError a)
+    -&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a)
+-&gt; m (Either InterpretError a)
+-&gt; InterpretT m a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ExceptT InterpretError m a
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(ExceptT InterpretError m a
+ -&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a)
+-&gt; (m (Either InterpretError a) -&gt; ExceptT InterpretError m a)
+-&gt; m (Either InterpretError a)
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">m (Either InterpretError a) -&gt; ExceptT InterpretError m a
+forall e (m :: * -&gt; *) a. m (Either e a) -&gt; ExceptT e m a
+</span><span class="hs-identifier hs-var">ExceptT</span></span><span> </span><span class="annot"><span class="annottext">(m (Either InterpretError a) -&gt; InterpretT m a)
+-&gt; m (Either InterpretError a) -&gt; InterpretT m a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Either e a -&gt; Either InterpretError a)
+-&gt; m (Either e a) -&gt; m (Either InterpretError a)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(e -&gt; InterpretError) -&gt; Either e a -&gt; Either InterpretError a
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; InterpretError
+</span><a href="#local-6989586621679117968"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m (Either e a)
+</span><a href="#local-6989586621679117967"><span class="hs-identifier hs-var">ma</span></a></span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span class="hs-comment">-- | Build a PureScript module from source, and make its exported functions available</span><span>
+</span><span id="line-136"></span><span class="hs-comment">-- during subsequent evaluations.</span><span>
+</span><span id="line-137"></span><span id="local-6989586621679117965"><span class="annot"><a href="Dovetail.html#build"><span class="hs-identifier hs-type">build</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117965"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117965"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Module</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Ann</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-138"></span><span id="build"><span class="annot"><span class="annottext">build :: Text -&gt; InterpretT m (Module Ann)
+</span><a href="Dovetail.html#build"><span class="hs-identifier hs-var hs-var">build</span></a></span></span><span> </span><span id="local-6989586621679117964"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679117964"><span class="hs-identifier hs-var">moduleText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-139"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679117963"><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117963"><span class="hs-identifier hs-var">externs</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117962"><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117962"><span class="hs-identifier hs-var">env</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT
+  ([ExternsFile], Env m)
+  (ExceptT InterpretError m)
+  ([ExternsFile], Env m)
+-&gt; InterpretT m ([ExternsFile], Env m)
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">StateT
+  ([ExternsFile], Env m)
+  (ExceptT InterpretError m)
+  ([ExternsFile], Env m)
+forall (m :: * -&gt; *) s. Monad m =&gt; StateT s m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-140"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679117961"><span class="annot"><span class="annottext">Module Ann
+</span><a href="#local-6989586621679117961"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117960"><span class="annot"><span class="annottext">ExternsFile
+</span><a href="#local-6989586621679117960"><span class="hs-identifier hs-var">newExterns</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(BuildError -&gt; InterpretError)
+-&gt; m (Either BuildError (Module Ann, ExternsFile))
+-&gt; InterpretT m (Module Ann, ExternsFile)
+forall (m :: * -&gt; *) e a.
+Monad m =&gt;
+(e -&gt; InterpretError) -&gt; m (Either e a) -&gt; InterpretT m a
+</span><a href="Dovetail.html#liftWith"><span class="hs-identifier hs-var">liftWith</span></a></span><span> </span><span class="annot"><span class="annottext">BuildError -&gt; InterpretError
+</span><a href="Dovetail.html#BuildError"><span class="hs-identifier hs-var">BuildError</span></a></span><span> </span><span class="annot"><span class="annottext">(m (Either BuildError (Module Ann, ExternsFile))
+ -&gt; InterpretT m (Module Ann, ExternsFile))
+-&gt; m (Either BuildError (Module Ann, ExternsFile))
+-&gt; InterpretT m (Module Ann, ExternsFile)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Either BuildError (Module Ann, ExternsFile)
+-&gt; m (Either BuildError (Module Ann, ExternsFile))
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either BuildError (Module Ann, ExternsFile)
+ -&gt; m (Either BuildError (Module Ann, ExternsFile)))
+-&gt; Either BuildError (Module Ann, ExternsFile)
+-&gt; m (Either BuildError (Module Ann, ExternsFile))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
+-&gt; Text -&gt; Either BuildError (Module Ann, ExternsFile)
+</span><a href="Dovetail.Build.html#buildSingleModule"><span class="hs-identifier hs-var">Make.buildSingleModule</span></a></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117963"><span class="hs-identifier hs-var">externs</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679117964"><span class="hs-identifier hs-var">moduleText</span></a></span><span>
+</span><span id="line-141"></span><span>  </span><span class="annot"><span class="annottext">StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+-&gt; InterpretT m ()
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">(StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+ -&gt; InterpretT m ())
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+-&gt; InterpretT m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">([ExternsFile], Env m)
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+forall (m :: * -&gt; *) s. Monad m =&gt; s -&gt; StateT s m ()
+</span><span class="hs-identifier hs-var">put</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ExternsFile
+</span><a href="#local-6989586621679117960"><span class="hs-identifier hs-var">newExterns</span></a></span><span> </span><span class="annot"><span class="annottext">ExternsFile -&gt; [ExternsFile] -&gt; [ExternsFile]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117963"><span class="hs-identifier hs-var">externs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117962"><span class="hs-identifier hs-var">env</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-142"></span><span>  </span><span class="annot"><span class="annottext">Module Ann -&gt; InterpretT m (Module Ann)
+forall (m :: * -&gt; *).
+MonadFix m =&gt;
+Module Ann -&gt; InterpretT m (Module Ann)
+</span><a href="Dovetail.html#buildCoreFn"><span class="hs-identifier hs-var">buildCoreFn</span></a></span><span> </span><span class="annot"><span class="annottext">Module Ann
+</span><a href="#local-6989586621679117961"><span class="hs-identifier hs-var">m</span></a></span><span>
+</span><span id="line-143"></span><span>
+</span><span id="line-144"></span><span class="hs-comment">-- | Build a PureScript module from corefn, and make its exported functions available</span><span>
+</span><span id="line-145"></span><span class="hs-comment">-- during subsequent evaluations.</span><span>
+</span><span id="line-146"></span><span class="hs-comment">--</span><span>
+</span><span id="line-147"></span><span class="hs-comment">-- The corefn module may be preprepared, for example by compiling from source text using the</span><span>
+</span><span id="line-148"></span><span class="hs-comment">-- functions in the &quot;Dovetail.Build&quot; module.</span><span>
+</span><span id="line-149"></span><span id="local-6989586621679118065"><span class="annot"><a href="Dovetail.html#buildCoreFn"><span class="hs-identifier hs-type">buildCoreFn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679118065"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Module</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Ann</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118065"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Module</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Ann</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-150"></span><span id="buildCoreFn"><span class="annot"><span class="annottext">buildCoreFn :: Module Ann -&gt; InterpretT m (Module Ann)
+</span><a href="Dovetail.html#buildCoreFn"><span class="hs-identifier hs-var hs-var">buildCoreFn</span></a></span></span><span> </span><span id="local-6989586621679117958"><span class="annot"><span class="annottext">Module Ann
+</span><a href="#local-6989586621679117958"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-151"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679117957"><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117957"><span class="hs-identifier hs-var">externs</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117956"><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117956"><span class="hs-identifier hs-var">env</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT
+  ([ExternsFile], Env m)
+  (ExceptT InterpretError m)
+  ([ExternsFile], Env m)
+-&gt; InterpretT m ([ExternsFile], Env m)
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">StateT
+  ([ExternsFile], Env m)
+  (ExceptT InterpretError m)
+  ([ExternsFile], Env m)
+forall (m :: * -&gt; *) s. Monad m =&gt; StateT s m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-152"></span><span>  </span><span id="local-6989586621679117955"><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117955"><span class="hs-identifier hs-var">newEnv</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(EvaluationError -&gt; InterpretError)
+-&gt; m (Either EvaluationError (Env m)) -&gt; InterpretT m (Env m)
+forall (m :: * -&gt; *) e a.
+Monad m =&gt;
+(e -&gt; InterpretError) -&gt; m (Either e a) -&gt; InterpretT m a
+</span><a href="Dovetail.html#liftWith"><span class="hs-identifier hs-var">liftWith</span></a></span><span> </span><span class="annot"><span class="annottext">EvaluationError -&gt; InterpretError
+</span><a href="Dovetail.html#EvaluationError"><span class="hs-identifier hs-var">EvaluationError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EvalT m (Env m) -&gt; m (Either EvaluationError (Env m))
+forall (m :: * -&gt; *) a. EvalT m a -&gt; m (Either EvaluationError a)
+</span><a href="Dovetail.Types.html#runEvalT"><span class="hs-identifier hs-var">Evaluate.runEvalT</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Env m -&gt; Module Ann -&gt; EvalT m (Env m)
+forall (m :: * -&gt; *) ann.
+MonadFix m =&gt;
+Env m -&gt; Module ann -&gt; EvalT m (Env m)
+</span><a href="Dovetail.Evaluate.html#buildCoreFn"><span class="hs-identifier hs-var">Evaluate.buildCoreFn</span></a></span><span> </span><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117956"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="annot"><span class="annottext">Module Ann
+</span><a href="#local-6989586621679117958"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-153"></span><span>  </span><span class="annot"><span class="annottext">StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+-&gt; InterpretT m ()
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">(StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+ -&gt; InterpretT m ())
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+-&gt; InterpretT m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">([ExternsFile], Env m)
+-&gt; StateT ([ExternsFile], Env m) (ExceptT InterpretError m) ()
+forall (m :: * -&gt; *) s. Monad m =&gt; s -&gt; StateT s m ()
+</span><span class="hs-identifier hs-var">put</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117957"><span class="hs-identifier hs-var">externs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117955"><span class="hs-identifier hs-var">newEnv</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-154"></span><span>  </span><span class="annot"><span class="annottext">Module Ann -&gt; InterpretT m (Module Ann)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Module Ann
+</span><a href="#local-6989586621679117958"><span class="hs-identifier hs-var">m</span></a></span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span class="hs-comment">-- | Evaluate a PureScript corefn expression and return the result.</span><span>
+</span><span id="line-157"></span><span class="hs-comment">-- Note: The expression is not type-checked by the PureScript typechecker. </span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- See the documentation for 'ToValueRHS' for valid result types.</span><span>
+</span><span id="line-159"></span><span id="local-6989586621679118046"><span id="local-6989586621679118047"><span class="annot"><a href="Dovetail.html#eval"><span class="hs-identifier hs-type">eval</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679118047"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValueRHS"><span class="hs-identifier hs-type">ToValueRHS</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118047"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118046"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CoreFn.Expr</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118047"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118046"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-160"></span><span id="eval"><span class="annot"><span class="annottext">eval :: Expr () -&gt; InterpretT m a
+</span><a href="Dovetail.html#eval"><span class="hs-identifier hs-var hs-var">eval</span></a></span></span><span> </span><span id="local-6989586621679117953"><span class="annot"><span class="annottext">Expr ()
+</span><a href="#local-6989586621679117953"><span class="hs-identifier hs-var">expr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-161"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679117952"><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679117952"><span class="hs-identifier hs-var">_externs</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117951"><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117951"><span class="hs-identifier hs-var">env</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT
+  ([ExternsFile], Env m)
+  (ExceptT InterpretError m)
+  ([ExternsFile], Env m)
+-&gt; InterpretT m ([ExternsFile], Env m)
+forall (m :: * -&gt; *) a.
+StateT ([ExternsFile], Env m) (ExceptT InterpretError m) a
+-&gt; InterpretT m a
+</span><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-var">InterpretT</span></a></span><span> </span><span class="annot"><span class="annottext">StateT
+  ([ExternsFile], Env m)
+  (ExceptT InterpretError m)
+  ([ExternsFile], Env m)
+forall (m :: * -&gt; *) s. Monad m =&gt; StateT s m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-162"></span><span>  </span><span class="annot"><span class="annottext">a -&gt; InterpretT m a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(a -&gt; InterpretT m a)
+-&gt; (EvalT m (Value m) -&gt; a) -&gt; EvalT m (Value m) -&gt; InterpretT m a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">EvalT m (Value m) -&gt; a
+forall (m :: * -&gt; *) a. ToValueRHS m a =&gt; EvalT m (Value m) -&gt; a
+</span><a href="Dovetail.Evaluate.html#fromValueRHS"><span class="hs-identifier hs-var">Evaluate.fromValueRHS</span></a></span><span> </span><span class="annot"><span class="annottext">(EvalT m (Value m) -&gt; InterpretT m a)
+-&gt; EvalT m (Value m) -&gt; InterpretT m a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Env m -&gt; Expr () -&gt; EvalT m (Value m)
+forall (m :: * -&gt; *).
+MonadFix m =&gt;
+Env m -&gt; Expr () -&gt; EvalT m (Value m)
+</span><a href="Dovetail.Evaluate.html#eval"><span class="hs-identifier hs-var">Evaluate.eval</span></a></span><span> </span><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679117951"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="annot"><span class="annottext">Expr ()
+</span><a href="#local-6989586621679117953"><span class="hs-identifier hs-var">expr</span></a></span><span>
+</span><span id="line-163"></span><span>
+</span><span id="line-164"></span><span class="hs-comment">-- | Evaluate @main@ in the specified module and return the result.</span><span>
+</span><span id="line-165"></span><span id="local-6989586621679117947"><span id="local-6989586621679117948"><span class="annot"><a href="Dovetail.html#evalMain"><span class="hs-identifier hs-type">evalMain</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117948"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValueRHS"><span class="hs-identifier hs-type">ToValueRHS</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117948"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117947"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.html#InterpretT"><span class="hs-identifier hs-type">InterpretT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117948"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117947"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-166"></span><span id="evalMain"><span class="annot"><span class="annottext">evalMain :: ModuleName -&gt; InterpretT m a
+</span><a href="Dovetail.html#evalMain"><span class="hs-identifier hs-var hs-var">evalMain</span></a></span></span><span> </span><span id="local-6989586621679117946"><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679117946"><span class="hs-identifier hs-var">moduleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Expr () -&gt; InterpretT m a
+forall (m :: * -&gt; *) a.
+(MonadFix m, ToValueRHS m a) =&gt;
+Expr () -&gt; InterpretT m a
+</span><a href="Dovetail.html#eval"><span class="hs-identifier hs-var">eval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">() -&gt; Qualified Ident -&gt; Expr ()
+forall a. a -&gt; Qualified Ident -&gt; Expr a
+</span><span class="hs-identifier hs-var">CoreFn.Var</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe ModuleName -&gt; Ident -&gt; Qualified Ident
+forall a. Maybe ModuleName -&gt; a -&gt; Qualified a
+</span><span class="hs-identifier hs-var">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ModuleName -&gt; Maybe ModuleName
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679117946"><span class="hs-identifier hs-var">moduleName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
+</span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;main&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span></pre></body></html>

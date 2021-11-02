@@ -13,12 +13,15 @@
 
 module Main where
   
+import Control.Monad (guard)
 import Data.Bifunctor (first)
+import Data.Functor (($>))
 import Data.Functor.Identity
 import Data.Text (Text)
 import Dovetail
 import Dovetail.Prelude (prelude)
 import GHC.Generics (Generic)
+import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
 import Test.Hspec
 import Test.QuickCheck
@@ -118,6 +121,34 @@ main = hspec do
             \import Prelude\n\
             \main x = { foo: 42, bar: 1.0, baz: true, quux: x }")
           `shouldBe` Right (Right (ExampleRecord1 42 1.0 True "testing"))
+          
+      let buildSingleExpressionWithPrelude 
+            :: forall a
+             . ToValueRHS Identity a
+            => Bool
+            -> Text
+            -> Either String (a, P.SourceType)
+          buildSingleExpressionWithPrelude importPreludeUnqualified exprText =
+            first renderInterpretError $
+              runInterpret do
+                ffi prelude
+                let defaultModule = guard importPreludeUnqualified $> P.ModuleName "Prelude"
+                eval defaultModule exprText
+                
+      it "should compile and evaluate literals" $
+        fmap (first (first renderEvaluationError . runEval)) 
+          (buildSingleExpressionWithPrelude @(Eval Integer) False "42")
+          `shouldBe` Right (Right 42, P.tyInt)
+          
+      it "should compile and evaluate simple expressions" $
+        fmap (first (first renderEvaluationError . runEval)) 
+          (buildSingleExpressionWithPrelude @(Eval Integer) False "Prelude.identity 42")
+          `shouldBe` Right (Right 42, P.tyInt)
+          
+      it "should compile and evaluate simple expressions with unqualified names from the default module" $
+        fmap (first (first renderEvaluationError . runEval)) 
+          (buildSingleExpressionWithPrelude @(Eval Integer) True "identity 42")
+          `shouldBe` Right (Right 42, P.tyInt)
     
 data ExampleRecord1 = ExampleRecord1
   { foo :: Integer

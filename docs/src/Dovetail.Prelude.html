@@ -19,7 +19,7 @@
 </span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html"><span class="hs-identifier">Dovetail.FFI.Builder</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FFI</span></span><span>
 </span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
 </span><span id="line-21"></span><span>
-</span><span id="line-22"></span><span id="local-6989586621679117758"><span class="annot"><a href="Dovetail.Prelude.html#stdlib"><span class="hs-identifier hs-type">stdlib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117758"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117758"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">]</span></span><span>
+</span><span id="line-22"></span><span id="local-6989586621679124346"><span class="annot"><a href="Dovetail.Prelude.html#stdlib"><span class="hs-identifier hs-type">stdlib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124346"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124346"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">]</span></span><span>
 </span><span id="line-23"></span><span id="stdlib"><span class="annot"><span class="annottext">stdlib :: [FFI m]
 </span><a href="Dovetail.Prelude.html#stdlib"><span class="hs-identifier hs-var hs-var">stdlib</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
 </span><span id="line-24"></span><span>  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">FFI m
@@ -45,7 +45,7 @@ forall (m :: * -&gt; *). MonadFix m =&gt; FFI m
 </span><a href="Dovetail.Prelude.html#preludeBoolean"><span class="hs-identifier hs-var">preludeBoolean</span></a></span><span>
 </span><span id="line-31"></span><span>  </span><span class="hs-special">]</span><span>
 </span><span id="line-32"></span><span>
-</span><span id="line-33"></span><span id="local-6989586621679117842"><span class="annot"><a href="Dovetail.Prelude.html#prelude"><span class="hs-identifier hs-type">prelude</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117842"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117842"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-33"></span><span id="local-6989586621679124430"><span class="annot"><a href="Dovetail.Prelude.html#prelude"><span class="hs-identifier hs-type">prelude</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124430"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124430"><span class="hs-identifier hs-type">m</span></a></span></span><span>
 </span><span id="line-34"></span><span id="prelude"><span class="annot"><span class="annottext">prelude :: FFI m
 </span><a href="Dovetail.Prelude.html#prelude"><span class="hs-identifier hs-var hs-var">prelude</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
@@ -64,9 +64,9 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Dovetail.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;identity&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-36"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117745"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117745"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117745"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-36"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124333"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124333"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124333"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -74,7 +74,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117745"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124333"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-37"></span><span>    </span><span class="annot"><span class="annottext">Value m -&gt; EvalT m (Value m)
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span>
@@ -97,11 +97,11 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Dovetail.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;flip&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-39"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117744"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117744"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679117743"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117743"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679117742"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117742"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117744"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-39"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124332"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124332"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679124331"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124331"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679124330"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124330"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124332"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -112,7 +112,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117743"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124331"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -120,7 +120,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117742"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679124330"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
@@ -138,7 +138,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117743"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124331"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -149,7 +149,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117744"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124332"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -157,13 +157,13 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117742"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124330"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-40"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
 -&gt; Value m -&gt; Value m -&gt; EvalT m (Value m)
 forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
 </span><span class="hs-identifier hs-var">flip</span></span><span>
 </span><span id="line-41"></span><span>    </span><span>
-</span><span id="line-42"></span><span id="local-6989586621679117740"><span class="annot"><a href="Dovetail.Prelude.html#preludeArray"><span class="hs-identifier hs-type">preludeArray</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117740"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117740"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-42"></span><span id="local-6989586621679124328"><span class="annot"><a href="Dovetail.Prelude.html#preludeArray"><span class="hs-identifier hs-type">preludeArray</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124328"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124328"><span class="hs-identifier hs-type">m</span></a></span></span><span>
 </span><span id="line-43"></span><span id="preludeArray"><span class="annot"><span class="annottext">preludeArray :: FFI m
 </span><a href="Dovetail.Prelude.html#preludeArray"><span class="hs-identifier hs-var hs-var">preludeArray</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
@@ -188,10 +188,10 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Dovetail.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;map&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-45"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117739"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117739"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679117738"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117738"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117739"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-45"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124327"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124327"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679124326"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124326"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124327"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -199,7 +199,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117738"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679124326"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
      m
@@ -220,7 +220,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117739"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679124327"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -235,7 +235,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117738"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124326"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-46"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; EvalT m (Value m))
 -&gt; Vector (Value m) -&gt; EvalT m (Vector (Value m))
 forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
@@ -259,9 +259,9 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Dovetail.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;filter&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-48"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117736"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117736"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117736"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-48"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124324"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124324"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124324"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m Bool (EvalT m Bool)
 -&gt; FunctionType
      m (Value m -&gt; EvalT m Bool) (Value m -&gt; EvalT m Bool)
@@ -290,7 +290,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117736"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679124324"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -305,7 +305,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117736"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124324"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-49"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; EvalT m Bool)
 -&gt; Vector (Value m) -&gt; EvalT m (Vector (Value m))
 forall (m :: * -&gt; *) a.
@@ -330,10 +330,10 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Dovetail.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;foldl&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-51"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117734"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117734"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679117733"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117733"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117733"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-51"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124322"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124322"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679124321"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124321"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124321"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -344,7 +344,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117734"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124322"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -352,7 +352,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117733"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679124321"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
@@ -370,7 +370,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117733"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124321"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m
      (Vector (Value m) -&gt; EvalT m (Value m))
@@ -388,7 +388,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117734"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679124322"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m
@@ -398,7 +398,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117733"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124321"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
 -&gt; Value m -&gt; Vector (Value m) -&gt; EvalT m (Value m)
 forall (m :: * -&gt; *) a b.
@@ -430,11 +430,11 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Dovetail.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;zipWith&quot;</span></span><span class="hs-special">)</span><span> </span><span>
-</span><span id="line-54"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117731"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117731"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679117730"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117730"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679117729"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117729"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117731"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-54"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124319"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124319"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679124318"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124318"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679124317"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124317"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124319"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
 -&gt; FunctionType
@@ -445,7 +445,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117730"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124318"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType
      m (Value m -&gt; EvalT m (Value m)) (Value m -&gt; EvalT m (Value m))
@@ -453,7 +453,7 @@ forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117729"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
+</span><a href="#local-6989586621679124317"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FunctionType
   m
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
   (Value m -&gt; Value m -&gt; EvalT m (Value m))
@@ -482,7 +482,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117731"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679124319"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
      (Vector (Value m) -&gt; EvalT m (Vector (Value m)))
@@ -502,7 +502,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117730"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679124318"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -517,7 +517,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117729"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124317"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-55"></span><span>    </span><span class="annot"><span class="annottext">(Value m -&gt; Value m -&gt; EvalT m (Value m))
 -&gt; Vector (Value m)
 -&gt; Vector (Value m)
@@ -543,14 +543,14 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><a href="Dovetail.FFI.Builder.html#foreignImport"><span class="hs-identifier hs-var">FFI.foreignImport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ident
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;append&quot;</span></span><span class="hs-special">)</span><span>
-</span><span id="line-57"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117727"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117727"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><span id="line-57"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124315"><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
+</span><a href="#local-6989586621679124315"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117727"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679124315"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
      (Vector (Value m) -&gt; EvalT m (Vector (Value m)))
@@ -570,7 +570,7 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117727"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
+</span><a href="#local-6989586621679124315"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType m (Vector (Value m)) (EvalT m (Vector (Value m)))
 -&gt; FunctionType
      m
@@ -585,18 +585,18 @@ forall (m :: * -&gt; *) l r.
 FunctionType m l r
 -&gt; FunctionType m (Vector l) (EvalT m (Vector l))
 </span><a href="Dovetail.FFI.Builder.html#array"><span class="hs-identifier hs-var">array</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m (Value m) (EvalT m (Value m))
-</span><a href="#local-6989586621679117727"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-58"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117726"><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679117726"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679117725"><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679117725"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; EvalT m (Vector (Value m))
+</span><a href="#local-6989586621679124315"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124314"><span class="annot"><span class="annottext">Vector (Value m)
+</span><a href="#local-6989586621679124314"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679124313"><span class="annot"><span class="annottext">Vector (Value m)
+</span><a href="#local-6989586621679124313"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; EvalT m (Vector (Value m))
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679117726"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; Vector (Value m) -&gt; Vector (Value m)
+</span><a href="#local-6989586621679124314"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Vector (Value m) -&gt; Vector (Value m) -&gt; Vector (Value m)
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Vector (Value m)
-</span><a href="#local-6989586621679117725"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124313"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-59"></span><span>  </span><span>
-</span><span id="line-60"></span><span id="local-6989586621679117724"><span class="annot"><a href="Dovetail.Prelude.html#preludeString"><span class="hs-identifier hs-type">preludeString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117724"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117724"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-60"></span><span id="local-6989586621679124312"><span class="annot"><a href="Dovetail.Prelude.html#preludeString"><span class="hs-identifier hs-type">preludeString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124312"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124312"><span class="hs-identifier hs-type">m</span></a></span></span><span>
 </span><span id="line-61"></span><span id="preludeString"><span class="annot"><span class="annottext">preludeString :: FFI m
 </span><a href="Dovetail.Prelude.html#preludeString"><span class="hs-identifier hs-var hs-var">preludeString</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
@@ -634,15 +634,15 @@ FunctionType m al ar
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Text (EvalT m Text)
 forall (m :: * -&gt; *). FunctionType m Text (EvalT m Text)
 </span><a href="Dovetail.FFI.Builder.html#string"><span class="hs-identifier hs-var">string</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-64"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117723"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679117723"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679117722"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679117722"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; EvalT m Text
+</span><span id="line-64"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124311"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679124311"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679124310"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679124310"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; EvalT m Text
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679117723"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+</span><a href="#local-6989586621679124311"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679117722"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124310"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-65"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType m (Char -&gt; EvalT m Text) (Char -&gt; EvalT m Text)
 -&gt; (Char -&gt; EvalT m Text)
@@ -671,7 +671,7 @@ forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 </span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Text
 </span><span class="hs-identifier hs-var">Text.singleton</span></span><span class="hs-special">)</span><span>
 </span><span id="line-68"></span><span>    </span><span>
-</span><span id="line-69"></span><span id="local-6989586621679117719"><span class="annot"><a href="Dovetail.Prelude.html#preludeChar"><span class="hs-identifier hs-type">preludeChar</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117719"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117719"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-69"></span><span id="local-6989586621679124307"><span class="annot"><a href="Dovetail.Prelude.html#preludeChar"><span class="hs-identifier hs-type">preludeChar</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124307"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124307"><span class="hs-identifier hs-type">m</span></a></span></span><span>
 </span><span id="line-70"></span><span id="preludeChar"><span class="annot"><span class="annottext">preludeChar :: FFI m
 </span><a href="Dovetail.Prelude.html#preludeChar"><span class="hs-identifier hs-var hs-var">preludeChar</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
@@ -747,7 +747,7 @@ forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 </span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
 </span><span class="hs-identifier hs-var">ord</span></span><span class="hs-special">)</span><span>
 </span><span id="line-77"></span><span>    </span><span>
-</span><span id="line-78"></span><span id="local-6989586621679117718"><span class="annot"><a href="Dovetail.Prelude.html#preludeNumber"><span class="hs-identifier hs-type">preludeNumber</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117718"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117718"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-78"></span><span id="local-6989586621679124306"><span class="annot"><a href="Dovetail.Prelude.html#preludeNumber"><span class="hs-identifier hs-type">preludeNumber</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124306"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124306"><span class="hs-identifier hs-type">m</span></a></span></span><span>
 </span><span id="line-79"></span><span id="preludeNumber"><span class="annot"><span class="annottext">preludeNumber :: FFI m
 </span><a href="Dovetail.Prelude.html#preludeNumber"><span class="hs-identifier hs-var hs-var">preludeNumber</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
@@ -806,15 +806,15 @@ FunctionType m al ar
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Double (EvalT m Double)
 forall (m :: * -&gt; *). FunctionType m Double (EvalT m Double)
 </span><a href="Dovetail.FFI.Builder.html#number"><span class="hs-identifier hs-var">number</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-85"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117715"><span class="annot"><span class="annottext">Double
-</span><a href="#local-6989586621679117715"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117714"><span class="annot"><span class="annottext">Double
-</span><a href="#local-6989586621679117714"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Double -&gt; EvalT m Double
+</span><span id="line-85"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124303"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679124303"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124302"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679124302"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Double -&gt; EvalT m Double
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
-</span><a href="#local-6989586621679117715"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+</span><a href="#local-6989586621679124303"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
 forall a. Fractional a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Double
-</span><a href="#local-6989586621679117714"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124302"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-86"></span><span>
 </span><span id="line-87"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType
@@ -941,7 +941,7 @@ forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
 </span><span class="hs-identifier hs-var">truncate</span></span><span class="hs-special">)</span><span>
 </span><span id="line-99"></span><span>  </span><span>
-</span><span id="line-100"></span><span id="local-6989586621679117708"><span class="annot"><a href="Dovetail.Prelude.html#preludeInt"><span class="hs-identifier hs-type">preludeInt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117708"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117708"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-100"></span><span id="local-6989586621679124296"><span class="annot"><a href="Dovetail.Prelude.html#preludeInt"><span class="hs-identifier hs-type">preludeInt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124296"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124296"><span class="hs-identifier hs-type">m</span></a></span></span><span>
 </span><span id="line-101"></span><span id="preludeInt"><span class="annot"><span class="annottext">preludeInt :: FFI m
 </span><a href="Dovetail.Prelude.html#preludeInt"><span class="hs-identifier hs-var hs-var">preludeInt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
@@ -1000,15 +1000,15 @@ FunctionType m al ar
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Integer (EvalT m Integer)
 forall (m :: * -&gt; *). FunctionType m Integer (EvalT m Integer)
 </span><a href="Dovetail.FFI.Builder.html#int"><span class="hs-identifier hs-var">int</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-107"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117707"><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679117707"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117706"><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679117706"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; EvalT m Integer
+</span><span id="line-107"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124295"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679124295"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124294"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679124294"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; EvalT m Integer
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679117707"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+</span><a href="#local-6989586621679124295"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
 forall a. Integral a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">`div`</span></span><span> </span><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679117706"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124294"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-108"></span><span>
 </span><span id="line-109"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType
@@ -1042,7 +1042,7 @@ forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 forall a b. (Integral a, Num b) =&gt; a -&gt; b
 </span><span class="hs-identifier hs-var">fromIntegral</span></span><span class="hs-special">)</span><span>
 </span><span id="line-112"></span><span>  </span><span>
-</span><span id="line-113"></span><span id="local-6989586621679117704"><span class="annot"><a href="Dovetail.Prelude.html#preludeBoolean"><span class="hs-identifier hs-type">preludeBoolean</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679117704"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117704"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-113"></span><span id="local-6989586621679124292"><span class="annot"><a href="Dovetail.Prelude.html#preludeBoolean"><span class="hs-identifier hs-type">preludeBoolean</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679124292"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.html#FFI"><span class="hs-identifier hs-type">FFI</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124292"><span class="hs-identifier hs-type">m</span></a></span></span><span>
 </span><span id="line-114"></span><span id="preludeBoolean"><span class="annot"><span class="annottext">preludeBoolean :: FFI m
 </span><a href="Dovetail.Prelude.html#preludeBoolean"><span class="hs-identifier hs-var hs-var">preludeBoolean</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; FFIBuilder m () -&gt; FFI m
 forall (m :: * -&gt; *) a. ModuleName -&gt; FFIBuilder m a -&gt; FFI m
@@ -1080,14 +1080,14 @@ FunctionType m al ar
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
 forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
 </span><a href="Dovetail.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-117"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117703"><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117703"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117702"><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117702"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
+</span><span id="line-117"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124291"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679124291"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124290"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679124290"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117703"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><a href="#local-6989586621679124291"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
 </span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117702"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124290"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-118"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType
      m (Bool -&gt; Bool -&gt; EvalT m Bool) (Bool -&gt; Bool -&gt; EvalT m Bool)
@@ -1119,14 +1119,14 @@ FunctionType m al ar
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m Bool (EvalT m Bool)
 forall (m :: * -&gt; *). FunctionType m Bool (EvalT m Bool)
 </span><a href="Dovetail.FFI.Builder.html#boolean"><span class="hs-identifier hs-var">boolean</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-120"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117700"><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117700"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117699"><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117699"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
+</span><span id="line-120"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124288"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679124288"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124287"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679124287"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; EvalT m Bool
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117700"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><a href="#local-6989586621679124288"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
 </span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679117699"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124287"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-121"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType m (Bool -&gt; EvalT m Bool) (Bool -&gt; EvalT m Bool)
 -&gt; (Bool -&gt; EvalT m Bool)
@@ -1155,13 +1155,13 @@ forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 </span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
 </span><span class="hs-identifier hs-var">not</span></span><span class="hs-special">)</span><span>
 </span><span id="line-124"></span><span>
-</span><span id="line-125"></span><span id="local-6989586621679117784"><span id="local-6989586621679117785"><span class="annot"><a href="Dovetail.Prelude.html#numOps"><span class="hs-identifier hs-type">numOps</span></a></span><span> </span><span>
-</span><span id="line-126"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Evaluate.html#ToValue"><span class="hs-identifier hs-type">ToValue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117785"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117784"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValueRHS"><span class="hs-identifier hs-type">ToValueRHS</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117785"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117785"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117784"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679117784"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-127"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FunctionType"><span class="hs-identifier hs-type">FFI.FunctionType</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117785"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117784"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117785"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117784"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-128"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FFIBuilder"><span class="hs-identifier hs-type">FFI.FFIBuilder</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117785"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-125"></span><span id="local-6989586621679124372"><span id="local-6989586621679124373"><span class="annot"><a href="Dovetail.Prelude.html#numOps"><span class="hs-identifier hs-type">numOps</span></a></span><span> </span><span>
+</span><span id="line-126"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Evaluate.html#ToValue"><span class="hs-identifier hs-type">ToValue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124373"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124372"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValueRHS"><span class="hs-identifier hs-type">ToValueRHS</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124373"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124373"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124372"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679124372"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-127"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FunctionType"><span class="hs-identifier hs-type">FFI.FunctionType</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124373"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124372"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124373"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124372"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FFIBuilder"><span class="hs-identifier hs-type">FFI.FFIBuilder</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124373"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
 </span><span id="line-129"></span><span id="numOps"><span class="annot"><span class="annottext">numOps :: FunctionType m a (EvalT m a) -&gt; FFIBuilder m ()
-</span><a href="Dovetail.Prelude.html#numOps"><span class="hs-identifier hs-var hs-var">numOps</span></a></span></span><span> </span><span id="local-6989586621679117696"><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><a href="Dovetail.Prelude.html#numOps"><span class="hs-identifier hs-var hs-var">numOps</span></a></span></span><span> </span><span id="local-6989586621679124284"><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-130"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 -&gt; (a -&gt; a -&gt; EvalT m a)
@@ -1173,30 +1173,30 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;add&quot;</span></span><span class="hs-special">)</span><span>
 </span><span id="line-131"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-132"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117695"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117695"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117694"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117694"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-132"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124283"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124283"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124282"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124282"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117695"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+</span><a href="#local-6989586621679124283"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
 forall a. Num a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117694"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124282"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-133"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 -&gt; (a -&gt; a -&gt; EvalT m a)
@@ -1208,30 +1208,30 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;sub&quot;</span></span><span class="hs-special">)</span><span>
 </span><span id="line-134"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-135"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117692"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117692"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117691"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117691"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-135"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124280"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124280"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124279"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124279"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117692"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+</span><a href="#local-6989586621679124280"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
 forall a. Num a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117691"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124279"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-136"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 -&gt; (a -&gt; a -&gt; EvalT m a)
@@ -1243,38 +1243,38 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;mul&quot;</span></span><span class="hs-special">)</span><span>
 </span><span id="line-137"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117696"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-138"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117690"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117690"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117689"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117689"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
+</span><a href="#local-6989586621679124284"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-138"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124278"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124278"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124277"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124277"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117690"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+</span><a href="#local-6989586621679124278"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
 forall a. Num a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117689"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124277"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-139"></span><span>    </span><span>
-</span><span id="line-140"></span><span id="local-6989586621679117780"><span id="local-6989586621679117781"><span class="annot"><a href="Dovetail.Prelude.html#ordOps"><span class="hs-identifier hs-type">ordOps</span></a></span><span> </span><span>
-</span><span id="line-141"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Evaluate.html#ToValue"><span class="hs-identifier hs-type">ToValue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117781"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117780"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValueRHS"><span class="hs-identifier hs-type">ToValueRHS</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117781"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117781"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117780"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679117780"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-142"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FunctionType"><span class="hs-identifier hs-type">FFI.FunctionType</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117781"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117780"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117781"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117780"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-143"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FFIBuilder"><span class="hs-identifier hs-type">FFI.FFIBuilder</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117781"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-140"></span><span id="local-6989586621679124368"><span id="local-6989586621679124369"><span class="annot"><a href="Dovetail.Prelude.html#ordOps"><span class="hs-identifier hs-type">ordOps</span></a></span><span> </span><span>
+</span><span id="line-141"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Evaluate.html#ToValue"><span class="hs-identifier hs-type">ToValue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124369"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124368"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html#ToValueRHS"><span class="hs-identifier hs-type">ToValueRHS</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124369"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124369"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124368"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679124368"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-142"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FunctionType"><span class="hs-identifier hs-type">FFI.FunctionType</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124369"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124368"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Types.html#EvalT"><span class="hs-identifier hs-type">EvalT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124369"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124368"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-143"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.FFI.Builder.html#FFIBuilder"><span class="hs-identifier hs-type">FFI.FFIBuilder</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124369"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
 </span><span id="line-144"></span><span id="ordOps"><span class="annot"><span class="annottext">ordOps :: FunctionType m a (EvalT m a) -&gt; FFIBuilder m ()
-</span><a href="Dovetail.Prelude.html#ordOps"><span class="hs-identifier hs-var hs-var">ordOps</span></a></span></span><span> </span><span id="local-6989586621679117687"><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117687"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><a href="Dovetail.Prelude.html#ordOps"><span class="hs-identifier hs-var hs-var">ordOps</span></a></span></span><span> </span><span id="local-6989586621679124275"><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124275"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-145"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 -&gt; (a -&gt; a -&gt; EvalT m a)
@@ -1286,30 +1286,30 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;min&quot;</span></span><span class="hs-special">)</span><span>
 </span><span id="line-146"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117687"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124275"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117687"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124275"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117687"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-147"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117686"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117686"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117685"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117685"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
+</span><a href="#local-6989586621679124275"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-147"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124274"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124274"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124273"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124273"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117686"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+</span><a href="#local-6989586621679124274"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
 forall a. Ord a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">`min`</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117685"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124273"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-148"></span><span>  </span><span class="annot"><span class="annottext">Ident
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 -&gt; (a -&gt; a -&gt; EvalT m a)
@@ -1321,28 +1321,28 @@ Ident -&gt; ty -&gt; a -&gt; FFIBuilder m ()
 </span><span class="hs-identifier hs-var">P.Ident</span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;max&quot;</span></span><span class="hs-special">)</span><span>
 </span><span id="line-149"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117687"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124275"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 -&gt; FunctionType m (a -&gt; a -&gt; EvalT m a) (a -&gt; a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117687"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
+</span><a href="#local-6989586621679124275"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
 -&gt; FunctionType m a (EvalT m a)
 -&gt; FunctionType m (a -&gt; EvalT m a) (a -&gt; EvalT m a)
 forall (m :: * -&gt; *) al ar bl br.
 FunctionType m al ar
 -&gt; FunctionType m bl br -&gt; FunctionType m (al -&gt; br) (al -&gt; br)
 </span><a href="Dovetail.FFI.Builder.html#~%3E"><span class="hs-operator hs-var">~&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">FunctionType m a (EvalT m a)
-</span><a href="#local-6989586621679117687"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-150"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679117683"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117683"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679117682"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117682"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
+</span><a href="#local-6989586621679124275"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-150"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679124271"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124271"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679124270"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124270"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; EvalT m a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117683"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+</span><a href="#local-6989586621679124271"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
 forall a. Ord a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">`max`</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679117682"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679124270"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-151"></span></pre></body></html>

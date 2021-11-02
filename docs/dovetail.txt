@@ -13,11 +13,19 @@ module Dovetail.Build
 data BuildError
 UnableToParse :: NonEmpty ParserError -> BuildError
 UnableToCompile :: MultipleErrors -> BuildError
+InternalError :: BuildError
 renderBuildError :: BuildError -> String
 
 -- | Parse and build a single PureScript module, returning the compiled
 --   CoreFn module.
 buildSingleModule :: [ExternsFile] -> Text -> Either BuildError (Module Ann, ExternsFile)
+
+-- | Parse and build a single PureScript expression, returning the compiled
+--   CoreFn module. The expression will be used to create a placeholder
+--   module with the name <tt>Main</tt>, and a single expression named
+--   <tt>main</tt>, with the specified content.
+buildSingleExpression :: Maybe ModuleName -> [ExternsFile] -> Text -> Either BuildError (Expr Ann, SourceType)
+buildSingleExpressionFromCST :: Maybe ModuleName -> [ExternsFile] -> Expr a -> Either BuildError (Expr Ann, SourceType)
 
 -- | Compile a single <a>Module</a> into a CoreFn module.
 --   
@@ -528,12 +536,15 @@ build :: MonadFix m => Text -> InterpretT m (Module Ann)
 --   
 --   The corefn module may be preprepared, for example by compiling from
 --   source text using the functions in the <a>Dovetail.Build</a> module.
-buildCoreFn :: MonadFix m => Module Ann -> InterpretT m (Module Ann)
+buildCoreFn :: MonadFix m => ExternsFile -> Module Ann -> InterpretT m (Module Ann)
+
+-- | Evaluate a PureScript expression from source
+eval :: (MonadFix m, ToValueRHS m a) => Maybe ModuleName -> Text -> InterpretT m (a, SourceType)
 
 -- | Evaluate a PureScript corefn expression and return the result. Note:
 --   The expression is not type-checked by the PureScript typechecker. See
 --   the documentation for <a>ToValueRHS</a> for valid result types.
-eval :: (MonadFix m, ToValueRHS m a) => Expr () -> InterpretT m a
+evalCoreFn :: (MonadFix m, ToValueRHS m a) => Expr () -> InterpretT m a
 
 -- | Evaluate <tt>main</tt> in the specified module and return the result.
 evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
@@ -621,6 +632,7 @@ fromValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => Value m -> EvalT m 
 data BuildError
 UnableToParse :: NonEmpty ParserError -> BuildError
 UnableToCompile :: MultipleErrors -> BuildError
+InternalError :: BuildError
 renderBuildError :: BuildError -> String
 type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
 data Expr a

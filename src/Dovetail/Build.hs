@@ -17,6 +17,7 @@ import Data.List.NonEmpty qualified as NEL
 import Data.Text (Text)
 import Language.PureScript qualified as P
 import Language.PureScript.AST.Declarations qualified as AST
+import Language.PureScript.AST.SourcePos qualified as AST
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.CST qualified as CST
 import Language.PureScript.Errors qualified as Errors
@@ -27,6 +28,7 @@ import Language.PureScript.TypeChecker.Monad qualified as TC
 data BuildError
   = UnableToParse (NonEmpty CST.ParserError)
   | UnableToCompile Errors.MultipleErrors
+  | InternalError
   deriving Show
 
 renderBuildError :: BuildError -> String
@@ -35,6 +37,8 @@ renderBuildError (UnableToParse xs) =
     "Parser errors:" : NEL.toList (fmap CST.prettyPrintError xs)
 renderBuildError (UnableToCompile xs) =
   Errors.prettyPrintMultipleErrors Errors.defaultPPEOptions xs
+renderBuildError InternalError =
+  "An internal error occurred during compilation."
 
 -- | Parse and build a single PureScript module, returning the compiled CoreFn
 -- module.
@@ -48,6 +52,65 @@ buildSingleModule externs moduleText = do
         Left errs ->
           Left (UnableToCompile errs)
         Right (result, _) -> Right result
+
+-- | Parse and build a single PureScript expression, returning the compiled CoreFn
+-- module. The expression will be used to create a placeholder module with the name
+-- @Main@, and a single expression named @main@, with the specified content.
+buildSingleExpression
+  :: Maybe P.ModuleName
+  -- ^ The name of the "default module" whose exports will be made available unqualified
+  -- to the evaluated expression.
+  -> [P.ExternsFile]
+  -> Text
+  -> Either BuildError (CoreFn.Expr CoreFn.Ann, P.SourceType)
+buildSingleExpression defaultModule externs input = do
+  let tokens = CST.lex input
+      (_, parseResult) = CST.runParser (CST.ParserState tokens [] []) CST.parseExpr
+  case parseResult of
+    Left errs ->
+      Left (UnableToParse errs)
+    Right cst -> 
+      buildSingleExpressionFromCST defaultModule externs cst
+
+buildSingleExpressionFromCST
+  :: Maybe P.ModuleName
+  -- ^ The name of the "default module" whose exports will be made available unqualified
+  -- to the evaluated expression.
+  -> [P.ExternsFile]
+  -> CST.Expr a
+  -> Either BuildError (CoreFn.Expr CoreFn.Ann, P.SourceType)
+buildSingleExpressionFromCST defaultModule externs cst = do
+  let expr = CST.convertExpr "<input>" cst
+      exprName = P.Ident "$"
+      decl = AST.ValueDeclarationData
+               { AST.valdeclSourceAnn  = AST.nullSourceAnn
+               , AST.valdeclIdent      = exprName
+               , AST.valdeclName       = P.Public
+               , AST.valdeclBinders    = []
+               , AST.valdeclExpression = [AST.GuardedExpr [] expr]
+               }
+      imports = [ P.ImportDeclaration
+                    AST.nullSourceAnn
+                    mn
+                    P.Implicit
+                    (if defaultModule == Just mn 
+                       then Nothing
+                       else Just mn)
+                | P.ExternsFile { P.efModuleName = mn } <- externs
+                ]
+      m = AST.Module AST.nullSourceSpan [] (P.ModuleName "$") (imports <> [P.ValueDeclaration decl]) Nothing
+  case buildCoreFnOnly externs m of 
+    Left errs ->
+      Left (UnableToCompile errs)
+    Right ((result, externs'), _) -> 
+      case (CoreFn.moduleDecls result, P.efDeclarations externs') of
+        ([CoreFn.NonRec _ name1 coreFnExpr], [P.EDValue name2 ty]) 
+          | name1 == exprName
+          , name2 == exprName -> Right (coreFnExpr, ty)
+        ([CoreFn.Rec [((_, name1), coreFnExpr)]], [P.EDValue name2 ty]) 
+          | name1 == exprName
+          , name2 == exprName -> Right (coreFnExpr, ty)
+        _ -> Left InternalError
 
 -- | Compile a single 'AST.Module' into a CoreFn module.
 --

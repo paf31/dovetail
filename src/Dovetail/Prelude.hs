@@ -5,18 +5,24 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 
 -- | A tiny standard library.
 module Dovetail.Prelude where
   
 import Control.Monad.Fix (MonadFix)
 import Data.Char (chr, ord)
+import Data.HashMap.Strict qualified as HashMap
+import Data.List (sortBy)
+import Data.Ord (comparing)
+import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector qualified as Vector
 import Dovetail.Evaluate (EvalT, ToValue, ToValueRHS)
 import Dovetail.FFI (FFI(..))
 import Dovetail.FFI.Builder (array, boolean, char, int, string, number, (~>))
 import Dovetail.FFI.Builder qualified as FFI
+import Dovetail.Types (Value(..))
 import Language.PureScript qualified as P
 
 stdlib :: MonadFix m => [FFI m]
@@ -28,6 +34,7 @@ stdlib =
   , preludeNumber
   , preludeInt
   , preludeBoolean
+  , preludeDebug
   ]
 
 prelude :: MonadFix m => FFI m
@@ -59,6 +66,9 @@ preludeArray = FFI.evalFFIBuilder (P.ModuleName "Prelude.Array") do
   
 preludeString :: MonadFix m => FFI m
 preludeString = FFI.evalFFIBuilder (P.ModuleName "Prelude.String") do
+  eqOps string
+  ordOps string
+  
   FFI.foreignImport (P.Ident "append")
     (string ~> string ~> string)
     (\xs ys -> pure (xs <> ys))
@@ -68,6 +78,9 @@ preludeString = FFI.evalFFIBuilder (P.ModuleName "Prelude.String") do
     
 preludeChar :: MonadFix m => FFI m
 preludeChar = FFI.evalFFIBuilder (P.ModuleName "Prelude.Char") do
+  eqOps char
+  ordOps string
+  
   FFI.foreignImport (P.Ident "chr")
     (int ~> char)
     (pure . chr . fromIntegral)
@@ -99,6 +112,7 @@ preludeNumber = FFI.evalFFIBuilder (P.ModuleName "Prelude.Number") do
   
 preludeInt :: MonadFix m => FFI m
 preludeInt = FFI.evalFFIBuilder (P.ModuleName "Prelude.Int") do
+  eqOps int
   numOps int
   ordOps int
 
@@ -112,6 +126,9 @@ preludeInt = FFI.evalFFIBuilder (P.ModuleName "Prelude.Int") do
   
 preludeBoolean :: MonadFix m => FFI m
 preludeBoolean = FFI.evalFFIBuilder (P.ModuleName "Prelude.Boolean") do
+  eqOps boolean
+  ordOps string
+  
   FFI.foreignImport (P.Ident "and")
     (boolean ~> boolean ~> boolean)
     (\x y -> pure (x && y))
@@ -121,6 +138,53 @@ preludeBoolean = FFI.evalFFIBuilder (P.ModuleName "Prelude.Boolean") do
   FFI.foreignImport (P.Ident "not")
     (boolean ~> boolean)
     (pure . not)
+    
+preludeDebug :: MonadFix m => FFI m
+preludeDebug = 
+    FFI.evalFFIBuilder (P.ModuleName "Prelude.Debug") do
+      FFI.foreignImport (P.Ident "show")
+        (\a -> a ~> string)
+        (pure . fst . go)
+  where
+    go :: Value m -> (Text, Bool)
+    go (String s) = (Text.pack (show @Text s), True)
+    go (Char c) = (Text.pack (show @Char c), True)
+    go (Number d) = (Text.pack (show @Double d), True)
+    go (Int i) = (Text.pack (show @Integer i), True)
+    go (Bool True) = ("true", True)
+    go (Bool False) = ("false", True)
+    go (Object o) = ( "{ " <> Text.intercalate ", " 
+                        [ Text.pack (show @Text k) <> ": " <> fst (go x) 
+                        | (k, x) <- sortBy (comparing fst) (HashMap.toList o)
+                        ] <> " }"
+                    , True
+                    )
+    go (Array xs) = ( "[ " <> Text.intercalate ", " 
+                         [ fst (go x) 
+                         | x <- Vector.toList xs
+                         ] <> " ]"
+                    , True
+                    )
+    go (Closure{}) = ("<closure>", True)
+    go (Constructor ctor args) = (Text.unwords (P.runProperName ctor : map goParens args), null args)
+    
+    goParens :: Value m -> Text
+    goParens x = 
+      case go x of
+        (result, True) -> result
+        (result, False) -> "(" <> result <> ")"
+
+eqOps 
+  :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a)
+  => FFI.FunctionType m a (EvalT m a)
+  -> FFI.FFIBuilder m ()
+eqOps ty = do
+  FFI.foreignImport (P.Ident "eq")
+    (ty ~> ty ~> boolean)
+    (\x y -> pure (x == y))
+  FFI.foreignImport (P.Ident "neq")
+    (ty ~> ty ~> boolean)
+    (\x y -> pure (x /= y))
 
 numOps 
   :: (ToValue m a, ToValueRHS m (EvalT m a), Num a)
@@ -148,3 +212,17 @@ ordOps ty = do
   FFI.foreignImport (P.Ident "max")
     (ty ~> ty ~> ty)
     (\x y -> pure (x `max` y))
+    
+  FFI.foreignImport (P.Ident "lt")
+    (ty ~> ty ~> boolean)
+    (\x y -> pure (x < y))
+  FFI.foreignImport (P.Ident "gt")
+    (ty ~> ty ~> boolean)
+    (\x y -> pure (x > y))
+  FFI.foreignImport (P.Ident "lte")
+    (ty ~> ty ~> boolean)
+    (\x y -> pure (x <= y))
+  FFI.foreignImport (P.Ident "gte")
+    (ty ~> ty ~> boolean)
+    (\x y -> pure (x >= y))
+

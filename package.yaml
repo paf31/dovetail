@@ -97,8 +97,11 @@ tests:
     - -with-rtsopts=-N
     - -fwarn-unused-imports
     dependencies:
+    - directory
     - dovetail
+    - filepath
     - hspec
+    - hspec-golden
     - purescript
     - QuickCheck
     - generic-arbitrary

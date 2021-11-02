@@ -8,4 +8,5 @@ extra-deps:
     - .
     - lib/purescript-cst
 - generic-arbitrary-0.2.0@sha256:5c8619724d64271725c89a479630279fde40825eed75e68960ed0f14ca682d78
+- hspec-golden-0.2.0.0
 - language-javascript-0.7.0.0

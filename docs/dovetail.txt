@@ -463,6 +463,8 @@ preludeChar :: MonadFix m => FFI m
 preludeNumber :: MonadFix m => FFI m
 preludeInt :: MonadFix m => FFI m
 preludeBoolean :: MonadFix m => FFI m
+preludeDebug :: MonadFix m => FFI m
+eqOps :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
 numOps :: (ToValue m a, ToValueRHS m (EvalT m a), Num a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
 ordOps :: (ToValue m a, ToValueRHS m (EvalT m a), Ord a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
 

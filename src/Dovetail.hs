@@ -25,8 +25,9 @@ module Dovetail
   , build
   , buildCoreFn
   
-  -- ** Evaluating values
+  -- ** Evaluating expressions
   , eval
+  , evalCoreFn
   , evalMain
   
   , module Dovetail.Evaluate
@@ -40,6 +41,7 @@ import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.State (StateT, evalStateT, get, put, modify)
 import Data.Bifunctor (first)
+import Data.Functor (void)
 import Data.Functor.Identity (Identity(..))
 import Data.Text (Text)
 import Dovetail.Build (BuildError(..), renderBuildError)
@@ -136,31 +138,43 @@ liftWith f ma = InterpretT . lift . ExceptT $ fmap (first f) ma
 -- during subsequent evaluations.
 build :: MonadFix m => Text -> InterpretT m (CoreFn.Module CoreFn.Ann)
 build moduleText = do
-  (externs, env) <- InterpretT get
+  (externs, _) <- InterpretT get
   (m, newExterns) <- liftWith BuildError $ pure $ Make.buildSingleModule externs moduleText
-  InterpretT $ put (newExterns : externs, env)
-  buildCoreFn m
+  buildCoreFn newExterns m
 
 -- | Build a PureScript module from corefn, and make its exported functions available
 -- during subsequent evaluations.
 --
 -- The corefn module may be preprepared, for example by compiling from source text using the
 -- functions in the "Dovetail.Build" module.
-buildCoreFn :: MonadFix m => CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
-buildCoreFn m = do
+buildCoreFn :: MonadFix m => P.ExternsFile -> CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
+buildCoreFn newExterns m = do
   (externs, env) <- InterpretT get
   newEnv <- liftWith EvaluationError (Evaluate.runEvalT (Evaluate.buildCoreFn env m))
-  InterpretT $ put (externs, newEnv)
+  InterpretT $ put (newExterns : externs, newEnv)
   pure m
+
+-- | Evaluate a PureScript expression from source
+eval
+  :: (MonadFix m, ToValueRHS m a)
+  => Maybe P.ModuleName
+  -- ^ The name of the "default module" whose exports will be made available unqualified
+  -- to the evaluated expression.
+  -> Text
+  -> InterpretT m (a, P.SourceType)
+eval defaultModule exprText = do
+  (externs, env) <- InterpretT get
+  (expr, ty) <- liftWith BuildError $ pure $ Make.buildSingleExpression defaultModule externs exprText
+  pure (Evaluate.fromValueRHS (Evaluate.eval env (void expr)), ty)
 
 -- | Evaluate a PureScript corefn expression and return the result.
 -- Note: The expression is not type-checked by the PureScript typechecker. 
 -- See the documentation for 'ToValueRHS' for valid result types.
-eval :: (MonadFix m, ToValueRHS m a) => CoreFn.Expr () -> InterpretT m a
-eval expr = do
+evalCoreFn :: (MonadFix m, ToValueRHS m a) => CoreFn.Expr () -> InterpretT m a
+evalCoreFn expr = do
   (_externs, env) <- InterpretT get
   pure . Evaluate.fromValueRHS $ Evaluate.eval env expr
 
 -- | Evaluate @main@ in the specified module and return the result.
 evalMain :: (MonadFix m, ToValueRHS m a) => P.ModuleName -> InterpretT m a
-evalMain moduleName = eval (CoreFn.Var () (P.Qualified (Just moduleName) (P.Ident "main")))
+evalMain moduleName = evalCoreFn (CoreFn.Var () (P.Qualified (Just moduleName) (P.Ident "main")))

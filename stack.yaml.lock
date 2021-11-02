@@ -38,6 +38,13 @@ packages:
   original:
     hackage: generic-arbitrary-0.2.0@sha256:5c8619724d64271725c89a479630279fde40825eed75e68960ed0f14ca682d78
 - completed:
+    hackage: hspec-golden-0.2.0.0@sha256:395816f942d9386ec7eddda938415d99364118841bff9053bac2457811be8acc,1854
+    pantry-tree:
+      size: 495
+      sha256: c6bffa87f8b0117daeb4941091695ef80219ba8a7aeb5ea72389cd49dcb14de6
+  original:
+    hackage: hspec-golden-0.2.0.0
+- completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
       size: 2244

@@ -15,15 +15,21 @@ module Main where
   
 import Control.Monad (guard)
 import Data.Bifunctor (first)
+import Data.Foldable (for_, traverse_)
 import Data.Functor (($>))
 import Data.Functor.Identity
 import Data.Text (Text)
+import Data.Text qualified as Text
+import Data.Text.IO qualified as IO
 import Dovetail
-import Dovetail.Prelude (prelude)
+import Dovetail.Prelude (prelude, stdlib)
 import GHC.Generics (Generic)
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
+import System.FilePath (takeFileName, (</>))
+import System.Directory (listDirectory)
 import Test.Hspec
+import Test.Hspec.Golden
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
 import Test.QuickCheck.Instances.Text ()
@@ -126,29 +132,61 @@ main = hspec do
             :: forall a
              . ToValueRHS Identity a
             => Bool
+            -> [FFI Identity]
             -> Text
             -> Either String (a, P.SourceType)
-          buildSingleExpressionWithPrelude importPreludeUnqualified exprText =
+          buildSingleExpressionWithPrelude importPreludeUnqualified ffiModules exprText =
             first renderInterpretError $
               runInterpret do
-                ffi prelude
+                traverse_ ffi ffiModules
                 let defaultModule = guard importPreludeUnqualified $> P.ModuleName "Prelude"
                 eval defaultModule exprText
                 
       it "should compile and evaluate literals" $
         fmap (first (first renderEvaluationError . runEval)) 
-          (buildSingleExpressionWithPrelude @(Eval Integer) False "42")
+          (buildSingleExpressionWithPrelude @(Eval Integer) False [prelude] "42")
           `shouldBe` Right (Right 42, P.tyInt)
           
       it "should compile and evaluate simple expressions" $
         fmap (first (first renderEvaluationError . runEval)) 
-          (buildSingleExpressionWithPrelude @(Eval Integer) False "Prelude.identity 42")
+          (buildSingleExpressionWithPrelude @(Eval Integer) False [prelude] "Prelude.identity 42")
           `shouldBe` Right (Right 42, P.tyInt)
           
       it "should compile and evaluate simple expressions with unqualified names from the default module" $
         fmap (first (first renderEvaluationError . runEval)) 
-          (buildSingleExpressionWithPrelude @(Eval Integer) True "identity 42")
+          (buildSingleExpressionWithPrelude @(Eval Integer) True [prelude] "identity 42")
           `shouldBe` Right (Right 42, P.tyInt)
+          
+      it "should support debugging expressions" $
+        fmap (first (first renderEvaluationError . runEval)) 
+          (buildSingleExpressionWithPrelude @(Eval Text) True stdlib "Prelude.Debug.show 42")
+          `shouldBe` Right (Right "42", P.tyString)
+          
+      describe "Golden expression tests" do
+        testFiles <- map takeFileName <$> runIO (listDirectory "test-files")
+        
+        for_ testFiles \name -> do
+          input <- runIO (IO.readFile ("test-files" </> name </> "input.purs"))
+          let actualOutput = 
+                case buildSingleExpressionWithPrelude @(Eval Text) True stdlib input of
+                  Left err -> 
+                    Text.pack err 
+                  Right (value, _) -> 
+                    case runEval value of
+                      Left err ->
+                        Text.pack (renderEvaluationError err)
+                      Right result ->
+                        result
+          it ("generates the correct output for test case " <> show name) $
+            Golden {
+              Test.Hspec.Golden.output = actualOutput,
+              encodePretty = Text.unpack,
+              writeToFile = IO.writeFile,
+              readFromFile = IO.readFile,
+              goldenFile = "test-files" </> name </> "golden",
+              actualFile = Just ("test-files" </> name </> "actual"),
+              failFirstTime = False
+            }
     
 data ExampleRecord1 = ExampleRecord1
   { foo :: Integer

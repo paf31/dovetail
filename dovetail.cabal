@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 88d10d6c54f31ff8a01cbc42e8c184c1e8e90cb448be94ebb38d776afb175b44
+-- hash: 586e9cb9ae02768b548c643a93eee42d432f0d9e9eba0e498e4034a10f408f85
 
 name:           dovetail
 version:        0.1.0.0
@@ -112,9 +112,12 @@ test-suite dovetail-test
   build-depends:
       QuickCheck
     , base >=4.7 && <5
+    , directory
     , dovetail
+    , filepath
     , generic-arbitrary
     , hspec
+    , hspec-golden
     , purescript
     , quickcheck-instances
     , text

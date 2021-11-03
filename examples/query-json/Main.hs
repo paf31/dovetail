@@ -35,6 +35,7 @@ import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Foldable (traverse_)
+import Data.Functor.Identity (Identity)
 import Data.Text.IO qualified as Text
 import Dovetail
 import Dovetail.JSON (JSON(..))
@@ -51,7 +52,7 @@ main = do
   moduleText <- Text.readFile moduleFile
   
   -- Compile the PureScript CoreFn output for the module
-  let buildResult :: Either InterpretError (JSON Aeson.Value -> Eval (JSON Aeson.Value))
+  let buildResult :: Either (InterpretError Identity) (JSON Aeson.Value -> Eval (JSON Aeson.Value))
       buildResult = runInterpret do
         traverse_ ffi stdlib
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText

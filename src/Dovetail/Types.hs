@@ -1,9 +1,12 @@
 {-# LANGUAGE BlockArguments             #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost        #-}
 {-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE NamedFieldPuns             #-}
+{-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeApplications           #-}
 
@@ -11,6 +14,7 @@ module Dovetail.Types (
   -- * Evaluation
   -- ** Value types
     Value(..)
+  , renderValue
   
   -- ** Evaluation monad
   , Env
@@ -21,23 +25,44 @@ module Dovetail.Types (
   
   -- ** Evaluation errors
   , EvaluationError(..)
+  , EvaluationErrorType(..)
   , renderEvaluationError
+  
+  -- ** Evaluation contexts
+  , EvaluationContext(..)
+  
+  -- *** Stack frames
+  , EvaluationStackFrame(..)
+  , pushStackFrame
+  , throwErrorWithContext
   ) where
   
 import Control.Monad.Error.Class (MonadError(..))
+import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.Fix (MonadFix(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
+import Control.Monad.Trans.Reader (ReaderT, runReaderT)
+import Data.Foldable (fold)
 import Data.Functor.Identity (Identity(..))
 import Data.HashMap.Strict (HashMap)
+import Data.HashMap.Strict qualified as HashMap
+import Data.List (sortBy)
 import Data.Map (Map)
+import Data.Map qualified as Map
+import Data.Ord (comparing)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
+import Language.PureScript qualified as P
+import Language.PureScript.CoreFn qualified as CoreFn
+import Language.PureScript.Errors qualified as Errors
 import Language.PureScript.Names (Ident(..), Qualified(..))
 import Language.PureScript.Names qualified as Names
 import Language.PureScript.PSString qualified as PSString
-  
+import System.Console.ANSI.Types qualified as Color
+
 -- | The representation of values used by the interpreter - essentially, the
 -- semantic domain for a simple untyped lambda calculus with records and ADTs.
 --
@@ -56,7 +81,53 @@ data Value m
   -- ^ Closures, represented in higher-order abstract syntax style.
   | Constructor (Names.ProperName 'Names.ConstructorName) [Value m]
   -- ^ Fully-applied data constructors
+  
+color :: (Color.ColorIntensity, Color.Color) -> String -> String
+color c = (Errors.ansiColor c <>) . (<> Errors.ansiColorReset)
 
+red :: String -> String
+red = color (Color.Dull, Color.Red)
+
+yellow :: String -> String
+yellow = color (Color.Dull, Color.Yellow)
+
+green :: String -> String
+green = color (Color.Dull, Color.Green)
+
+blue :: String -> String
+blue = color (Color.Vivid, Color.Blue)
+
+renderValue :: Maybe Int -> Value m -> Text
+renderValue depth = fst . go 0 where
+  go :: Int -> Value m -> (Text, Bool)
+  go n _ | maybe False (n >=) depth = ("...", True)
+  go _ (String s) = (Text.pack (yellow (show @Text s)), True)
+  go _ (Char c) = (Text.pack (yellow (show @Char c)), True)
+  go _ (Number d) = (Text.pack (green (show @Double d)), True)
+  go _ (Int i) = (Text.pack (green (show @Integer i)), True)
+  go _ (Bool True) = (Text.pack (blue "true"), True)
+  go _ (Bool False) = (Text.pack (blue "false"), True)
+  go _ (Closure{}) = (Text.pack (blue "<closure>"), True)
+  go n (Object o) = ( "{ " <> Text.intercalate ", " 
+                      [ Text.pack (yellow (show @Text k)) <> ": " <> fst (go (n + 1) x) 
+                      | (k, x) <- sortBy (comparing fst) (HashMap.toList o)
+                      ] <> " }"
+                  , True
+                  )
+  go n (Array xs) = ( "[ " <> Text.intercalate ", " 
+                       [ fst (go (n + 1) x) 
+                       | x <- Vector.toList xs
+                       ] <> " ]"
+                  , True
+                  )
+  go n (Constructor ctor args) = (Text.unwords (P.runProperName ctor : map (goParens (n + 1)) args), null args)
+
+  goParens :: Int -> Value m -> Text
+  goParens n x = 
+    case go n x of
+      (result, True) -> result
+      (result, False) -> "(" <> result <> ")"
+      
 -- | An environment, i.e. a mapping from names to evaluated values.
 --
 -- An environment for a single built-in function can be constructed
@@ -64,30 +135,70 @@ data Value m
 -- easily using the 'Monoid' instance for 'Map'.
 type Env m = Map (Qualified Ident) (Value m)
 
+newtype EvaluationContext m = EvaluationContext { getEvaluationContext :: [EvaluationStackFrame m] }
+  
+data EvaluationStackFrame m = EvaluationStackFrame
+  { frameEnv :: Env m
+  , frameSource :: P.SourceSpan
+  , frameExpr :: CoreFn.Expr CoreFn.Ann
+  }
+  
+pushStackFrame :: Monad m => Env m -> CoreFn.Expr CoreFn.Ann -> EvalT m a -> EvalT m a
+pushStackFrame env expr = 
+    local \(EvaluationContext frames) ->
+      EvaluationContext (frame : frames)
+  where
+    frame = EvaluationStackFrame 
+      { frameEnv = env
+      , frameSource = let (ss, _, _, _) = CoreFn.extractAnn expr in ss
+      , frameExpr = expr
+      }
+
+throwErrorWithContext 
+  :: ( MonadError (EvaluationError x) m
+     , MonadReader (EvaluationContext x) m
+     ) 
+  => EvaluationErrorType
+  -> m a
+throwErrorWithContext errorType = do
+  errorContext <- ask
+  throwError EvaluationError 
+    { errorType
+    , errorContext
+    }
+    
 -- | The monad used by the interpreter, which supports error reporting for errors
 -- which can occur during evaluation.
 --
 -- The transformed monad is used to track any benign side effects that might be
 -- exposed via the foreign function interface to PureScript code.
-newtype EvalT m a = EvalT { unEvalT :: ExceptT EvaluationError m a }
+newtype EvalT m a = EvalT { unEvalT :: ReaderT (EvaluationContext m) (ExceptT (EvaluationError m) m) a }
   deriving newtype 
     ( Functor
     , Applicative
     , Monad
-    , MonadTrans
-    , MonadError EvaluationError
+    , MonadError (EvaluationError m)
+    , MonadReader (EvaluationContext m)
     , MonadFix
     )
 
-runEvalT :: EvalT m a -> m (Either EvaluationError a)
-runEvalT = runExceptT . unEvalT
+instance MonadTrans EvalT where
+  lift = EvalT . lift . lift
+
+runEvalT :: EvalT m a -> m (Either (EvaluationError m) a)
+runEvalT = runExceptT . flip runReaderT (EvaluationContext []) . unEvalT
 
 -- | Non-transformer version of `EvalT`, useful in any settings where the FFI
 -- does not use any side effects during evaluation.
 type Eval = EvalT Identity
 
-runEval :: Eval a -> Either EvaluationError a
+runEval :: Eval a -> Either (EvaluationError Identity) a
 runEval = runIdentity . runEvalT
+
+data EvaluationError m = EvaluationError
+  { errorType :: EvaluationErrorType
+  , errorContext :: EvaluationContext m
+  } 
 
 -- | Errors which can occur during evaluation of PureScript code.
 -- 
@@ -96,7 +207,7 @@ runEval = runIdentity . runEvalT
 -- PureScript code, so it is possible that runtime errors can occur if we are
 -- not careful. This is similar to how PureScript code can fail at runtime
 -- due to errors in the FFI.
-data EvaluationError 
+data EvaluationErrorType
   = UnknownIdent (Qualified Ident)
   -- ^ A name was not found in the environment
   | TypeMismatch Text
@@ -121,20 +232,49 @@ data EvaluationError
   deriving Show
 
 -- | Render an 'EvaluationError' as a human-readable string.
-renderEvaluationError :: EvaluationError -> String
-renderEvaluationError (UnknownIdent x) =
+renderEvaluationError :: EvaluationError m -> String
+renderEvaluationError (EvaluationError{ errorType, errorContext }) =
+  unlines $
+    [ red "Error" <> " at " <> renderSourceSpan 
+        (frameSource (head (getEvaluationContext errorContext))) 
+    , ""
+    , "  " <> renderEvaluationErrorType errorType
+    , ""
+    , "In context:"
+    ] <> concat
+    [ [ "  " <> Text.unpack (Names.showIdent (P.disqualify ident))
+      , "  = " <> Text.unpack (renderValue (Just 4) value)
+      , ""
+      ]
+    | headFrame <- take 1 (getEvaluationContext errorContext)
+    , (ident, value) <- Map.toList (frameEnv headFrame)
+    , P.isUnqualified ident
+    ] <> 
+    [ "at " <> renderSourceSpan (frameSource frame)
+    | frame <- drop 1 (getEvaluationContext errorContext)
+    ]
+  where
+    renderSourceSpan ss =
+      Text.unpack (fold
+        [ P.displaySourcePos (P.spanStart ss) 
+        , " - " 
+        , P.displaySourcePos (P.spanEnd ss)
+        ])
+  
+renderEvaluationErrorType :: EvaluationErrorType -> String
+renderEvaluationErrorType (UnknownIdent x) =
   "Identifier not in scope: " <> Text.unpack (Names.showQualified Names.showIdent x)
-renderEvaluationError (TypeMismatch x) =
+renderEvaluationErrorType (TypeMismatch x) =
   "Type mismatch, expected " <> Text.unpack x
-renderEvaluationError (FieldNotFound x) =
+renderEvaluationErrorType (FieldNotFound x) =
   "Record field not found: " <> Text.unpack x
-renderEvaluationError InexhaustivePatternMatch =
+renderEvaluationErrorType InexhaustivePatternMatch =
   "Inexhaustive pattern match"
-renderEvaluationError (InvalidNumberOfArguments given expected) =
+renderEvaluationErrorType (InvalidNumberOfArguments given expected) =
   "Invalid number of arguments, given " <> show given <> ", but expected " <> show expected
-renderEvaluationError UnsaturatedConstructorApplication =
+renderEvaluationErrorType UnsaturatedConstructorApplication =
   "Unsaturated constructor application"
-renderEvaluationError (InvalidFieldName x) =
+renderEvaluationErrorType (InvalidFieldName x) =
   "Invalid field name: " <> PSString.decodeStringWithReplacement x
-renderEvaluationError (OtherError x) =
+renderEvaluationErrorType (OtherError x) =
   "Other error: " <> Text.unpack x

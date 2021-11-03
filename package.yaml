@@ -27,6 +27,7 @@ library:
   - -fwarn-unused-imports
   dependencies:
   - aeson
+  - ansi-terminal
   - containers
   - mtl
   - purescript

@@ -41,7 +41,6 @@ import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.State (StateT, evalStateT, get, put, modify)
 import Data.Bifunctor (first)
-import Data.Functor (void)
 import Data.Functor.Identity (Identity(..))
 import Data.Text (Text)
 import Dovetail.Build (BuildError(..), renderBuildError)
@@ -68,7 +67,7 @@ import Language.PureScript.Names
 -- The transformed monad is used to track any benign side effects that might be
 -- exposed via the foreign function interface to PureScript code, in the same sense
 -- as 'EvalT'.
-newtype InterpretT m a = InterpretT { unInterpretT :: StateT ([P.ExternsFile], Env m) (ExceptT InterpretError m) a }
+newtype InterpretT m a = InterpretT { unInterpretT :: StateT ([P.ExternsFile], Env m) (ExceptT (InterpretError m) m) a }
   deriving newtype (Functor, Applicative, Monad)
   
 instance MonadTrans InterpretT where
@@ -95,12 +94,12 @@ instance MonadTrans InterpretT where
 --   -- Evaluate the main function
 --   'evalMain' ('P.ModuleName' \"Main\")
 -- @
-runInterpretT :: Monad m => InterpretT m a -> m (Either InterpretError a)
+runInterpretT :: Monad m => InterpretT m a -> m (Either (InterpretError m) a)
 runInterpretT = runExceptT . flip evalStateT ([], mempty) . unInterpretT
 
 type Interpret = InterpretT Identity
 
-runInterpret :: Interpret a -> Either InterpretError a
+runInterpret :: Interpret a -> Either (InterpretError Identity) a
 runInterpret = runIdentity . runInterpretT
 
 -- | Make an 'FFI' module available for use to subsequent operations.
@@ -117,21 +116,20 @@ ffi f = InterpretT $ modify \(externs, env) ->
   )
 
 -- | The type of errors that can occur in the 'InterpretT' monad.
-data InterpretError
-  = EvaluationError Evaluate.EvaluationError
+data InterpretError m
+  = ErrorDuringEvaluation (Evaluate.EvaluationError m)
   -- ^ Evaluation errors can occur during the initial evaluation of the module
   -- when it is loaded into the environment.
-  | BuildError Make.BuildError
+  | ErrorDuringBuild Make.BuildError
   -- ^ Build errors can occur if we are building modules from source or corefn.
-  deriving Show
 
-renderInterpretError :: InterpretError -> String
-renderInterpretError (BuildError err) =
+renderInterpretError :: InterpretError m -> String
+renderInterpretError (ErrorDuringBuild err) =
   "Build error: " <> Make.renderBuildError err
-renderInterpretError (EvaluationError err) =
+renderInterpretError (ErrorDuringEvaluation err) =
   "Evaluation error: " <> Evaluate.renderEvaluationError err
 
-liftWith :: Monad m => (e -> InterpretError) -> m (Either e a) -> InterpretT m a
+liftWith :: Monad m => (e -> InterpretError m) -> m (Either e a) -> InterpretT m a
 liftWith f ma = InterpretT . lift . ExceptT $ fmap (first f) ma
 
 -- | Build a PureScript module from source, and make its exported functions available
@@ -139,7 +137,7 @@ liftWith f ma = InterpretT . lift . ExceptT $ fmap (first f) ma
 build :: MonadFix m => Text -> InterpretT m (CoreFn.Module CoreFn.Ann)
 build moduleText = do
   (externs, _) <- InterpretT get
-  (m, newExterns) <- liftWith BuildError $ pure $ Make.buildSingleModule externs moduleText
+  (m, newExterns) <- liftWith ErrorDuringBuild $ pure $ Make.buildSingleModule externs moduleText
   buildCoreFn newExterns m
 
 -- | Build a PureScript module from corefn, and make its exported functions available
@@ -150,7 +148,7 @@ build moduleText = do
 buildCoreFn :: MonadFix m => P.ExternsFile -> CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
 buildCoreFn newExterns m = do
   (externs, env) <- InterpretT get
-  newEnv <- liftWith EvaluationError (Evaluate.runEvalT (Evaluate.buildCoreFn env m))
+  newEnv <- liftWith ErrorDuringEvaluation (Evaluate.runEvalT (Evaluate.buildCoreFn env m))
   InterpretT $ put (newExterns : externs, newEnv)
   pure m
 
@@ -164,17 +162,17 @@ eval
   -> InterpretT m (a, P.SourceType)
 eval defaultModule exprText = do
   (externs, env) <- InterpretT get
-  (expr, ty) <- liftWith BuildError $ pure $ Make.buildSingleExpression defaultModule externs exprText
-  pure (Evaluate.fromValueRHS (Evaluate.eval env (void expr)), ty)
+  (expr, ty) <- liftWith ErrorDuringBuild $ pure $ Make.buildSingleExpression defaultModule externs exprText
+  pure (Evaluate.fromValueRHS (Evaluate.eval env expr), ty)
 
 -- | Evaluate a PureScript corefn expression and return the result.
 -- Note: The expression is not type-checked by the PureScript typechecker. 
 -- See the documentation for 'ToValueRHS' for valid result types.
-evalCoreFn :: (MonadFix m, ToValueRHS m a) => CoreFn.Expr () -> InterpretT m a
+evalCoreFn :: (MonadFix m, ToValueRHS m a) => CoreFn.Expr CoreFn.Ann -> InterpretT m a
 evalCoreFn expr = do
   (_externs, env) <- InterpretT get
   pure . Evaluate.fromValueRHS $ Evaluate.eval env expr
 
 -- | Evaluate @main@ in the specified module and return the result.
 evalMain :: (MonadFix m, ToValueRHS m a) => P.ModuleName -> InterpretT m a
-evalMain moduleName = evalCoreFn (CoreFn.Var () (P.Qualified (Just moduleName) (P.Ident "main")))
+evalMain moduleName = evalCoreFn (CoreFn.Var (CoreFn.ssAnn P.nullSourceSpan) (P.Qualified (Just moduleName) (P.Ident "main")))

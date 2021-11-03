@@ -60,7 +60,7 @@ main = do
   -- computation may involve side-effects in the 'M' monad.
   let buildResult 
         :: (MonadState Random.StdGen m, MonadFix m)
-        => m (Either InterpretError (EvalT m (JSON Aeson.Value)))
+        => m (Either (InterpretError m) (EvalT m (JSON Aeson.Value)))
       buildResult = runInterpretT do
         traverse_ ffi stdlib
         

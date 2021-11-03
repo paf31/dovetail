@@ -46,13 +46,11 @@ module Dovetail.Evaluate
   ) where
  
 import Control.Monad (guard, foldM, join, mzero, zipWithM)
-import Control.Monad.Error.Class (throwError)
 import Control.Monad.Fix (MonadFix, mfix)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
-import Data.Functor (void)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map qualified as Map
@@ -73,9 +71,9 @@ import Language.PureScript.PSString qualified as PSString
 -- | Evaluate each of the bindings in a compiled PureScript module, and store
 -- the evaluated values in the environment, without evaluating any main
 -- expression.
-buildCoreFn :: MonadFix m => Env m -> CoreFn.Module ann -> EvalT m (Env m)
+buildCoreFn :: MonadFix m => Env m -> CoreFn.Module CoreFn.Ann -> EvalT m (Env m)
 buildCoreFn env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } = 
-  bind (Just moduleName) env (fmap void moduleDecls)
+  bind (Just moduleName) env moduleDecls
   
 -- | Create an environment from a Haskell value.
 --
@@ -110,7 +108,7 @@ evalPSString :: MonadFix m => PSString.PSString -> EvalT m Text
 evalPSString pss = 
   case PSString.decodeString pss of
     Just field -> pure field
-    _ -> throwError (InvalidFieldName pss)
+    _ -> throwErrorWithContext (InvalidFieldName pss)
 
 -- | Evaluate a PureScript CoreFn expression in the given environment.
 --
@@ -121,85 +119,86 @@ eval
   :: forall m
    . MonadFix m
   => Env m
-  -> CoreFn.Expr ()
+  -> CoreFn.Expr CoreFn.Ann
   -> EvalT m (Value m)
-eval env (CoreFn.Literal _ lit) =
-  evalLit env lit
-eval env (CoreFn.Accessor _ pss e) = do
-  val <- eval env e
-  field <- evalPSString pss
-  case val of
-    Object o ->
-      case HashMap.lookup field o of
-        Just x -> pure x
-        Nothing -> throwError (FieldNotFound field)
-    _ -> throwError (TypeMismatch "object")
-eval env (CoreFn.Abs _ arg body) =
-  pure . Closure $ \v -> eval (Map.insert (Qualified Nothing arg) v env) body
-eval env (CoreFn.App _ f x) =
-  join (apply <$> eval env f <*> eval env x)
-eval env (CoreFn.Var _ name) =
-  case Map.lookup name env of
-    Nothing -> throwError $ UnknownIdent name
-    Just val -> pure val
-eval env (CoreFn.Let _ binders body) = do
-  env' <- bind Nothing env binders
-  eval env' body
-eval env (CoreFn.ObjectUpdate _ e updates) = do
-  val <- eval env e
-  let updateOne 
-        :: HashMap Text (Value m)
-        -> (PSString.PSString, CoreFn.Expr ())
-        -> EvalT m (HashMap Text (Value m))
-      updateOne o (pss, new) = do
-        field <- evalPSString pss
-        newVal <- eval env new
-        pure $ HashMap.insert field newVal o
-  case val of
-    Object o -> Object <$> foldM updateOne o updates
-    _ -> throwError (TypeMismatch "object")
-eval env (CoreFn.Case _ args alts) = do
-  vals <- traverse (eval env) args
-  result <- runMaybeT (asum (map (match env vals) alts))
-  case result of
-    Nothing -> throwError InexhaustivePatternMatch
-    Just (newEnv, matchedExpr) -> eval (newEnv <> env) matchedExpr
-eval _ (CoreFn.Constructor _ _tyName ctor fields) = 
-    pure $ go fields []
-  where
-    go [] applied = Constructor ctor (reverse applied)
-    go (_ : tl) applied = Closure \arg -> pure (go tl (arg : applied))
+eval env expr = pushStackFrame env expr (evalHelper expr) where
+  evalHelper (CoreFn.Literal _ lit) = 
+    evalLit env lit
+  evalHelper (CoreFn.Accessor _ pss e) = do
+    val <- eval env e
+    field <- evalPSString pss
+    case val of
+      Object o ->
+        case HashMap.lookup field o of
+          Just x -> pure x
+          Nothing -> throwErrorWithContext (FieldNotFound field)
+      _ -> throwErrorWithContext (TypeMismatch "object")
+  evalHelper (CoreFn.Abs _ arg body) =
+    pure . Closure $ \v -> eval (Map.insert (Qualified Nothing arg) v env) body
+  evalHelper (CoreFn.App _ f x) =
+    join (apply <$> eval env f <*> eval env x)
+  evalHelper (CoreFn.Var _ name) =
+    case Map.lookup name env of
+      Nothing -> throwErrorWithContext $ UnknownIdent name
+      Just val -> pure val
+  evalHelper (CoreFn.Let _ binders body) = do
+    env' <- bind Nothing env binders
+    eval env' body
+  evalHelper (CoreFn.ObjectUpdate _ e updates) = do
+    val <- eval env e
+    let updateOne 
+          :: HashMap Text (Value m)
+          -> (PSString.PSString, CoreFn.Expr CoreFn.Ann)
+          -> EvalT m (HashMap Text (Value m))
+        updateOne o (pss, new) = do
+          field <- evalPSString pss
+          newVal <- eval env new
+          pure $ HashMap.insert field newVal o
+    case val of
+      Object o -> Object <$> foldM updateOne o updates
+      _ -> throwErrorWithContext (TypeMismatch "object")
+  evalHelper (CoreFn.Case _ args alts) = do
+    vals <- traverse (eval env) args
+    result <- runMaybeT (asum (map (match env vals) alts))
+    case result of
+      Nothing -> throwErrorWithContext InexhaustivePatternMatch
+      Just (newEnv, matchedExpr) -> eval (newEnv <> env) matchedExpr
+  evalHelper (CoreFn.Constructor _ _tyName ctor fields) = 
+      pure $ go fields []
+    where
+      go [] applied = Constructor ctor (reverse applied)
+      go (_ : tl) applied = Closure \arg -> pure (go tl (arg : applied))
 
 match :: MonadFix m
       => Env m
       -> [Value m]
-      -> CoreFn.CaseAlternative ()
-      -> MaybeT (EvalT m) (Env m, CoreFn.Expr ())
+      -> CoreFn.CaseAlternative CoreFn.Ann
+      -> MaybeT (EvalT m) (Env m, CoreFn.Expr CoreFn.Ann)
 match env vals (CoreFn.CaseAlternative binders expr) 
   | length vals == length binders = do
     newEnv <- fold <$> zipWithM matchOne vals binders
     case expr of
       Left guards -> (newEnv, ) <$> asum (map (uncurry (evalGuard env)) guards)
       Right e -> pure (newEnv, e)
-  | otherwise = throwError (InvalidNumberOfArguments (length vals) (length binders))
+  | otherwise = lift $ throwErrorWithContext (InvalidNumberOfArguments (length vals) (length binders))
 
 evalGuard
   :: MonadFix m
   => Env m
-  -> CoreFn.Guard ()
-  -> CoreFn.Expr ()
-  -> MaybeT (EvalT m) (CoreFn.Expr ())
+  -> CoreFn.Guard CoreFn.Ann
+  -> CoreFn.Expr CoreFn.Ann
+  -> MaybeT (EvalT m) (CoreFn.Expr CoreFn.Ann)
 evalGuard env g e = do
   test <- lift $ eval env g
   case test of
     Bool b -> guard b
-    _ -> throwError (TypeMismatch "boolean")
+    _ -> lift $ throwErrorWithContext (TypeMismatch "boolean")
   pure e
 
 matchOne 
   :: MonadFix m
   => Value m
-  -> CoreFn.Binder ()
+  -> CoreFn.Binder CoreFn.Ann
   -> MaybeT (EvalT m) (Env m)
 matchOne _ (CoreFn.NullBinder _) = pure mempty
 matchOne val (CoreFn.LiteralBinder _ lit) = matchLit val lit
@@ -212,14 +211,14 @@ matchOne (Constructor ctor vals) (CoreFn.ConstructorBinder _ _tyName ctor' bs)
   | ctor == Names.disqualify ctor'
   = if length vals == length bs 
       then fold <$> zipWithM matchOne vals bs
-      else throwError UnsaturatedConstructorApplication
+      else lift $ throwErrorWithContext UnsaturatedConstructorApplication
 matchOne _ _ = mzero
 
 matchLit
   :: forall m
    . MonadFix m
   => Value m
-  -> CoreFn.Literal (CoreFn.Binder ())
+  -> CoreFn.Literal (CoreFn.Binder CoreFn.Ann)
   -> MaybeT (EvalT m) (Env m)
 matchLit (Int n) (CoreFn.NumericLiteral (Left i)) 
   | fromIntegral i == n = pure mempty
@@ -241,14 +240,14 @@ matchLit (Object o) (CoreFn.ObjectLiteral bs) = do
         t <- lift (evalPSString pss)
         pure (t, (t, b))
   vals <- HashMap.fromList <$> traverse evalField bs
-  let matchField :: These (Value m) (Text, CoreFn.Binder ()) -> MaybeT (EvalT m) (Env m)
+  let matchField :: These (Value m) (Text, CoreFn.Binder CoreFn.Ann) -> MaybeT (EvalT m) (Env m)
       matchField This{} = pure mempty
-      matchField (That (pss, _)) = throwError (FieldNotFound pss)
+      matchField (That (pss, _)) = lift $ throwErrorWithContext (FieldNotFound pss)
       matchField (These val (_, b)) = matchOne val b
   fold <$> sequence (Align.alignWith matchField o vals)
 matchLit _ _ = mzero
 
-evalLit :: MonadFix m => Env m -> CoreFn.Literal (CoreFn.Expr ()) -> EvalT m (Value m)
+evalLit :: MonadFix m => Env m -> CoreFn.Literal (CoreFn.Expr CoreFn.Ann) -> EvalT m (Value m)
 evalLit _ (CoreFn.NumericLiteral (Left int)) =
   pure $ Int (fromIntegral int)
 evalLit _ (CoreFn.NumericLiteral (Right dbl)) =
@@ -274,10 +273,10 @@ bind
    . MonadFix m
   => Maybe Names.ModuleName
   -> Env m
-  -> [CoreFn.Bind ()] 
+  -> [CoreFn.Bind CoreFn.Ann] 
   -> EvalT m (Env m)
 bind scope = foldM go where
-  go :: Env m -> CoreFn.Bind () -> EvalT m (Env m)
+  go :: Env m -> CoreFn.Bind CoreFn.Ann -> EvalT m (Env m)
   go env (CoreFn.NonRec _ name e) = do
     val <- eval env e
     pure $ Map.insert (Qualified scope name) val env
@@ -294,7 +293,7 @@ apply
   -> Value m
   -> EvalT m (Value m)
 apply (Closure f) arg = f arg
-apply _ _ = throwError (TypeMismatch "closure")
+apply _ _ = throwErrorWithContext (TypeMismatch "closure")
 
 -- | Values which can be communicated across the FFI boundary from Haskell to 
 -- PureScript.
@@ -332,7 +331,7 @@ instance MonadFix m => ToValue m Integer where
   toValue = Int
   fromValue = \case
     Int i -> pure i
-    _ -> throwError (TypeMismatch "integer")
+    _ -> throwErrorWithContext (TypeMismatch "integer")
   
 -- | The Haskell 'Douvle' type corresponds to the subset of PureScript
 -- values consisting of its Number type.
@@ -340,7 +339,7 @@ instance MonadFix m => ToValue m Double where
   toValue = Number
   fromValue = \case
     Number s -> pure s
-    _ -> throwError (TypeMismatch "number")
+    _ -> throwErrorWithContext (TypeMismatch "number")
 
 -- | The Haskell 'Text' type is represented by PureScript strings
 -- which contain no lone surrogates.
@@ -348,21 +347,21 @@ instance MonadFix m => ToValue m Text where
   toValue = String
   fromValue = \case
     String s -> pure s
-    _ -> throwError (TypeMismatch "string")
+    _ -> throwErrorWithContext (TypeMismatch "string")
 
 -- | The Haskell 'Char' type is represented by PureScript characters.
 instance MonadFix m => ToValue m Char where
   toValue = Char
   fromValue = \case
     Char c -> pure c
-    _ -> throwError (TypeMismatch "char")
+    _ -> throwErrorWithContext (TypeMismatch "char")
 
 -- | Haskell booleans are represented by boolean values.
 instance MonadFix m => ToValue m Bool where
   toValue = Bool
   fromValue = \case
     Bool b -> pure b
-    _ -> throwError (TypeMismatch "boolean")
+    _ -> throwErrorWithContext (TypeMismatch "boolean")
   
 -- | Haskell functions are represented as closures which take valid
 -- representations for the domain type to valid representations of the codomain
@@ -377,7 +376,7 @@ instance ToValue m a => ToValue m (Vector a) where
   toValue = Array . fmap toValue
   fromValue = \case
     Array xs -> traverse fromValue xs
-    _ -> throwError (TypeMismatch "array")
+    _ -> throwErrorWithContext (TypeMismatch "array")
     
 -- | 'ToValue' should support functions with types such as
 --
@@ -449,7 +448,7 @@ genericFromValue
   -> EvalT m a
 genericFromValue opts = \case
   Object o -> G.to <$> fromObject opts o
-  _ -> throwError (TypeMismatch "object")
+  _ -> throwErrorWithContext (TypeMismatch "object")
        
 -- | This class is used in the default instance for 'ToValue', via generic
 -- deriving, in order to identify a Haskell record type (with a single data
@@ -490,5 +489,5 @@ instance
     fromObject opts o = do
       let field = toPureScriptField opts (Text.pack (symbolVal @field (Proxy :: Proxy field)))
       case HashMap.lookup field o of
-        Nothing -> throwError (FieldNotFound field)
+        Nothing -> throwErrorWithContext (FieldNotFound field)
         Just v -> G.M1 . G.K1 <$> fromValue v

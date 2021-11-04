@@ -64,7 +64,7 @@ main = do
           
   -- Interpret the main function of the PureScript module as a Haskell function
   -- from JSON to JSON:
-  query <- buildResult `orDie` renderInterpretError
+  query <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
   
   -- Read and parse the input JSON from standard input
   stdinBytes <- BL.hGetContents stdin
@@ -72,5 +72,5 @@ main = do
   
   -- Evaluate that function, then render the output as pretty-printed JSON on
   -- standard output.
-  output <- runEval (query (JSON input)) `orDie` renderEvaluationError
+  output <- runEval (query (JSON input)) `orDie` renderEvaluationError defaultTerminalRenderValueOptions
   BL8.putStrLn (Pretty.encodePretty (getJSON output))

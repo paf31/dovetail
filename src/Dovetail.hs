@@ -123,11 +123,11 @@ data InterpretError m
   | ErrorDuringBuild Make.BuildError
   -- ^ Build errors can occur if we are building modules from source or corefn.
 
-renderInterpretError :: InterpretError m -> String
-renderInterpretError (ErrorDuringBuild err) =
+renderInterpretError :: RenderValueOptions -> InterpretError m -> String
+renderInterpretError _ (ErrorDuringBuild err) =
   "Build error: " <> Make.renderBuildError err
-renderInterpretError (ErrorDuringEvaluation err) =
-  "Evaluation error: " <> Evaluate.renderEvaluationError err
+renderInterpretError opts (ErrorDuringEvaluation err) =
+  "Evaluation error: " <> Evaluate.renderEvaluationError opts err
 
 liftWith :: Monad m => (e -> InterpretError m) -> m (Either e a) -> InterpretT m a
 liftWith f ma = InterpretT . lift . ExceptT $ fmap (first f) ma

@@ -45,10 +45,11 @@ module Dovetail.Evaluate
   , module Dovetail.Types
   ) where
  
-import Control.Monad (guard, foldM, join, mzero, zipWithM)
+import Control.Monad (guard, foldM, mzero, zipWithM)
 import Control.Monad.Fix (MonadFix, mfix)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(..))
+import Control.Monad.Reader.Class
 import Data.Align qualified as Align
 import Data.Foldable (asum, fold)
 import Data.HashMap.Strict (HashMap)
@@ -133,10 +134,13 @@ eval env expr = pushStackFrame env expr (evalHelper expr) where
           Just x -> pure x
           Nothing -> throwErrorWithContext (FieldNotFound field)
       _ -> throwErrorWithContext (TypeMismatch "object")
-  evalHelper (CoreFn.Abs _ arg body) =
-    pure . Closure $ \v -> eval (Map.insert (Qualified Nothing arg) v env) body
-  evalHelper (CoreFn.App _ f x) =
-    join (apply <$> eval env f <*> eval env x)
+  evalHelper (CoreFn.Abs _ arg body) = do
+    ctx <- ask
+    pure . Closure $ \v -> local (const ctx) $ eval (Map.insert (Qualified Nothing arg) v env) body
+  evalHelper (CoreFn.App _ f x) = do
+    x_ <- eval env x
+    f_ <- eval env f
+    apply f_ x_
   evalHelper (CoreFn.Var _ name) =
     case Map.lookup name env of
       Nothing -> throwErrorWithContext $ UnknownIdent name
@@ -180,7 +184,7 @@ match env vals (CoreFn.CaseAlternative binders expr)
     case expr of
       Left guards -> (newEnv, ) <$> asum (map (uncurry (evalGuard env)) guards)
       Right e -> pure (newEnv, e)
-  | otherwise = lift $ throwErrorWithContext (InvalidNumberOfArguments (length vals) (length binders))
+  | otherwise = throwErrorWithContext (InvalidNumberOfArguments (length vals) (length binders))
 
 evalGuard
   :: MonadFix m
@@ -192,7 +196,7 @@ evalGuard env g e = do
   test <- lift $ eval env g
   case test of
     Bool b -> guard b
-    _ -> lift $ throwErrorWithContext (TypeMismatch "boolean")
+    _ -> throwErrorWithContext (TypeMismatch "boolean")
   pure e
 
 matchOne 
@@ -211,7 +215,7 @@ matchOne (Constructor ctor vals) (CoreFn.ConstructorBinder _ _tyName ctor' bs)
   | ctor == Names.disqualify ctor'
   = if length vals == length bs 
       then fold <$> zipWithM matchOne vals bs
-      else lift $ throwErrorWithContext UnsaturatedConstructorApplication
+      else throwErrorWithContext UnsaturatedConstructorApplication
 matchOne _ _ = mzero
 
 matchLit
@@ -242,7 +246,7 @@ matchLit (Object o) (CoreFn.ObjectLiteral bs) = do
   vals <- HashMap.fromList <$> traverse evalField bs
   let matchField :: These (Value m) (Text, CoreFn.Binder CoreFn.Ann) -> MaybeT (EvalT m) (Env m)
       matchField This{} = pure mempty
-      matchField (That (pss, _)) = lift $ throwErrorWithContext (FieldNotFound pss)
+      matchField (That (pss, _)) = throwErrorWithContext (FieldNotFound pss)
       matchField (These val (_, b)) = matchOne val b
   fold <$> sequence (Align.alignWith matchField o vals)
 matchLit _ _ = mzero

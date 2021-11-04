@@ -14,11 +14,11 @@ import Control.Monad.Fix (MonadFix)
 import Data.Char (chr, ord)
 import Data.Text qualified as Text
 import Data.Vector qualified as Vector
-import Dovetail.Evaluate (EvalT, ToValue, ToValueRHS)
+import Dovetail.Evaluate (ToValue, ToValueRHS)
 import Dovetail.FFI (FFI(..))
 import Dovetail.FFI.Builder (array, boolean, char, int, string, number, (~>))
 import Dovetail.FFI.Builder qualified as FFI
-import Dovetail.Types (renderValue)
+import Dovetail.Types
 import Language.PureScript qualified as P
 
 stdlib :: MonadFix m => [FFI m]
@@ -140,7 +140,10 @@ preludeDebug =
   FFI.evalFFIBuilder (P.ModuleName "Prelude.Debug") do
     FFI.foreignImport (P.Ident "show")
       (\a -> a ~> string)
-      (pure . renderValue Nothing)
+      (pure . renderValue (RenderValueOptions False Nothing))
+    FFI.foreignImport (P.Ident "crash")
+      (\a -> string ~> a)
+      (throwErrorWithContext . OtherError)
 
 eqOps 
   :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a)

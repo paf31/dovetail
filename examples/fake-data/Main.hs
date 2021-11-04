@@ -93,9 +93,9 @@ main = do
   flip evalStateT gen do
     -- Interpret the main function of the PureScript module as a non-deterministic
     -- JSON result
-    value <- buildResult `orDie` renderInterpretError
+    value <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
   
     -- Evaluate that function, then render the output as pretty-printed JSON on
     -- standard output.
-    output <- runEvalT value `orDie` renderEvaluationError
+    output <- runEvalT value `orDie` renderEvaluationError defaultTerminalRenderValueOptions
     lift (BL8.putStrLn (Pretty.encodePretty (getJSON output)))

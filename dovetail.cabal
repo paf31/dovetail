@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 586e9cb9ae02768b548c643a93eee42d432f0d9e9eba0e498e4034a10f408f85
+-- hash: 25df3cb06fb8b9b31ce5aeffb09976b142a0995e0c2e4fadd4d3022d592d27e2
 
 name:           dovetail
 version:        0.1.0.0
@@ -42,6 +42,7 @@ library
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-unused-imports
   build-depends:
       aeson
+    , ansi-terminal
     , base >=4.7 && <5
     , containers
     , mtl

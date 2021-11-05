@@ -34,6 +34,12 @@ import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
 import Test.QuickCheck.Instances.Text ()
   
+renderOpts :: RenderValueOptions
+renderOpts = RenderValueOptions
+  { colorOutput = False
+  , maximumDepth = Nothing 
+  }
+  
 main :: IO ()
 main = hspec do
   describe "Evaluation" do
@@ -90,22 +96,20 @@ main = hspec do
             => Text
             -> Either String a
           buildSingleModuleWithPrelude moduleText =
-            first renderInterpretError $
+            first (renderInterpretError renderOpts) $
               runInterpret do
                 ffi prelude
                 m <- build moduleText
                 evalMain (CoreFn.moduleName m)
-              
-      -- TODO: replace these with a suite of golden tests:
                 
       it "should build single modules from source" $
-        fmap (first renderEvaluationError . runEval) 
+        fmap (first (renderEvaluationError renderOpts) . runEval) 
           (buildSingleModuleWithPrelude @(Eval Integer) 
             "module Main where main = 42")
           `shouldBe` Right (Right 42)
       
       it "should support imports" $
-        fmap (first renderEvaluationError . runEval) 
+        fmap (first (renderEvaluationError renderOpts) . runEval) 
           (buildSingleModuleWithPrelude @(Eval Integer) 
             "module Main where\n\
             \import Prelude\n\
@@ -113,7 +117,7 @@ main = hspec do
           `shouldBe` Right (Right 42)
       
       it "should support returning functions" $
-        fmap (first renderEvaluationError . runEval . ($ "testing")) 
+        fmap (first (renderEvaluationError renderOpts) . runEval . ($ "testing")) 
           (buildSingleModuleWithPrelude @(Text -> Eval Text) 
             "module Main where\n\
             \import Prelude\n\
@@ -121,7 +125,7 @@ main = hspec do
           `shouldBe` Right (Right "testing")
       
       it "should support records" $
-        fmap (first renderEvaluationError . runEval . ($ "testing")) 
+        fmap (first (renderEvaluationError renderOpts) . runEval . ($ "testing")) 
           (buildSingleModuleWithPrelude @(Text -> Eval ExampleRecord1) 
             "module Main where\n\
             \import Prelude\n\
@@ -136,31 +140,26 @@ main = hspec do
             -> Text
             -> Either String (a, P.SourceType)
           buildSingleExpressionWithPrelude importPreludeUnqualified ffiModules exprText =
-            first renderInterpretError $
+            first (renderInterpretError renderOpts) $
               runInterpret do
                 traverse_ ffi ffiModules
                 let defaultModule = guard importPreludeUnqualified $> P.ModuleName "Prelude"
                 eval defaultModule exprText
                 
       it "should compile and evaluate literals" $
-        fmap (first (first renderEvaluationError . runEval)) 
+        fmap (first (first (renderEvaluationError renderOpts) . runEval)) 
           (buildSingleExpressionWithPrelude @(Eval Integer) False [prelude] "42")
           `shouldBe` Right (Right 42, P.tyInt)
           
       it "should compile and evaluate simple expressions" $
-        fmap (first (first renderEvaluationError . runEval)) 
+        fmap (first (first (renderEvaluationError renderOpts) . runEval)) 
           (buildSingleExpressionWithPrelude @(Eval Integer) False [prelude] "Prelude.identity 42")
           `shouldBe` Right (Right 42, P.tyInt)
           
       it "should compile and evaluate simple expressions with unqualified names from the default module" $
-        fmap (first (first renderEvaluationError . runEval)) 
+        fmap (first (first (renderEvaluationError renderOpts) . runEval)) 
           (buildSingleExpressionWithPrelude @(Eval Integer) True [prelude] "identity 42")
           `shouldBe` Right (Right 42, P.tyInt)
-          
-      it "should support debugging expressions" $
-        fmap (first (first renderEvaluationError . runEval)) 
-          (buildSingleExpressionWithPrelude @(Eval Text) True stdlib "Prelude.Debug.show 42")
-          `shouldBe` Right (Right "42", P.tyString)
           
       describe "Golden expression tests" do
         testFiles <- map takeFileName <$> runIO (listDirectory "test-files")
@@ -174,7 +173,7 @@ main = hspec do
                   Right (value, _) -> 
                     case runEval value of
                       Left err ->
-                        Text.pack (renderEvaluationError err)
+                        Text.pack (renderEvaluationError renderOpts err)
                       Right result ->
                         result
           it ("generates the correct output for test case " <> show name) $

@@ -10,7 +10,6 @@ module Dovetail.JSON
   , toJSON
   ) where
 
-import Control.Monad.Error.Class (throwError)
 import Control.Monad.Fix (MonadFix)  
 import Data.Aeson qualified as Aeson
 import Data.String (fromString)
@@ -40,6 +39,6 @@ instance (MonadFix m, Aeson.ToJSON a, Aeson.FromJSON a) => Evaluate.ToValue m (J
     case toJSON a of
       Just value ->
         case Aeson.fromJSON value of
-          Aeson.Error err -> throwError . Evaluate.OtherError . fromString $ "Invalid JSON: " <> err
+          Aeson.Error err -> Evaluate.throwErrorWithContext . Evaluate.OtherError . fromString $ "Invalid JSON: " <> err
           Aeson.Success json -> pure (JSON json)
-      Nothing -> throwError (Evaluate.TypeMismatch "json")
+      Nothing -> Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "json")

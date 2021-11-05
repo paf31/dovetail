@@ -12,17 +12,13 @@ module Dovetail.Prelude where
   
 import Control.Monad.Fix (MonadFix)
 import Data.Char (chr, ord)
-import Data.HashMap.Strict qualified as HashMap
-import Data.List (sortBy)
-import Data.Ord (comparing)
-import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector qualified as Vector
-import Dovetail.Evaluate (EvalT, ToValue, ToValueRHS)
+import Dovetail.Evaluate (ToValue, ToValueRHS)
 import Dovetail.FFI (FFI(..))
 import Dovetail.FFI.Builder (array, boolean, char, int, string, number, (~>))
 import Dovetail.FFI.Builder qualified as FFI
-import Dovetail.Types (Value(..))
+import Dovetail.Types
 import Language.PureScript qualified as P
 
 stdlib :: MonadFix m => [FFI m]
@@ -141,38 +137,13 @@ preludeBoolean = FFI.evalFFIBuilder (P.ModuleName "Prelude.Boolean") do
     
 preludeDebug :: MonadFix m => FFI m
 preludeDebug = 
-    FFI.evalFFIBuilder (P.ModuleName "Prelude.Debug") do
-      FFI.foreignImport (P.Ident "show")
-        (\a -> a ~> string)
-        (pure . fst . go)
-  where
-    go :: Value m -> (Text, Bool)
-    go (String s) = (Text.pack (show @Text s), True)
-    go (Char c) = (Text.pack (show @Char c), True)
-    go (Number d) = (Text.pack (show @Double d), True)
-    go (Int i) = (Text.pack (show @Integer i), True)
-    go (Bool True) = ("true", True)
-    go (Bool False) = ("false", True)
-    go (Object o) = ( "{ " <> Text.intercalate ", " 
-                        [ Text.pack (show @Text k) <> ": " <> fst (go x) 
-                        | (k, x) <- sortBy (comparing fst) (HashMap.toList o)
-                        ] <> " }"
-                    , True
-                    )
-    go (Array xs) = ( "[ " <> Text.intercalate ", " 
-                         [ fst (go x) 
-                         | x <- Vector.toList xs
-                         ] <> " ]"
-                    , True
-                    )
-    go (Closure{}) = ("<closure>", True)
-    go (Constructor ctor args) = (Text.unwords (P.runProperName ctor : map goParens args), null args)
-    
-    goParens :: Value m -> Text
-    goParens x = 
-      case go x of
-        (result, True) -> result
-        (result, False) -> "(" <> result <> ")"
+  FFI.evalFFIBuilder (P.ModuleName "Prelude.Debug") do
+    FFI.foreignImport (P.Ident "show")
+      (\a -> a ~> string)
+      (pure . renderValue (RenderValueOptions False Nothing))
+    FFI.foreignImport (P.Ident "crash")
+      (\a -> string ~> a)
+      (throwErrorWithContext . OtherError)
 
 eqOps 
   :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a)

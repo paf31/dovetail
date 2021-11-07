@@ -21,7 +21,7 @@ fromJSON (Aeson.Array x) = Evaluate.Array (fmap fromJSON x)
 fromJSON (Aeson.String x) = Evaluate.String x
 fromJSON (Aeson.Number x) = Evaluate.Number (realToFrac x)
 fromJSON (Aeson.Bool x) = Evaluate.Bool x
-fromJSON Aeson.Null = error "TODO: not supported"
+fromJSON Aeson.Null = Evaluate.String "TODO: null"
 
 toJSON :: Evaluate.Value m -> Maybe Aeson.Value
 toJSON (Evaluate.Object x) = Aeson.Object <$> traverse toJSON x

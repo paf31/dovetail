@@ -101,7 +101,7 @@ data RenderValueOptions = RenderValueOptions
 defaultTerminalRenderValueOptions :: RenderValueOptions
 defaultTerminalRenderValueOptions = RenderValueOptions
   { colorOutput = True
-  , maximumDepth = Just 4
+  , maximumDepth = Just 2
   }
 
 -- | Render a 'Value' as human-readable text.
@@ -111,7 +111,7 @@ defaultTerminalRenderValueOptions = RenderValueOptions
 renderValue :: RenderValueOptions -> Value m -> Text
 renderValue RenderValueOptions{ colorOutput, maximumDepth } = fst . go 0 where
   go :: Int -> Value m -> (Text, Bool)
-  go n _ | maybe False (n >=) maximumDepth = ("...", True)
+  go n _ | maybe False (n >=) maximumDepth = ("⋯", True)
   go _ (String s) = (Text.pack (yellow (show @Text s)), True)
   go _ (Char c) = (Text.pack (yellow (show @Char c)), True)
   go _ (Number d) = (Text.pack (green (show @Double d)), True)

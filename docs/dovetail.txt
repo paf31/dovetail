@@ -93,10 +93,10 @@ runEval :: Eval a -> Either (EvaluationError Identity) a
 -- | An evaluation error containing the evaluation context at the point the
 --   error was raised.
 data EvaluationError m
-EvaluationError :: EvaluationErrorType -> EvaluationContext m -> EvaluationError m
+EvaluationError :: EvaluationErrorType m -> EvaluationContext m -> EvaluationError m
 
 -- | The type of error which was raised
-[errorType] :: EvaluationError m -> EvaluationErrorType
+[errorType] :: EvaluationError m -> EvaluationErrorType m
 
 -- | The evaluation context at the point the error was raised.
 [errorContext] :: EvaluationError m -> EvaluationContext m
@@ -108,34 +108,34 @@ EvaluationError :: EvaluationErrorType -> EvaluationContext m -> EvaluationError
 --   outside PureScript code, so it is possible that runtime errors can
 --   occur if we are not careful. This is similar to how PureScript code
 --   can fail at runtime due to errors in the FFI.
-data EvaluationErrorType
+data EvaluationErrorType m
 
 -- | A name was not found in the environment
-UnknownIdent :: Qualified Ident -> EvaluationErrorType
+UnknownIdent :: Qualified Ident -> EvaluationErrorType m
 
 -- | The runtime representation of a value did not match the expected
 --   representation
-TypeMismatch :: Text -> EvaluationErrorType
+TypeMismatch :: Text -> Value m -> EvaluationErrorType m
 
 -- | A record field did not exist in an <a>Object</a> value.
-FieldNotFound :: Text -> EvaluationErrorType
+FieldNotFound :: Text -> Value m -> EvaluationErrorType m
 
 -- | A pattern match failed to match its argument
-InexhaustivePatternMatch :: EvaluationErrorType
+InexhaustivePatternMatch :: [Value m] -> EvaluationErrorType m
 
 -- | A pattern match received the wrong number of arguments
-InvalidNumberOfArguments :: Int -> Int -> EvaluationErrorType
+InvalidNumberOfArguments :: Int -> Int -> EvaluationErrorType m
 
 -- | A pattern match occurred against a partially-applied data constructor
-UnsaturatedConstructorApplication :: EvaluationErrorType
+UnsaturatedConstructorApplication :: EvaluationErrorType m
 
 -- | A PureScript string which contains lone surrogates which could not be
 --   decoded. See <a>PSString</a>.
-InvalidFieldName :: PSString -> EvaluationErrorType
+InvalidFieldName :: PSString -> EvaluationErrorType m
 
 -- | An error occurred in a foreign function which is not tracked by any of
 --   the other error types.
-OtherError :: Text -> EvaluationErrorType
+OtherError :: Text -> EvaluationErrorType m
 
 -- | Render an <a>EvaluationError</a> as a human-readable string.
 renderEvaluationError :: RenderValueOptions -> EvaluationError m -> String
@@ -171,7 +171,7 @@ EvaluationStackFrame :: Env m -> SourceSpan -> Expr Ann -> EvaluationStackFrame 
 pushStackFrame :: Monad m => Env m -> Expr Ann -> EvalT m a -> EvalT m a
 
 -- | Throw an error which captures the current execution context.
-throwErrorWithContext :: (MonadError (EvaluationError x) m, MonadReader (EvaluationContext x) m) => EvaluationErrorType -> m a
+throwErrorWithContext :: (MonadError (EvaluationError x) m, MonadReader (EvaluationContext x) m) => EvaluationErrorType x -> m a
 
 -- | Render a <a>Value</a> as human-readable text.
 --   
@@ -194,7 +194,6 @@ RenderValueOptions :: Bool -> Maybe Int -> RenderValueOptions
 -- | Some sensible default rendering options for use on a terminal which
 --   supports color.
 defaultTerminalRenderValueOptions :: RenderValueOptions
-instance GHC.Show.Show Dovetail.Types.EvaluationErrorType
 instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Dovetail.Types.EvalT m)
 instance GHC.Base.Monad m => Control.Monad.Reader.Class.MonadReader (Dovetail.Types.EvaluationContext m) (Dovetail.Types.EvalT m)
 instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError (Dovetail.Types.EvaluationError m) (Dovetail.Types.EvalT m)

@@ -132,8 +132,8 @@ eval env expr = pushStackFrame env expr (evalHelper expr) where
       Object o ->
         case HashMap.lookup field o of
           Just x -> pure x
-          Nothing -> throwErrorWithContext (FieldNotFound field)
-      _ -> throwErrorWithContext (TypeMismatch "object")
+          Nothing -> throwErrorWithContext (FieldNotFound field val)
+      _ -> throwErrorWithContext (TypeMismatch "object" val)
   evalHelper (CoreFn.Abs _ arg body) = do
     ctx <- ask
     pure . Closure $ \v -> local (const ctx) $ eval (Map.insert (Qualified Nothing arg) v env) body
@@ -160,12 +160,12 @@ eval env expr = pushStackFrame env expr (evalHelper expr) where
           pure $ HashMap.insert field newVal o
     case val of
       Object o -> Object <$> foldM updateOne o updates
-      _ -> throwErrorWithContext (TypeMismatch "object")
+      _ -> throwErrorWithContext (TypeMismatch "object" val)
   evalHelper (CoreFn.Case _ args alts) = do
     vals <- traverse (eval env) args
     result <- runMaybeT (asum (map (match env vals) alts))
     case result of
-      Nothing -> throwErrorWithContext InexhaustivePatternMatch
+      Nothing -> throwErrorWithContext (InexhaustivePatternMatch vals)
       Just (newEnv, matchedExpr) -> eval (newEnv <> env) matchedExpr
   evalHelper (CoreFn.Constructor _ _tyName ctor fields) = 
       pure $ go fields []
@@ -196,7 +196,7 @@ evalGuard env g e = do
   test <- lift $ eval env g
   case test of
     Bool b -> guard b
-    _ -> throwErrorWithContext (TypeMismatch "boolean")
+    _ -> throwErrorWithContext (TypeMismatch "boolean" test )
   pure e
 
 matchOne 
@@ -239,15 +239,15 @@ matchLit (Bool b) (CoreFn.BooleanLiteral b')
 matchLit (Array xs) (CoreFn.ArrayLiteral bs)
   | length xs == length bs
   = fold <$> zipWithM matchOne (Vector.toList xs) bs
-matchLit (Object o) (CoreFn.ObjectLiteral bs) = do
+matchLit val@(Object o) (CoreFn.ObjectLiteral bs) = do
   let evalField (pss, b) = do
         t <- lift (evalPSString pss)
         pure (t, (t, b))
   vals <- HashMap.fromList <$> traverse evalField bs
   let matchField :: These (Value m) (Text, CoreFn.Binder CoreFn.Ann) -> MaybeT (EvalT m) (Env m)
       matchField This{} = pure mempty
-      matchField (That (pss, _)) = throwErrorWithContext (FieldNotFound pss)
-      matchField (These val (_, b)) = matchOne val b
+      matchField (That (pss, _)) = throwErrorWithContext (FieldNotFound pss val)
+      matchField (These val' (_, b)) = matchOne val' b
   fold <$> sequence (Align.alignWith matchField o vals)
 matchLit _ _ = mzero
 
@@ -297,7 +297,7 @@ apply
   -> Value m
   -> EvalT m (Value m)
 apply (Closure f) arg = f arg
-apply _ _ = throwErrorWithContext (TypeMismatch "closure")
+apply val _ = throwErrorWithContext (TypeMismatch "closure" val)
 
 -- | Values which can be communicated across the FFI boundary from Haskell to 
 -- PureScript.
@@ -335,7 +335,7 @@ instance MonadFix m => ToValue m Integer where
   toValue = Int
   fromValue = \case
     Int i -> pure i
-    _ -> throwErrorWithContext (TypeMismatch "integer")
+    val -> throwErrorWithContext (TypeMismatch "integer" val)
   
 -- | The Haskell 'Douvle' type corresponds to the subset of PureScript
 -- values consisting of its Number type.
@@ -343,7 +343,7 @@ instance MonadFix m => ToValue m Double where
   toValue = Number
   fromValue = \case
     Number s -> pure s
-    _ -> throwErrorWithContext (TypeMismatch "number")
+    val -> throwErrorWithContext (TypeMismatch "number" val)
 
 -- | The Haskell 'Text' type is represented by PureScript strings
 -- which contain no lone surrogates.
@@ -351,21 +351,21 @@ instance MonadFix m => ToValue m Text where
   toValue = String
   fromValue = \case
     String s -> pure s
-    _ -> throwErrorWithContext (TypeMismatch "string")
+    val -> throwErrorWithContext (TypeMismatch "string" val)
 
 -- | The Haskell 'Char' type is represented by PureScript characters.
 instance MonadFix m => ToValue m Char where
   toValue = Char
   fromValue = \case
     Char c -> pure c
-    _ -> throwErrorWithContext (TypeMismatch "char")
+    val -> throwErrorWithContext (TypeMismatch "char" val)
 
 -- | Haskell booleans are represented by boolean values.
 instance MonadFix m => ToValue m Bool where
   toValue = Bool
   fromValue = \case
     Bool b -> pure b
-    _ -> throwErrorWithContext (TypeMismatch "boolean")
+    val -> throwErrorWithContext (TypeMismatch "boolean" val)
   
 -- | Haskell functions are represented as closures which take valid
 -- representations for the domain type to valid representations of the codomain
@@ -380,7 +380,7 @@ instance ToValue m a => ToValue m (Vector a) where
   toValue = Array . fmap toValue
   fromValue = \case
     Array xs -> traverse fromValue xs
-    _ -> throwErrorWithContext (TypeMismatch "array")
+    val -> throwErrorWithContext (TypeMismatch "array" val)
     
 -- | 'ToValue' should support functions with types such as
 --
@@ -452,7 +452,7 @@ genericFromValue
   -> EvalT m a
 genericFromValue opts = \case
   Object o -> G.to <$> fromObject opts o
-  _ -> throwErrorWithContext (TypeMismatch "object")
+  val -> throwErrorWithContext (TypeMismatch "object" val)
        
 -- | This class is used in the default instance for 'ToValue', via generic
 -- deriving, in order to identify a Haskell record type (with a single data
@@ -493,5 +493,5 @@ instance
     fromObject opts o = do
       let field = toPureScriptField opts (Text.pack (symbolVal @field (Proxy :: Proxy field)))
       case HashMap.lookup field o of
-        Nothing -> throwErrorWithContext (FieldNotFound field)
+        Nothing -> throwErrorWithContext (FieldNotFound field (Object o))
         Just v -> G.M1 . G.K1 <$> fromValue v

@@ -101,7 +101,7 @@ data RenderValueOptions = RenderValueOptions
 defaultTerminalRenderValueOptions :: RenderValueOptions
 defaultTerminalRenderValueOptions = RenderValueOptions
   { colorOutput = True
-  , maximumDepth = Just 2
+  , maximumDepth = Just 1
   }
 
 -- | Render a 'Value' as human-readable text.
@@ -199,7 +199,7 @@ throwErrorWithContext
   :: ( MonadError (EvaluationError x) m
      , MonadReader (EvaluationContext x) m
      ) 
-  => EvaluationErrorType
+  => EvaluationErrorType x
   -> m a
 throwErrorWithContext errorType = do
   errorContext <- ask
@@ -239,7 +239,7 @@ runEval = runIdentity . runEvalT
 -- | An evaluation error containing the evaluation context at the point the
 -- error was raised.
 data EvaluationError m = EvaluationError
-  { errorType :: EvaluationErrorType
+  { errorType :: EvaluationErrorType m
   -- ^ The type of error which was raised
   , errorContext :: EvaluationContext m
   -- ^ The evaluation context at the point the error was raised.
@@ -252,15 +252,15 @@ data EvaluationError m = EvaluationError
 -- PureScript code, so it is possible that runtime errors can occur if we are
 -- not careful. This is similar to how PureScript code can fail at runtime
 -- due to errors in the FFI.
-data EvaluationErrorType
+data EvaluationErrorType m
   = UnknownIdent (Qualified Ident)
   -- ^ A name was not found in the environment
-  | TypeMismatch Text
+  | TypeMismatch Text (Value m)
   -- ^ The runtime representation of a value did not match the expected
   -- representation
-  | FieldNotFound Text
+  | FieldNotFound Text (Value m)
   -- ^ A record field did not exist in an 'Object' value.
-  | InexhaustivePatternMatch
+  | InexhaustivePatternMatch [Value m]
   -- ^ A pattern match failed to match its argument
   | InvalidNumberOfArguments Int Int
   -- ^ A pattern match received the wrong number of arguments
@@ -272,7 +272,6 @@ data EvaluationErrorType
   | OtherError Text
   -- ^ An error occurred in a foreign function which is not tracked by
   -- any of the other error types.
-  deriving Show
 
 -- | Render an 'EvaluationError' as a human-readable string.
 renderEvaluationError :: RenderValueOptions -> EvaluationError m -> String
@@ -283,7 +282,7 @@ renderEvaluationError opts (EvaluationError{ errorType, errorContext }) =
         (listToMaybe (getEvaluationContext errorContext))
     ] <>
     [ ""
-    , "  " <> renderEvaluationErrorType errorType
+    , "  " <> renderEvaluationErrorType opts errorType
     , ""
     , "In context:"
     ] <> concat
@@ -306,20 +305,20 @@ renderEvaluationError opts (EvaluationError{ errorType, errorContext }) =
         , P.displaySourcePos (P.spanEnd (frameSource frame))
         ]
   
-renderEvaluationErrorType :: EvaluationErrorType -> String
-renderEvaluationErrorType (UnknownIdent x) =
+renderEvaluationErrorType :: RenderValueOptions -> EvaluationErrorType m -> String
+renderEvaluationErrorType _ (UnknownIdent x) =
   "Identifier not in scope: " <> Text.unpack (Names.showQualified Names.showIdent x)
-renderEvaluationErrorType (TypeMismatch x) =
-  "Type mismatch, expected " <> Text.unpack x
-renderEvaluationErrorType (FieldNotFound x) =
-  "Record field not found: " <> Text.unpack x
-renderEvaluationErrorType InexhaustivePatternMatch =
+renderEvaluationErrorType opts (TypeMismatch x val) =
+  "Type mismatch, expected " <> Text.unpack x <> ", but got value " <> Text.unpack (renderValue opts val)
+renderEvaluationErrorType opts (FieldNotFound x val) =
+  "Record field " <> show x <> " was not present in value: " <> Text.unpack (renderValue opts val)
+renderEvaluationErrorType _ InexhaustivePatternMatch{} =
   "Inexhaustive pattern match"
-renderEvaluationErrorType (InvalidNumberOfArguments given expected) =
+renderEvaluationErrorType _ (InvalidNumberOfArguments given expected) =
   "Invalid number of arguments, given " <> show given <> ", but expected " <> show expected
-renderEvaluationErrorType UnsaturatedConstructorApplication =
+renderEvaluationErrorType _ UnsaturatedConstructorApplication =
   "Unsaturated constructor application"
-renderEvaluationErrorType (InvalidFieldName x) =
+renderEvaluationErrorType _ (InvalidFieldName x) =
   "Invalid field name: " <> PSString.decodeStringWithReplacement x
-renderEvaluationErrorType (OtherError x) =
+renderEvaluationErrorType _ (OtherError x) =
   "Other error: " <> Text.unpack x

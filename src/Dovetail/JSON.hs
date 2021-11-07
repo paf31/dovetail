@@ -41,4 +41,4 @@ instance (MonadFix m, Aeson.ToJSON a, Aeson.FromJSON a) => Evaluate.ToValue m (J
         case Aeson.fromJSON value of
           Aeson.Error err -> Evaluate.throwErrorWithContext . Evaluate.OtherError . fromString $ "Invalid JSON: " <> err
           Aeson.Success json -> pure (JSON json)
-      Nothing -> Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "json")
+      Nothing -> Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "json" a)

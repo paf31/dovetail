@@ -15,26 +15,26 @@
 </span><span id="line-15"></span><span>
 </span><span id="line-16"></span><span class="annot"><a href="Dovetail.FFI.Internal.html#forAll"><span class="hs-identifier hs-type">forAll</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span>
 </span><span id="line-17"></span><span id="forAll"><span class="annot"><span class="annottext">forAll :: (SourceType -&gt; SourceType) -&gt; SourceType
-</span><a href="Dovetail.FFI.Internal.html#forAll"><span class="hs-identifier hs-var hs-var">forAll</span></a></span></span><span> </span><span id="local-6989586621679123647"><span class="annot"><span class="annottext">SourceType -&gt; SourceType
-</span><a href="#local-6989586621679123647"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><a href="Dovetail.FFI.Internal.html#forAll"><span class="hs-identifier hs-var hs-var">forAll</span></a></span></span><span> </span><span id="local-6989586621679123631"><span class="annot"><span class="annottext">SourceType -&gt; SourceType
+</span><a href="#local-6989586621679123631"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
 </span><span id="line-18"></span><span>    </span><span class="annot"><span class="annottext">[(SourceAnn, (Text, Maybe SourceType))] -&gt; SourceType -&gt; SourceType
 forall a. [(a, (Text, Maybe (Type a)))] -&gt; Type a -&gt; Type a
 </span><span class="hs-identifier hs-var">P.mkForAll</span></span><span> </span><span>
 </span><span id="line-19"></span><span>      </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceAnn
 </span><span class="hs-identifier hs-var">P.nullSourceAnn</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679123644"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceType -&gt; Maybe SourceType
+</span><a href="#local-6989586621679123628"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceType -&gt; Maybe SourceType
 forall a. a -&gt; Maybe a
 </span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">SourceType
 </span><span class="hs-identifier hs-var">P.kindType</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">]</span><span>
 </span><span id="line-20"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceType -&gt; SourceType
-</span><a href="#local-6989586621679123647"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceAnn -&gt; Text -&gt; SourceType
+</span><a href="#local-6989586621679123631"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceAnn -&gt; Text -&gt; SourceType
 forall a. a -&gt; Text -&gt; Type a
 </span><span class="hs-identifier hs-var">P.TypeVar</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
 </span><span class="hs-identifier hs-var">P.nullSourceAnn</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679123644"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679123628"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-21"></span><span>  </span><span class="hs-keyword">where</span><span>
-</span><span id="line-22"></span><span>    </span><span id="local-6989586621679123644"><span class="annot"><span class="annottext">name :: Text
-</span><a href="#local-6989586621679123644"><span class="hs-identifier hs-var hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+</span><span id="line-22"></span><span>    </span><span id="local-6989586621679123628"><span class="annot"><span class="annottext">name :: Text
+</span><a href="#local-6989586621679123628"><span class="hs-identifier hs-var hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
 forall a. [a] -&gt; a
 </span><span class="hs-identifier hs-var">head</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Text]
 </span><a href="Dovetail.FFI.Internal.html#typeVars"><span class="hs-identifier hs-var">typeVars</span></a></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; [Text] -&gt; [Text]
@@ -42,7 +42,7 @@ forall a. Eq a =&gt; [a] -&gt; [a] -&gt; [a]
 </span><span class="hs-operator hs-var">\\</span></span><span> </span><span class="annot"><span class="annottext">SourceType -&gt; [Text]
 forall ann. Type ann -&gt; [Text]
 </span><a href="Dovetail.FFI.Internal.html#boundTypeVars"><span class="hs-identifier hs-var">boundTypeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceType -&gt; SourceType
-</span><a href="#local-6989586621679123647"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceAnn -&gt; Text -&gt; SourceType
+</span><a href="#local-6989586621679123631"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceAnn -&gt; Text -&gt; SourceType
 forall a. a -&gt; Text -&gt; Type a
 </span><span class="hs-identifier hs-var">P.TypeVar</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
 </span><span class="hs-identifier hs-var">P.nullSourceAnn</span></span><span> </span><span class="annot"><span class="annottext">Text
@@ -66,7 +66,7 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-string">&quot;'&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Text]
 </span><a href="Dovetail.FFI.Internal.html#typeVars"><span class="hs-identifier hs-var">typeVars</span></a></span><span>
 </span><span id="line-26"></span><span>
-</span><span id="line-27"></span><span id="local-6989586621679123669"><span class="annot"><a href="Dovetail.FFI.Internal.html#boundTypeVars"><span class="hs-identifier hs-type">boundTypeVars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.Type</span></span><span> </span><span class="annot"><a href="#local-6989586621679123669"><span class="hs-identifier hs-type">ann</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">]</span></span><span>
+</span><span id="line-27"></span><span id="local-6989586621679123653"><span class="annot"><a href="Dovetail.FFI.Internal.html#boundTypeVars"><span class="hs-identifier hs-type">boundTypeVars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.Type</span></span><span> </span><span class="annot"><a href="#local-6989586621679123653"><span class="hs-identifier hs-type">ann</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">]</span></span><span>
 </span><span id="line-28"></span><span id="boundTypeVars"><span class="annot"><span class="annottext">boundTypeVars :: Type ann -&gt; [Text]
 </span><a href="Dovetail.FFI.Internal.html#boundTypeVars"><span class="hs-identifier hs-var hs-var">boundTypeVars</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; [Text]
 forall a. Eq a =&gt; [a] -&gt; [a]
@@ -79,23 +79,23 @@ forall r a. (r -&gt; r -&gt; r) -&gt; (Type a -&gt; r) -&gt; Type a -&gt; r
 forall a. [a] -&gt; [a] -&gt; [a]
 </span><span class="hs-operator hs-var">(++)</span></span><span> </span><span class="annot"><span class="annottext">Type ann -&gt; [Text]
 forall ann. Type ann -&gt; [Text]
-</span><a href="#local-6989586621679123634"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-29"></span><span>  </span><span id="local-6989586621679123634"><span class="annot"><span class="annottext">go :: Type a -&gt; [Text]
-</span><a href="#local-6989586621679123634"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ForAll</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679123632"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679123632"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe (Type a)
+</span><a href="#local-6989586621679123618"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-29"></span><span>  </span><span id="local-6989586621679123618"><span class="annot"><span class="annottext">go :: Type a -&gt; [Text]
+</span><a href="#local-6989586621679123618"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ForAll</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679123616"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679123616"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe (Type a)
 </span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Type a
 </span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Maybe SkolemScope
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679123632"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-30"></span><span>  </span><span class="annot"><a href="#local-6989586621679123634"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">Type a
+</span><a href="#local-6989586621679123616"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-30"></span><span>  </span><span class="annot"><a href="#local-6989586621679123618"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">Type a
 </span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
 </span><span id="line-31"></span><span>
 </span><span id="line-32"></span><span class="annot"><a href="Dovetail.FFI.Internal.html#function"><span class="hs-identifier hs-type">function</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span>
 </span><span id="line-33"></span><span id="function"><span class="annot"><span class="annottext">function :: SourceType -&gt; SourceType -&gt; SourceType
-</span><a href="Dovetail.FFI.Internal.html#function"><span class="hs-identifier hs-var hs-var">function</span></a></span></span><span> </span><span id="local-6989586621679123631"><span class="annot"><span class="annottext">SourceType
-</span><a href="#local-6989586621679123631"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679123630"><span class="annot"><span class="annottext">SourceType
-</span><a href="#local-6989586621679123630"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SourceAnn -&gt; SourceType -&gt; SourceType -&gt; SourceType
+</span><a href="Dovetail.FFI.Internal.html#function"><span class="hs-identifier hs-var hs-var">function</span></a></span></span><span> </span><span id="local-6989586621679123615"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679123615"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679123614"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679123614"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SourceAnn -&gt; SourceType -&gt; SourceType -&gt; SourceType
 forall a. a -&gt; Type a -&gt; Type a -&gt; Type a
 </span><span class="hs-identifier hs-var">P.TypeApp</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
 </span><span class="hs-identifier hs-var">P.nullSourceAnn</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceAnn -&gt; SourceType -&gt; SourceType -&gt; SourceType
@@ -103,8 +103,8 @@ forall a. a -&gt; Type a -&gt; Type a -&gt; Type a
 </span><span class="hs-identifier hs-var">P.TypeApp</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
 </span><span class="hs-identifier hs-var">P.nullSourceAnn</span></span><span> </span><span class="annot"><span class="annottext">SourceType
 </span><span class="hs-identifier hs-var">P.tyFunction</span></span><span> </span><span class="annot"><span class="annottext">SourceType
-</span><a href="#local-6989586621679123631"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">SourceType
-</span><a href="#local-6989586621679123630"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><a href="#local-6989586621679123615"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679123614"><span class="hs-identifier hs-var">b</span></a></span><span>
 </span><span id="line-34"></span><span>
 </span><span id="line-35"></span><span class="annot"><a href="Dovetail.FFI.Internal.html#array"><span class="hs-identifier hs-type">array</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span>
 </span><span id="line-36"></span><span id="array"><span class="annot"><span class="annottext">array :: SourceType -&gt; SourceType

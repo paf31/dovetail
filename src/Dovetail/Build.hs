@@ -63,25 +63,35 @@ buildSingleExpression
   -> [P.ExternsFile]
   -> Text
   -> Either BuildError (CoreFn.Expr CoreFn.Ann, P.SourceType)
-buildSingleExpression defaultModule externs input = do
+buildSingleExpression = buildSingleExpressionWith id
+
+buildSingleExpressionWith
+  :: (AST.Expr -> AST.Expr)
+  -- ^ A function which can be used to modify the parsed syntax tree before compilation
+  -> Maybe P.ModuleName
+  -- ^ The name of the "default module" whose exports will be made available unqualified
+  -- to the evaluated expression.
+  -> [P.ExternsFile]
+  -> Text
+  -> Either BuildError (CoreFn.Expr CoreFn.Ann, P.SourceType)
+buildSingleExpressionWith f defaultModule externs input = do
   let tokens = CST.lex input
       (_, parseResult) = CST.runParser (CST.ParserState tokens [] []) CST.parseExpr
   case parseResult of
     Left errs ->
       Left (UnableToParse errs)
     Right cst -> 
-      buildSingleExpressionFromCST defaultModule externs cst
+      buildSingleExpressionFromAST defaultModule externs (f (CST.convertExpr "<input>" cst))
 
-buildSingleExpressionFromCST
+buildSingleExpressionFromAST
   :: Maybe P.ModuleName
   -- ^ The name of the "default module" whose exports will be made available unqualified
   -- to the evaluated expression.
   -> [P.ExternsFile]
-  -> CST.Expr a
+  -> AST.Expr
   -> Either BuildError (CoreFn.Expr CoreFn.Ann, P.SourceType)
-buildSingleExpressionFromCST defaultModule externs cst = do
-  let expr = CST.convertExpr "<input>" cst
-      exprName = P.Ident "$"
+buildSingleExpressionFromAST defaultModule externs expr = do
+  let exprName = P.Ident "$"
       decl = AST.ValueDeclarationData
                { AST.valdeclSourceAnn  = AST.nullSourceAnn
                , AST.valdeclIdent      = exprName

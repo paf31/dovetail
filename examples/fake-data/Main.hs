@@ -19,11 +19,11 @@
 -- It can be run on the command line as follows:
 -- 
 -- @
---   cat build.purs
+--   cat > build.purs
 --   module Main where
 --   import Choose (choose)
 --   main = { foo: choose [1, 2, 3] }
---   ⏎
+--   ^D
 --
 --   fake-data build.purs 12345
 -- @

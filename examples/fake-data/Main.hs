@@ -7,6 +7,7 @@
 {-# LANGUAGE NamedFieldPuns             #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeApplications           #-}
 
 -- | This example implements a generator for randomized fake data, which
 -- takes its instructions in the form of a PureScript program.
@@ -38,6 +39,8 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Foldable (traverse_)
+import Data.Proxy (Proxy)
+import Data.Reflection (reify)
 import Data.Text.IO qualified as Text
 import Data.Vector ((!))
 import Dovetail
@@ -60,7 +63,7 @@ main = do
   -- computation may involve side-effects in the 'M' monad.
   let buildResult 
         :: (MonadState Random.StdGen m, MonadFix m)
-        => m (Either (InterpretError m) (EvalT m (JSON Aeson.Value)))
+        => m (Either (InterpretError m) Aeson.Value)
       buildResult = runInterpretT do
         traverse_ ffi stdlib
         
@@ -79,7 +82,8 @@ main = do
               pure (xs ! idx)
               
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
-        evalMain moduleName
+        (val, ty) <- eval (Just moduleName) "main"
+        reify ty \(_ :: Proxy a) -> fmap getJSON . liftEvalT $ val >>= fromValue @_ @(JSON a)
           
   let seed = read seedString :: Int
   
@@ -93,9 +97,7 @@ main = do
   flip evalStateT gen do
     -- Interpret the main function of the PureScript module as a non-deterministic
     -- JSON result
-    value <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
+    output <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
   
-    -- Evaluate that function, then render the output as pretty-printed JSON on
-    -- standard output.
-    output <- runEvalT value `orDie` renderEvaluationError defaultTerminalRenderValueOptions
-    lift (BL8.putStrLn (Pretty.encodePretty (getJSON output)))
+    -- Render the output as pretty-printed JSON on standard output.
+    lift (BL8.putStrLn (Pretty.encodePretty output))

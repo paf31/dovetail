@@ -34,6 +34,7 @@ library:
   - mtl
   - purescript
   - purescript-cst
+  - reflection
   - scientific
   - semialign
   - text
@@ -86,6 +87,7 @@ executables:
     - purescript
     - purescript-cst
     - random
+    - reflection
     - text
     - transformers
     - vector

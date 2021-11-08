@@ -43,6 +43,9 @@ module Dovetail.Evaluate
   , ToObject(..)
   
   , module Dovetail.Types
+  
+  -- ** Utilities
+  , evalPSString
   ) where
  
 import Control.Monad (guard, foldM, mzero, zipWithM)

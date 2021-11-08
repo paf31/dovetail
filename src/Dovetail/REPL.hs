@@ -6,7 +6,7 @@
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 
-module Dovetail.REPL where
+module Dovetail.REPL (defaultMain) where
 
 import Control.Monad.Catch (MonadMask)
 import Control.Monad.Fix (MonadFix)

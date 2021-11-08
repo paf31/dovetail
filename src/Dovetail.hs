@@ -29,17 +29,18 @@ module Dovetail
   -- ** Building PureScript source
   , build
   , buildCoreFn
+  , module Dovetail.Build
   
   -- ** Evaluating expressions
   , eval
   , evalCoreFn
   , evalMain
+  , module Dovetail.Evaluate
   
   -- ** REPL
   , repl
   
-  , module Dovetail.Evaluate
-  , module Dovetail.Build
+  -- * Re-exports
   , module Language.PureScript.CoreFn
   , module Language.PureScript.Names
   ) where

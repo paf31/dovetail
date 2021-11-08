@@ -402,7 +402,6 @@ instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Bas
 instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Dovetail.Evaluate.ToObject m f, Dovetail.Evaluate.ToObject m g) => Dovetail.Evaluate.ToObject m (f GHC.Generics.:*: g)
 
 module Dovetail.REPL
-renderOptions :: RenderValueOptions
 
 -- | Starts a minimal interactive debugger (REPL) session.
 --   
@@ -621,6 +620,11 @@ build :: MonadFix m => Text -> InterpretT m (Module Ann)
 --   The corefn module may be preprepared, for example by compiling from
 --   source text using the functions in the <a>Dovetail.Build</a> module.
 buildCoreFn :: MonadFix m => ExternsFile -> Module Ann -> InterpretT m (Module Ann)
+data BuildError
+UnableToParse :: NonEmpty ParserError -> BuildError
+UnableToCompile :: MultipleErrors -> BuildError
+InternalError :: BuildError
+renderBuildError :: BuildError -> String
 
 -- | Evaluate a PureScript expression from source
 eval :: (MonadFix m, ToValueRHS m a) => Maybe ModuleName -> Text -> InterpretT m (a, SourceType)
@@ -632,9 +636,6 @@ evalCoreFn :: (MonadFix m, ToValueRHS m a) => Expr Ann -> InterpretT m a
 
 -- | Evaluate <tt>main</tt> in the specified module and return the result.
 evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
-
--- | Start an interactive debugger (REPL) session.
-repl :: (MonadFix m, MonadIO m, MonadMask m) => Maybe ModuleName -> InterpretT m ()
 
 -- | Non-transformer version of <a>EvalT</a>, useful in any settings where
 --   the FFI does not use any side effects during evaluation.
@@ -716,11 +717,9 @@ toValue :: ToValue m a => a -> Value m
 toValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => a -> Value m
 fromValue :: ToValue m a => Value m -> EvalT m a
 fromValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => Value m -> EvalT m a
-data BuildError
-UnableToParse :: NonEmpty ParserError -> BuildError
-UnableToCompile :: MultipleErrors -> BuildError
-InternalError :: BuildError
-renderBuildError :: BuildError -> String
+
+-- | Start an interactive debugger (REPL) session.
+repl :: (MonadFix m, MonadIO m, MonadMask m) => Maybe ModuleName -> InterpretT m ()
 type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
 data Expr a
 data Module a

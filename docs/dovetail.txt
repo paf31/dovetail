@@ -25,7 +25,8 @@ buildSingleModule :: [ExternsFile] -> Text -> Either BuildError (Module Ann, Ext
 --   module with the name <tt>Main</tt>, and a single expression named
 --   <tt>main</tt>, with the specified content.
 buildSingleExpression :: Maybe ModuleName -> [ExternsFile] -> Text -> Either BuildError (Expr Ann, SourceType)
-buildSingleExpressionFromCST :: Maybe ModuleName -> [ExternsFile] -> Expr a -> Either BuildError (Expr Ann, SourceType)
+buildSingleExpressionWith :: (Expr -> Expr) -> Maybe ModuleName -> [ExternsFile] -> Text -> Either BuildError (Expr Ann, SourceType)
+buildSingleExpressionFromAST :: Maybe ModuleName -> [ExternsFile] -> Expr -> Either BuildError (Expr Ann, SourceType)
 
 -- | Compile a single <a>Module</a> into a CoreFn module.
 --   
@@ -268,16 +269,16 @@ buildCoreFn :: MonadFix m => Env m -> Module Ann -> EvalT m (Env m)
 --   For example:
 --   
 --   <pre>
---   builtIn "greeting" ("Hello, World!" :: Text)
---   builtIn "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
+--   builtIn (ModuleName <a>Main</a>) "greeting" ("Hello, World!" :: Text)
+--   builtIn (ModuleName <a>Main</a>) "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
 --   </pre>
 --   
 --   Functions can be provided as built-ins, but the <a>EvalT</a> monad
 --   needs to be used to wrap any outputs (or values in positive position):
 --   
 --   <pre>
---   builtIn "strip" ((pure . Text.strip) :: Text -&gt; EvalT m Text)
---   builtIn "map" (traverse :: (Value -&gt; EvalT m Value) -&gt; Vector Value -&gt; EvalT m (Vector Value))
+--   builtIn (ModuleName <a>Main</a>) "strip" ((pure . Text.strip) :: Text -&gt; EvalT m Text)
+--   builtIn (ModuleName <a>Main</a>) "map" (traverse :: (Value -&gt; EvalT m Value) -&gt; Vector Value -&gt; EvalT m (Vector Value))
 --   </pre>
 --   
 --   Polymorphic functions can also be provided as built-ins, but values
@@ -399,6 +400,15 @@ instance (GHC.TypeLits.KnownSymbol field, Dovetail.Evaluate.ToValue m a) => Dove
 instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Dovetail.Evaluate.ToObject m f) => Dovetail.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.D t f)
 instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Dovetail.Evaluate.ToObject m f) => Dovetail.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
 instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Dovetail.Evaluate.ToObject m f, Dovetail.Evaluate.ToObject m g) => Dovetail.Evaluate.ToObject m (f GHC.Generics.:*: g)
+
+module Dovetail.REPL
+renderOptions :: RenderValueOptions
+
+-- | Starts a minimal interactive debugger (REPL) session.
+--   
+--   It is more likely that you will want to use the <a>repl</a> function
+--   to start a REPL session from within an <a>InterpretT</a> block.
+defaultMain :: forall m. (MonadFix m, MonadIO m, MonadMask m) => Maybe ModuleName -> [ExternsFile] -> [Ident] -> Env m -> m ()
 
 
 -- | This module is temporary and will be replaced or removed in a release
@@ -572,6 +582,14 @@ data InterpretT m a
 runInterpretT :: Monad m => InterpretT m a -> m (Either (InterpretError m) a)
 runInterpret :: Interpret a -> Either (InterpretError Identity) a
 
+-- | A convenience function for running <a>EvalT</a> computations in
+--   <a>InterpretT</a>, reporting errors via <a>InterpretError</a>.
+liftEvalT :: Monad m => EvalT m a -> InterpretT m a
+
+-- | Like <a>runInterpretT</a>, but starts an interactive debugging session
+--   in the event of a debugging error.
+runInterpretTWithDebugger :: (MonadIO m, MonadFix m, MonadMask m) => InterpretT m a -> m ()
+
 -- | The type of errors that can occur in the <a>InterpretT</a> monad.
 data InterpretError m
 
@@ -614,6 +632,9 @@ evalCoreFn :: (MonadFix m, ToValueRHS m a) => Expr Ann -> InterpretT m a
 
 -- | Evaluate <tt>main</tt> in the specified module and return the result.
 evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
+
+-- | Start an interactive debugger (REPL) session.
+repl :: (MonadFix m, MonadIO m, MonadMask m) => Maybe ModuleName -> InterpretT m ()
 
 -- | Non-transformer version of <a>EvalT</a>, useful in any settings where
 --   the FFI does not use any side effects during evaluation.
@@ -703,6 +724,7 @@ renderBuildError :: BuildError -> String
 type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
 data Expr a
 data Module a
+instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError (Dovetail.InterpretError m) (Dovetail.InterpretT m)
 instance GHC.Base.Monad m => GHC.Base.Monad (Dovetail.InterpretT m)
 instance GHC.Base.Monad m => GHC.Base.Applicative (Dovetail.InterpretT m)
 instance GHC.Base.Functor m => GHC.Base.Functor (Dovetail.InterpretT m)

@@ -84,16 +84,16 @@ buildCoreFn env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } =
 -- For example:
 --
 -- @
--- builtIn "greeting" ("Hello, World!" :: Text)
--- builtIn "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
+-- builtIn (ModuleName "Main") "greeting" ("Hello, World!" :: Text)
+-- builtIn (ModuleName "Main") "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
 -- @
 --
 -- Functions can be provided as built-ins, but the 'EvalT' monad needs to be
 -- used to wrap any outputs (or values in positive position):
 --
 -- @
--- builtIn "strip" ((pure . Text.strip) :: Text -> EvalT m Text)
--- builtIn "map" (traverse :: (Value -> EvalT m Value) -> Vector Value -> EvalT m (Vector Value))
+-- builtIn (ModuleName "Main") "strip" ((pure . Text.strip) :: Text -> EvalT m Text)
+-- builtIn (ModuleName "Main") "map" (traverse :: (Value -> EvalT m Value) -> Vector Value -> EvalT m (Vector Value))
 -- @
 --
 -- Polymorphic functions can also be provided as built-ins, but values with 

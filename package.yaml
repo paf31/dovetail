@@ -29,6 +29,8 @@ library:
   - aeson
   - ansi-terminal
   - containers
+  - exceptions
+  - haskeline
   - mtl
   - purescript
   - purescript-cst
@@ -108,3 +110,4 @@ tests:
     - generic-arbitrary
     - quickcheck-instances
     - text
+    - vector

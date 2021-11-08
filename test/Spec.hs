@@ -21,6 +21,7 @@ import Data.Functor.Identity
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as IO
+import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Prelude (prelude, stdlib)
 import GHC.Generics (Generic)
@@ -131,6 +132,18 @@ main = hspec do
             \import Prelude\n\
             \main x = { foo: 42, bar: 1.0, baz: true, quux: x }")
           `shouldBe` Right (Right (ExampleRecord1 42 1.0 True "testing"))
+
+      it "should support mixing module and expression evaluation" do
+        let x = runInterpret do
+                  traverse_ ffi stdlib
+                  let moduleText =
+                        "module Main where\n\
+                        \import Prelude.Array\n\
+                        \main = map _.foo"
+                  CoreFn.Module { CoreFn.moduleName = mn } <- build moduleText
+                  runEval . fst <$> eval (Just mn) "main [{ foo: 42 }]"
+        fmap (first (renderEvaluationError renderOpts)) (first (renderInterpretError renderOpts) x)
+          `shouldBe` Right (Right (Vector.fromList [42 :: Integer]))
           
       let buildSingleExpressionWithPrelude 
             :: forall a

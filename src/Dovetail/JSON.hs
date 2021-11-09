@@ -12,19 +12,27 @@
 
 -- | This module is temporary and will be replaced or removed in a release shortly.
 module Dovetail.JSON 
-  ( JSON(..)
-  , fromJSON
-  , toJSON
+  ( JSON
+  , mkJSON
+  
+  -- ** Supporting code
+  , stdlib
+  
+  -- ** Serializable types
+  , SerializableType(..)
+  , tryReifySerializableType
   ) where
 
 import Debug.Trace
 import Control.Monad.Fix (MonadFix)  
 import Data.Aeson qualified as Aeson
 import Data.Align (alignWith)
+import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Proxy (Proxy(..))
-import Data.Reflection (Reifies, reflect)
+import Data.Reflection (Reifies, reflect, reify)
 import Data.Text (Text)
+import Data.Text qualified as Text
 import Data.These (These(..))
 import Dovetail
 import Dovetail.Evaluate qualified as Evaluate
@@ -32,83 +40,130 @@ import Language.PureScript qualified as P
 import Language.PureScript.Names qualified as Names
 import Language.PureScript.Label qualified as Label
 
-fromJSON :: Aeson.Value -> Evaluate.Value m
-fromJSON (Aeson.Object x) = Evaluate.Object (fmap fromJSON x)
-fromJSON (Aeson.Array x) = Evaluate.Array (fmap fromJSON x)
-fromJSON (Aeson.String x) = Evaluate.String x
-fromJSON (Aeson.Number x) = Evaluate.Number (realToFrac x)
-fromJSON (Aeson.Bool x) = Evaluate.Bool x
-fromJSON Aeson.Null = Evaluate.String "TODO: null"
-
-toJSON :: Evaluate.Value m -> Maybe Aeson.Value
-toJSON (Evaluate.Object x) = Aeson.Object <$> traverse toJSON x
-toJSON (Evaluate.Array x) = Aeson.Array <$> traverse toJSON x
-toJSON (Evaluate.String x) = pure (Aeson.String x)
-toJSON (Evaluate.Number x) = pure (Aeson.Number (realToFrac x))
-toJSON (Evaluate.Bool x) = pure (Aeson.Bool x)
-toJSON _ = Nothing
-
 newtype JSON t = JSON { getJSON :: Aeson.Value }
 
--- TypeVar a Text	
--- TypeConstructor a (Qualified (ProperName TypeName))	
--- TypeApp a (Type a) (Type a)	
--- ForAll a Text (Maybe (Kind a)) (Type a) (Maybe SkolemScope)	
--- ConstrainedType a (Constraint a) (Type a)	
--- Skolem a Text Int SkolemScope	
--- rowToSortedList :: Type a -> ([RowListItem a], Type a)
--- rowFromList :: ([RowListItem a], Type a) -> Type a
+mkJSON :: Reifies t SerializableType => Aeson.Value -> EvalT m (JSON t)
+mkJSON = error "TODO"
 
-instance forall t m. (MonadFix m, Reifies t P.SourceType) => Evaluate.ToValue m (JSON t) where
+data SerializableType
+  = STObject (HashMap Text SerializableType)
+  | STArray SerializableType
+  | STNullable SerializableType
+  | STString
+  | STChar
+  | STNumber
+  | STInt
+  | STBool
+  deriving (Show, Eq)
+
+stdlib :: MonadFix m => InterpretT m (Module Ann)
+stdlib = build
+  "module JSON where\n\
+  \\n\
+  \data Nullable a = Null | NotNull a"
+
+tryReifySerializableType 
+  :: forall m r
+   . MonadFix m
+  => P.SourceType 
+  -> (forall t. Reifies t SerializableType => Proxy t -> EvalT m r)
+  -> EvalT m r
+tryReifySerializableType = \ty f ->
+    go ty >>= (`reify` f)
+  where
+    go :: P.SourceType -> EvalT m SerializableType
+    go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Int"))) =
+      pure STInt
+    go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Number"))) =
+      pure STNumber
+    go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "String"))) =
+      pure STString
+    go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Char"))) =
+      pure STChar
+    go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Boolean"))) =
+      pure STBool
+    go (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Record"))) ty) = do
+      let (knownFields, _unknownFields) = P.rowToSortedList ty
+      STObject . HashMap.fromList <$> sequence
+        [ (,) <$> Evaluate.evalPSString k <*> go v
+        | P.RowListItem _ (Label.Label k) v <- knownFields
+        ]
+    go (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Array"))) ty) =
+      STArray <$> go ty
+    go (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "Nullable"))) ty) =
+      STNullable <$> go ty
+    go _ =
+      Evaluate.throwErrorWithContext (Evaluate.OtherError "type is not serializable")
+  
+instance forall t m. (MonadFix m, Reifies t SerializableType) => Evaluate.ToValue m (JSON t) where
   toValue = go (reflect (Proxy :: Proxy t)) . getJSON
     where
-      go :: P.SourceType -> Aeson.Value -> Value m
-      go st _ = traceShow st $ String "TODO"
+      go :: SerializableType -> Aeson.Value -> Value m
+      go STNullable{} Aeson.Null = 
+        Evaluate.Constructor (Names.ProperName "Null") []
+      go (STNullable ty) notNull =
+        Evaluate.Constructor (Names.ProperName "NotNull") [go ty notNull]
+      go STObject{} (Aeson.Object x) =
+        Evaluate.Object (fmap (go _) x)
+      go (STArray ty) (Aeson.Array x) =
+        Evaluate.Array (fmap (go ty) x)
+      go STString (Aeson.String x) =
+        Evaluate.String x
+      go STChar (Aeson.String x) =
+        Evaluate.Char (_ x)
+      go STNumber (Aeson.Number x) =
+        Evaluate.Number (realToFrac x)
+      go STInt (Aeson.Number x) =
+        Evaluate.Int (_ x)
+      go _ (Aeson.Bool x) =
+        Evaluate.Bool x
   fromValue = fmap JSON . go (reflect (Proxy :: Proxy t))
     where
-      go :: P.SourceType -> Value m -> EvalT m Aeson.Value
+      go :: SerializableType -> Value m -> EvalT m Aeson.Value
       go = \case
-        P.TypeConstructor _ (Prim "Int") -> \case
+        STInt -> \case
           Evaluate.Int i -> 
             pure (Aeson.Number (fromIntegral i))
           other -> 
             Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "integer" other)
-        P.TypeConstructor _ (Prim "String") -> \case
+        STNumber -> \case
+          Evaluate.Number d -> 
+            pure (Aeson.Number (realToFrac d))
+          other -> 
+            Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "integer" other)
+        STString -> \case
           Evaluate.String s -> 
             pure (Aeson.String s)
           other -> 
             Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "string" other)
-        P.TypeApp _ (P.TypeConstructor _ (Prim "Record")) ty -> \case
+        STChar -> \case
+          Evaluate.Char c -> 
+            pure (Aeson.String (Text.singleton c))
+          other -> 
+            Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "char" other)
+        STBool -> \case
+          Evaluate.Bool b -> 
+            pure (Aeson.Bool b)
+          other -> 
+            Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "bool" other)
+        STObject fieldTypes -> \case
           o@(Evaluate.Object fields) -> do
-            let (knownFields, _unknownFields) = P.rowToSortedList ty
-            knownFieldsMap <- HashMap.fromList <$> sequence
-              [ (\a b -> (a, (a, b))) <$> Evaluate.evalPSString k <*> pure v
-              | P.RowListItem _ (Label.Label k) v <- knownFields
-              ]
-            let aligner :: These (Text, P.SourceType) (Value m) -> EvalT m Aeson.Value
+            let aligner :: These (Text, SerializableType) (Value m) -> EvalT m Aeson.Value
                 aligner (This (field, _)) = Evaluate.throwErrorWithContext (Evaluate.FieldNotFound field o)
                 aligner (That _) = Evaluate.throwErrorWithContext (Evaluate.OtherError "TODO: unexpected field")
                 aligner (These (_, ty') val) = go ty' val
-            fmap Aeson.Object . sequence $ alignWith aligner knownFieldsMap fields
+            fmap Aeson.Object . sequence $ alignWith aligner (HashMap.mapWithKey (,) fieldTypes) fields
           other -> 
             Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "object" other)
-          
-        other -> \_ -> do
-          traceShowM other
-          pure $ Aeson.String "TODO"
-
-pattern Prim :: Text -> Qualified (P.ProperName 'Names.TypeName)
-pattern Prim name = P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName name)
-
-
--- newtype JSON a = JSON { getJSON :: a }
--- 
--- instance (MonadFix m, Aeson.ToJSON a, Aeson.FromJSON a) => Evaluate.ToValue m (JSON a) where
---   toValue = fromJSON . Aeson.toJSON . getJSON
---   fromValue a =
---     case toJSON a of
---       Just value ->
---         case Aeson.fromJSON value of
---           Aeson.Error err -> Evaluate.throwErrorWithContext . Evaluate.OtherError . fromString $ "Invalid JSON: " <> err
---           Aeson.Success json -> pure (JSON json)
---       Nothing -> Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "json" a)
+        STArray elementType -> \case
+          Evaluate.Array xs ->
+            Aeson.Array <$> traverse (go elementType) xs
+          other -> 
+            Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "array" other)
+        STNullable ty -> \case
+          Evaluate.Constructor (Names.ProperName "Null") [] ->
+            pure Aeson.Null
+          Evaluate.Constructor (Names.ProperName "NotNull") [val] ->
+            go ty val
+          other ->
+            Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "Nullable" other)

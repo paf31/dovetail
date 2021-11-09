@@ -40,12 +40,12 @@ import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Foldable (traverse_)
 import Data.Proxy (Proxy)
-import Data.Reflection (reify)
 import Data.Text.IO qualified as Text
 import Data.Vector ((!))
 import Dovetail
 import Dovetail.FFI.Builder qualified as FFI
 import Dovetail.JSON (JSON(..))
+import Dovetail.JSON qualified as JSON
 import Dovetail.Prelude (stdlib)
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
@@ -67,6 +67,8 @@ main = do
       buildResult = runInterpretT do
         traverse_ ffi stdlib
         
+        _ <- JSON.stdlib
+        
         -- This example defines a single interesting function on the
         -- Haskell side: the @choose@ function demonstrates the idea of using
         -- side-effects in the interpreter - @choose@ chooses randomly between one of
@@ -83,7 +85,8 @@ main = do
               
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
         (val, ty) <- eval (Just moduleName) "main"
-        reify ty \(_ :: Proxy a) -> fmap getJSON . liftEvalT $ val >>= fromValue @_ @(JSON a)
+        liftEvalT $ JSON.tryReifySerializableType ty \(_ :: Proxy a) -> 
+          getJSON <$> (fromValue @_ @(JSON a) =<< val)
           
   let seed = read seedString :: Int
   

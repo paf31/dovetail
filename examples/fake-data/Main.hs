@@ -44,7 +44,6 @@ import Data.Text.IO qualified as Text
 import Data.Vector ((!))
 import Dovetail
 import Dovetail.FFI.Builder qualified as FFI
-import Dovetail.JSON (JSON(..))
 import Dovetail.JSON qualified as JSON
 import Dovetail.Prelude (stdlib)
 import Language.PureScript qualified as P
@@ -86,7 +85,7 @@ main = do
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
         (val, ty) <- eval (Just moduleName) "main"
         liftEvalT $ JSON.tryReifySerializableType ty \(_ :: Proxy a) -> 
-          getJSON <$> (fromValue @_ @(JSON a) =<< val)
+          Aeson.toJSON <$> (fromValue @_ @a =<< val)
           
   let seed = read seedString :: Int
   

@@ -386,6 +386,7 @@ genericFromValue :: (MonadFix m, Generic a, ToObject m (Rep a)) => ObjectOptions
 class ToObject m f
 toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
 fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
+evalPSString :: MonadFix m => PSString -> EvalT m Text
 instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m (Dovetail.Types.Value m)
 instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Integer.Type.Integer
 instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Types.Double
@@ -408,17 +409,6 @@ module Dovetail.REPL
 --   It is more likely that you will want to use the <a>repl</a> function
 --   to start a REPL session from within an <a>InterpretT</a> block.
 defaultMain :: forall m. (MonadFix m, MonadIO m, MonadMask m) => Maybe ModuleName -> [ExternsFile] -> [Ident] -> Env m -> m ()
-
-
--- | This module is temporary and will be replaced or removed in a release
---   shortly.
-module Dovetail.JSON
-newtype JSON a
-JSON :: a -> JSON a
-[getJSON] :: JSON a -> a
-fromJSON :: Value -> Value m
-toJSON :: Value m -> Maybe Value
-instance (Control.Monad.Fix.MonadFix m, Data.Aeson.Types.ToJSON.ToJSON a, Data.Aeson.Types.FromJSON.FromJSON a) => Dovetail.Evaluate.ToValue m (Dovetail.JSON.JSON a)
 
 
 -- | This module provides a higher-level API on top of the
@@ -728,3 +718,22 @@ instance GHC.Base.Monad m => GHC.Base.Monad (Dovetail.InterpretT m)
 instance GHC.Base.Monad m => GHC.Base.Applicative (Dovetail.InterpretT m)
 instance GHC.Base.Functor m => GHC.Base.Functor (Dovetail.InterpretT m)
 instance Control.Monad.Trans.Class.MonadTrans Dovetail.InterpretT
+
+
+-- | This module is temporary and will be replaced or removed in a release
+--   shortly.
+module Dovetail.JSON
+tryReifySerializableType :: forall m r. MonadFix m => SourceType -> (forall a. (FromJSON a, ToJSON a, ToValue m a) => Proxy a -> EvalT m r) -> EvalT m r
+stdlib :: MonadFix m => InterpretT m (Module Ann)
+instance Data.Aeson.Types.ToJSON.ToJSON a => Data.Aeson.Types.ToJSON.ToJSON (Dovetail.JSON.Nullable a)
+instance Data.Aeson.Types.FromJSON.FromJSON a => Data.Aeson.Types.FromJSON.FromJSON (Dovetail.JSON.Nullable a)
+instance Dovetail.Evaluate.ToValue m a => Dovetail.Evaluate.ToValue m (Dovetail.JSON.Nullable a)
+instance (GHC.TypeLits.KnownSymbol k, Data.Aeson.Types.FromJSON.FromJSON x, Dovetail.JSON.FromJSONObject xs) => Dovetail.JSON.FromJSONObject (Dovetail.JSON.Cons k x xs)
+instance (GHC.TypeLits.KnownSymbol k, Data.Aeson.Types.ToJSON.ToJSON x, Dovetail.JSON.ToJSONObject xs) => Dovetail.JSON.ToJSONObject (Dovetail.JSON.Cons k x xs)
+instance (GHC.TypeLits.KnownSymbol k, Dovetail.Evaluate.ToValue m x, Dovetail.JSON.ToObject m xs) => Dovetail.JSON.ToObject m (Dovetail.JSON.Cons k x xs)
+instance Dovetail.JSON.FromJSONObject Dovetail.JSON.Nil
+instance Dovetail.JSON.ToJSONObject Dovetail.JSON.Nil
+instance GHC.Base.Monad m => Dovetail.JSON.ToObject m Dovetail.JSON.Nil
+instance (Control.Monad.Fix.MonadFix m, Dovetail.JSON.ToObject m xs) => Dovetail.Evaluate.ToValue m (Dovetail.JSON.Record xs)
+instance Dovetail.JSON.ToJSONObject xs => Data.Aeson.Types.ToJSON.ToJSON (Dovetail.JSON.Record xs)
+instance Dovetail.JSON.FromJSONObject xs => Data.Aeson.Types.FromJSON.FromJSON (Dovetail.JSON.Record xs)

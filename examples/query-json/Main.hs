@@ -44,8 +44,8 @@ import Data.Proxy (Proxy(..))
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Dovetail
+import Dovetail.Aeson qualified as JSON 
 import Dovetail.Evaluate qualified as Evaluate 
-import Dovetail.JSON qualified as JSON 
 import Dovetail.Prelude (stdlib)
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn

@@ -43,8 +43,8 @@ import Data.Proxy (Proxy)
 import Data.Text.IO qualified as Text
 import Data.Vector ((!))
 import Dovetail
+import Dovetail.Aeson qualified as JSON
 import Dovetail.FFI.Builder qualified as FFI
-import Dovetail.JSON qualified as JSON
 import Dovetail.Prelude (stdlib)
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn

@@ -1,0 +1,60 @@
+name:                dovetail
+version:             0.1.0.0
+github:              "paf31/dovetail"
+license:             BSD3
+author:              "Phil Freeman"
+maintainer:          "freeman.phil@gmail.com"
+copyright:           "2021 Phil Freeman"
+
+description:         Dovetail is a general-purpose PureScript corefn interpreter with an FFI to Haskell. 
+                     Please see the README on GitHub at <https://github.com/paf31/dovetail#readme>, or 
+                     check out the examples directory, to learn how to use the library.
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+  - -Wall
+  - -Werror
+  - -fwarn-unused-imports
+  dependencies:
+  - ansi-terminal
+  - containers
+  - exceptions
+  - haskeline
+  - mtl
+  - purescript
+  - purescript-cst
+  - semialign
+  - text
+  - these
+  - transformers
+  - unordered-containers
+  - vector
+    
+tests:
+  dovetail-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -fwarn-unused-imports
+    dependencies:
+    - directory
+    - dovetail
+    - filepath
+    - hspec
+    - hspec-golden
+    - purescript
+    - QuickCheck
+    - generic-arbitrary
+    - quickcheck-instances
+    - text
+    - vector

@@ -1,0 +1,979 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments        #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE DataKinds             #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE DerivingVia           #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost   #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE FlexibleContexts      #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE FlexibleInstances     #-}</span><span>
+</span><span id="line-7"></span><span class="hs-pragma">{-# LANGUAGE KindSignatures        #-}</span><span>
+</span><span id="line-8"></span><span class="hs-pragma">{-# LANGUAGE LambdaCase            #-}</span><span>
+</span><span id="line-9"></span><span class="hs-pragma">{-# LANGUAGE MultiParamTypeClasses #-}</span><span>
+</span><span id="line-10"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings     #-}</span><span>
+</span><span id="line-11"></span><span class="hs-pragma">{-# LANGUAGE PatternSynonyms       #-}</span><span>
+</span><span id="line-12"></span><span class="hs-pragma">{-# LANGUAGE RankNTypes            #-}</span><span>
+</span><span id="line-13"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables   #-}</span><span>
+</span><span id="line-14"></span><span class="hs-pragma">{-# LANGUAGE TupleSections         #-}</span><span>
+</span><span id="line-15"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications      #-}</span><span>
+</span><span id="line-16"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances  #-}</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Aeson</span><span> </span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier">tryReifySerializableType</span></a></span><span> </span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#stdlib"><span class="hs-identifier">stdlib</span></a></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier">Nullable</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier">UnknownJSON</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Fix</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadFix</span></span><span class="hs-special">)</span><span>  </span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Aeson</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson.Types</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Aeson</span></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Dynamic</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Dynamic</span></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.HashMap.Strict</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">HashMap</span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.HashMap.Strict</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">HashMap</span></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Proxy</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Proxy</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Reflection</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">reifySymbol</span></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Text</span></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Vector</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.TypeLits</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Symbol</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">KnownSymbol</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">symbolVal</span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Evaluate</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.Names</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Names</span></span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.Label</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Label</span></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-type">tryReifySerializableType</span></a></span><span> </span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104053"><span class="annot"><a href="#local-6989586621679104053"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679104052"><span class="annot"><a href="#local-6989586621679104052"><span class="hs-identifier hs-type">r</span></a></span></span><span>
+</span><span id="line-45"></span><span>   </span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679104053"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span> </span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104091"><span class="annot"><a href="#local-6989586621679104091"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-48"></span><span>     </span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.FromJSON</span></span><span> </span><span class="annot"><a href="#local-6989586621679104091"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-49"></span><span>       </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.ToJSON</span></span><span> </span><span class="annot"><a href="#local-6989586621679104091"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-50"></span><span>       </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Evaluate.ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679104053"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104091"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-51"></span><span>       </span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>     </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679104091"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-53"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">EvalT</span></span><span> </span><span class="annot"><a href="#local-6989586621679104053"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104052"><span class="hs-identifier hs-type">r</span></a></span><span>
+</span><span id="line-54"></span><span>     </span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">EvalT</span></span><span> </span><span class="annot"><a href="#local-6989586621679104053"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104052"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span>
+</span><span id="line-56"></span><span id="tryReifySerializableType"><span class="annot"><span class="annottext">tryReifySerializableType :: SourceType
+-&gt; (forall a.
+    (FromJSON a, ToJSON a, ToValue m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var hs-var">tryReifySerializableType</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Int&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103930"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103930"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-57"></span><span>  </span><span class="annot"><span class="annottext">Proxy Integer -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103930"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy Integer
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Number&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103928"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103928"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-59"></span><span>  </span><span class="annot"><span class="annottext">Proxy Double -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103928"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy Double
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;String&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103927"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103927"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-61"></span><span>  </span><span class="annot"><span class="annottext">Proxy Text -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103927"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy Text
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Char&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103926"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103926"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-63"></span><span>  </span><span class="annot"><span class="annottext">Proxy Char -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103926"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy Char
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Boolean&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103925"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103925"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-65"></span><span>  </span><span class="annot"><span class="annottext">Proxy Bool -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103925"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy Bool
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeApp</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Record&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103923"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103923"><span class="hs-identifier hs-var">ty</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103922"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103922"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679103921"><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+</span><a href="#local-6989586621679103921"><span class="hs-identifier hs-var">knownFields</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679103920"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103920"><span class="hs-identifier hs-var">unknownFields</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SourceType -&gt; ([RowListItem SourceAnn], SourceType)
+forall a. Type a -&gt; ([RowListItem a], Type a)
+</span><span class="hs-identifier hs-var">P.rowToSortedList</span></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103923"><span class="hs-identifier hs-var">ty</span></a></span><span>
+</span><span id="line-68"></span><span>  </span><span>
+</span><span id="line-69"></span><span>      </span><span class="annot"><a href="#local-6989586621679103918"><span class="hs-identifier hs-type">go</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceType</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">EvalT</span></span><span> </span><span class="annot"><a href="#local-6989586621679104053"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104052"><span class="hs-identifier hs-type">r</span></a></span><span>
+</span><span id="line-70"></span><span>      </span><span id="local-6989586621679103918"><span class="annot"><span class="annottext">go :: SourceType -&gt; EvalT m r
+</span><a href="#local-6989586621679103918"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.KindApp</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.REmpty</span></span><span class="hs-special">{</span><span class="hs-special">}</span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-71"></span><span>        </span><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+-&gt; (forall a.
+    (FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+forall (m :: * -&gt; *) r.
+MonadFix m =&gt;
+[RowListItem SourceAnn]
+-&gt; (forall a.
+    (FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifyRecordType"><span class="hs-identifier hs-var">tryReifyRecordType</span></a></span><span> </span><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+</span><a href="#local-6989586621679103921"><span class="hs-identifier hs-var">knownFields</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679103914"><span class="annot"><span class="annottext">Proxy a
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103914"><span class="hs-identifier hs-type">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Proxy (Record a) -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103922"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy (Record a)
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-type">Record</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103914"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>      </span><span class="annot"><a href="#local-6989586621679103918"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;JSON&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;JSON&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-73"></span><span>        </span><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+-&gt; (forall a.
+    (FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+forall (m :: * -&gt; *) r.
+MonadFix m =&gt;
+[RowListItem SourceAnn]
+-&gt; (forall a.
+    (FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifyRecordType"><span class="hs-identifier hs-var">tryReifyRecordType</span></a></span><span> </span><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+</span><a href="#local-6989586621679103921"><span class="hs-identifier hs-var">knownFields</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679103913"><span class="annot"><span class="annottext">Proxy a
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103913"><span class="hs-identifier hs-type">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Proxy (OpenRecord a) -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103922"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy (OpenRecord a)
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-type">OpenRecord</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103913"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>      </span><span class="annot"><a href="#local-6989586621679103918"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>        </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m r
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.OtherError</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;record type is not serializable&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>  </span><span class="annot"><span class="annottext">SourceType -&gt; EvalT m r
+</span><a href="#local-6989586621679103918"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103920"><span class="hs-identifier hs-var">unknownFields</span></a></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeApp</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Prim&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Array&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103910"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103910"><span class="hs-identifier hs-var">ty</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103909"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103909"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-78"></span><span>  </span><span class="annot"><span class="annottext">SourceType
+-&gt; (forall a.
+    (FromJSON a, ToJSON a, ToValue m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+forall (m :: * -&gt; *) r.
+MonadFix m =&gt;
+SourceType
+-&gt; (forall a.
+    (FromJSON a, ToJSON a, ToValue m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103910"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679103908"><span class="annot"><span class="annottext">Proxy a
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103908"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Proxy (Vector a) -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103909"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy (Vector a)
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Vector</span></span><span> </span><span class="annot"><a href="#local-6989586621679103908"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeApp</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;JSON&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Nullable&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103907"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103907"><span class="hs-identifier hs-var">ty</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103906"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103906"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-80"></span><span>  </span><span class="annot"><span class="annottext">SourceType
+-&gt; (forall a.
+    (FromJSON a, ToJSON a, ToValue m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+forall (m :: * -&gt; *) r.
+MonadFix m =&gt;
+SourceType
+-&gt; (forall a.
+    (FromJSON a, ToJSON a, ToValue m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103907"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679103905"><span class="annot"><span class="annottext">Proxy a
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103905"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Proxy (Nullable a) -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103906"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy (Nullable a)
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-type">Nullable</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103905"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.TypeConstructor</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.Qualified</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;JSON&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;JSON&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103904"><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103904"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-82"></span><span>  </span><span class="annot"><span class="annottext">Proxy UnknownJSON -&gt; EvalT m r
+forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103904"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy UnknownJSON
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-type">UnknownJSON</span></a></span><span class="hs-special">)</span><span>  </span><span>
+</span><span id="line-83"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><span class="hs-identifier">_</span></span><span>  </span><span class="annot"><span class="annottext">forall a.
+(FromJSON a, ToJSON a, ToValue m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-84"></span><span>  </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m r
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.OtherError</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;type is not serializable&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifyRecordType"><span class="hs-identifier hs-type">tryReifyRecordType</span></a></span><span>
+</span><span id="line-87"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104068"><span class="annot"><a href="#local-6989586621679104068"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679104067"><span class="annot"><a href="#local-6989586621679104067"><span class="hs-identifier hs-type">r</span></a></span></span><span>
+</span><span id="line-88"></span><span>   </span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679104068"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">P.RowListItem</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.SourceAnn</span></span><span class="hs-special">]</span><span>
+</span><span id="line-90"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104072"><span class="annot"><a href="#local-6989586621679104072"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-91"></span><span>     </span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#FromJSONObject"><span class="hs-identifier hs-type">FromJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104072"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-92"></span><span>       </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToJSONObject"><span class="hs-identifier hs-type">ToJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104072"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-93"></span><span>       </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToObject"><span class="hs-identifier hs-type">ToObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104068"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104072"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-94"></span><span>       </span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>     </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679104072"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-96"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">EvalT</span></span><span> </span><span class="annot"><a href="#local-6989586621679104068"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104067"><span class="hs-identifier hs-type">r</span></a></span><span>
+</span><span id="line-97"></span><span>     </span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">EvalT</span></span><span> </span><span class="annot"><a href="#local-6989586621679104068"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104067"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span>
+</span><span id="line-99"></span><span id="tryReifyRecordType"><span class="annot"><span class="annottext">tryReifyRecordType :: [RowListItem SourceAnn]
+-&gt; (forall a.
+    (FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifyRecordType"><span class="hs-identifier hs-var hs-var">tryReifyRecordType</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span id="local-6989586621679103903"><span class="annot"><span class="annottext">forall a.
+(FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103903"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-100"></span><span>  </span><span class="annot"><span class="annottext">Proxy Nil -&gt; EvalT m r
+forall a.
+(FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103903"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy Nil
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-type">Nil</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span class="annot"><a href="Dovetail.Aeson.html#tryReifyRecordType"><span class="hs-identifier hs-var">tryReifyRecordType</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">P.RowListItem</span></span><span> </span><span class="annot"><span class="annottext">SourceAnn
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Label.Label</span></span><span> </span><span id="local-6989586621679103900"><span class="annot"><span class="annottext">PSString
+</span><a href="#local-6989586621679103900"><span class="hs-identifier hs-var">k</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103899"><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103899"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679103898"><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+</span><a href="#local-6989586621679103898"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103897"><span class="annot"><span class="annottext">forall a.
+(FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103897"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-102"></span><span>  </span><span id="local-6989586621679103896"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679103896"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">PSString -&gt; EvalT m Text
+forall (m :: * -&gt; *). MonadFix m =&gt; PSString -&gt; EvalT m Text
+</span><span class="hs-identifier hs-var">Evaluate.evalPSString</span></span><span> </span><span class="annot"><span class="annottext">PSString
+</span><a href="#local-6989586621679103900"><span class="hs-identifier hs-var">k</span></a></span><span>
+</span><span id="line-103"></span><span>  </span><span class="annot"><span class="annottext">String
+-&gt; (forall (n :: Symbol). KnownSymbol n =&gt; Proxy n -&gt; EvalT m r)
+-&gt; EvalT m r
+forall r.
+String
+-&gt; (forall (n :: Symbol). KnownSymbol n =&gt; Proxy n -&gt; r) -&gt; r
+</span><span class="hs-identifier hs-var">reifySymbol</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">Text.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679103896"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679103893"><span class="annot"><span class="annottext">Proxy n
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103893"><span class="hs-identifier hs-type">k</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="annottext">SourceType
+-&gt; (forall a.
+    (FromJSON a, ToJSON a, ToValue m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+forall (m :: * -&gt; *) r.
+MonadFix m =&gt;
+SourceType
+-&gt; (forall a.
+    (FromJSON a, ToJSON a, ToValue m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifySerializableType"><span class="hs-identifier hs-var">tryReifySerializableType</span></a></span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><a href="#local-6989586621679103899"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679103892"><span class="annot"><span class="annottext">Proxy a
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103892"><span class="hs-identifier hs-type">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-105"></span><span>      </span><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+-&gt; (forall a.
+    (FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+forall (m :: * -&gt; *) r.
+MonadFix m =&gt;
+[RowListItem SourceAnn]
+-&gt; (forall a.
+    (FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+    Proxy a -&gt; EvalT m r)
+-&gt; EvalT m r
+</span><a href="Dovetail.Aeson.html#tryReifyRecordType"><span class="hs-identifier hs-var">tryReifyRecordType</span></a></span><span> </span><span class="annot"><span class="annottext">[RowListItem SourceAnn]
+</span><a href="#local-6989586621679103898"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679103891"><span class="annot"><span class="annottext">Proxy a
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103891"><span class="hs-identifier hs-type">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-106"></span><span>        </span><span class="annot"><span class="annottext">Proxy (Cons n a a) -&gt; EvalT m r
+forall a.
+(FromJSONObject a, ToJSONObject a, ToObject m a) =&gt;
+Proxy a -&gt; EvalT m r
+</span><a href="#local-6989586621679103897"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy (Cons n a a)
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-type">Cons</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103893"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103892"><span class="hs-identifier hs-type">x</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103891"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="hs-keyword">data</span><span> </span><span id="OpenRecord"><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-var">OpenRecord</span></a></span></span><span> </span><span id="local-6989586621679104024"><span class="annot"><a href="#local-6989586621679104024"><span class="hs-identifier hs-type">xs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="OpenRecord"><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-var">OpenRecord</span></a></span></span><span>
+</span><span id="line-109"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="_knownFields"><span class="annot"><span class="annottext">OpenRecord xs -&gt; xs
+</span><a href="Dovetail.Aeson.html#_knownFields"><span class="hs-identifier hs-var hs-var">_knownFields</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679104024"><span class="hs-identifier hs-type">xs</span></a></span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-special">,</span><span> </span><span id="_allFields"><span class="annot"><span class="annottext">OpenRecord xs -&gt; HashMap Text UnknownJSON
+</span><a href="Dovetail.Aeson.html#_allFields"><span class="hs-identifier hs-var hs-var">_allFields</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HashMap</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-type">UnknownJSON</span></a></span><span>
+</span><span id="line-111"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span id="local-6989586621679103887"><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679103884"><span class="annot"><a href="Dovetail.Aeson.html#FromJSONObject"><span class="hs-identifier hs-type">FromJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103887"><span class="hs-identifier hs-type">xs</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.FromJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-type">OpenRecord</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103887"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-114"></span><span>  </span><span id="local-6989586621679103882"><span class="annot"><span class="annottext">parseJSON :: Value -&gt; Parser (OpenRecord xs)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">parseJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+-&gt; (Object -&gt; Parser (OpenRecord xs))
+-&gt; Value
+-&gt; Parser (OpenRecord xs)
+forall a. String -&gt; (Object -&gt; Parser a) -&gt; Value -&gt; Parser a
+</span><span class="hs-identifier hs-var">Aeson.withObject</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;object&quot;</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679103879"><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679103879"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><span class="annottext">xs -&gt; HashMap Text UnknownJSON -&gt; OpenRecord xs
+forall xs. xs -&gt; HashMap Text UnknownJSON -&gt; OpenRecord xs
+</span><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-var">OpenRecord</span></a></span><span> </span><span class="annot"><span class="annottext">(xs -&gt; HashMap Text UnknownJSON -&gt; OpenRecord xs)
+-&gt; Parser xs -&gt; Parser (HashMap Text UnknownJSON -&gt; OpenRecord xs)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Parser xs
+forall a. FromJSONObject a =&gt; Object -&gt; Parser a
+</span><a href="Dovetail.Aeson.html#parseJSONObject"><span class="hs-identifier hs-var">parseJSONObject</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679103879"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (HashMap Text UnknownJSON -&gt; OpenRecord xs)
+-&gt; Parser (HashMap Text UnknownJSON) -&gt; Parser (OpenRecord xs)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text UnknownJSON -&gt; Parser (HashMap Text UnknownJSON)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Value -&gt; UnknownJSON) -&gt; Object -&gt; HashMap Text UnknownJSON
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Value -&gt; UnknownJSON
+</span><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-var">UnknownJSON</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679103879"><span class="hs-identifier hs-var">o</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-116"></span><span>  </span><span>
+</span><span id="line-117"></span><span id="local-6989586621679103875"><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679103868"><span id="local-6989586621679103870"><span id="local-6989586621679103872"><span class="annot"><a href="Dovetail.Aeson.html#ToJSONObject"><span class="hs-identifier hs-type">ToJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103875"><span class="hs-identifier hs-type">xs</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.ToJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-type">OpenRecord</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103875"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-118"></span><span>  </span><span id="local-6989586621679103866"><span class="annot"><span class="annottext">toJSON :: OpenRecord xs -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-type">OpenRecord</span></a></span><span> </span><span id="local-6989586621679103864"><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103864"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679103863"><span class="annot"><span class="annottext">HashMap Text UnknownJSON
+</span><a href="#local-6989586621679103863"><span class="hs-identifier hs-var">o</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Object -&gt; Value
+</span><span class="hs-identifier hs-var">Aeson.Object</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">xs -&gt; Object
+forall a. ToJSONObject a =&gt; a -&gt; Object
+</span><a href="Dovetail.Aeson.html#toJSONObject"><span class="hs-identifier hs-var">toJSONObject</span></a></span><span> </span><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103864"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Object -&gt; Object
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(UnknownJSON -&gt; Value) -&gt; HashMap Text UnknownJSON -&gt; Object
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">UnknownJSON -&gt; Value
+</span><a href="Dovetail.Aeson.html#getUnknownJSON"><span class="hs-identifier hs-var hs-var">getUnknownJSON</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text UnknownJSON
+</span><a href="#local-6989586621679103863"><span class="hs-identifier hs-var">o</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span id="local-6989586621679103858"><span id="local-6989586621679103859"><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679103859"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToObject"><span class="hs-identifier hs-type">ToObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103859"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103858"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679103859"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-type">OpenRecord</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103858"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-121"></span><span>  </span><span id="local-6989586621679103853"><span class="annot"><span class="annottext">toValue :: OpenRecord xs -&gt; Value m
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">toValue</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-type">OpenRecord</span></a></span><span> </span><span id="local-6989586621679103851"><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103851"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679103850"><span class="annot"><span class="annottext">HashMap Text UnknownJSON
+</span><a href="#local-6989586621679103850"><span class="hs-identifier hs-var">o</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m) -&gt; Value m
+forall (m :: * -&gt; *). HashMap Text (Value m) -&gt; Value m
+</span><span class="hs-identifier hs-var">Evaluate.Object</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">xs -&gt; HashMap Text (Value m)
+forall (m :: * -&gt; *) a. ToObject m a =&gt; a -&gt; HashMap Text (Value m)
+</span><a href="Dovetail.Aeson.html#toObject"><span class="hs-identifier hs-var">toObject</span></a></span><span> </span><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103851"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+-&gt; HashMap Text (Value m) -&gt; HashMap Text (Value m)
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(UnknownJSON -&gt; Value m)
+-&gt; HashMap Text UnknownJSON -&gt; HashMap Text (Value m)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">UnknownJSON -&gt; Value m
+forall (m :: * -&gt; *) a. ToValue m a =&gt; a -&gt; Value m
+</span><span class="hs-identifier hs-var">toValue</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text UnknownJSON
+</span><a href="#local-6989586621679103850"><span class="hs-identifier hs-var">o</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-122"></span><span>  </span><span>
+</span><span id="line-123"></span><span>  </span><span id="local-6989586621679103847"><span class="annot"><span class="annottext">fromValue :: Value m -&gt; EvalT m (OpenRecord xs)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">fromValue</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Evaluate.Object</span></span><span> </span><span id="local-6989586621679103845"><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103845"><span class="hs-identifier hs-var">o</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-124"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679103844"><span class="annot"><span class="annottext">isUnknownJSON :: Value m -&gt; Bool
+</span><a href="#local-6989586621679103844"><span class="hs-identifier hs-var hs-var">isUnknownJSON</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Evaluate.Foreign</span></span><span> </span><span id="local-6989586621679103842"><span class="annot"><span class="annottext">Dynamic
+</span><a href="#local-6989586621679103842"><span class="hs-identifier hs-var">dyn</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span>          </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span class="hs-special">{</span><span class="hs-special">}</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Dynamic -&gt; Maybe UnknownJSON
+forall a. Typeable a =&gt; Dynamic -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Dynamic.fromDynamic</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-type">UnknownJSON</span></a></span><span> </span><span class="annot"><span class="annottext">Dynamic
+</span><a href="#local-6989586621679103842"><span class="hs-identifier hs-var">dyn</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-126"></span><span>        </span><span class="annot"><a href="#local-6989586621679103844"><span class="hs-identifier hs-var">isUnknownJSON</span></a></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-127"></span><span>     </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">xs -&gt; HashMap Text UnknownJSON -&gt; OpenRecord xs
+forall xs. xs -&gt; HashMap Text UnknownJSON -&gt; OpenRecord xs
+</span><a href="Dovetail.Aeson.html#OpenRecord"><span class="hs-identifier hs-var">OpenRecord</span></a></span><span> </span><span class="annot"><span class="annottext">(xs -&gt; HashMap Text UnknownJSON -&gt; OpenRecord xs)
+-&gt; EvalT m xs
+-&gt; EvalT m (HashMap Text UnknownJSON -&gt; OpenRecord xs)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m) -&gt; EvalT m xs
+forall (m :: * -&gt; *) a.
+ToObject m a =&gt;
+HashMap Text (Value m) -&gt; EvalT m a
+</span><a href="Dovetail.Aeson.html#fromObject"><span class="hs-identifier hs-var">fromObject</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103845"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">EvalT m (HashMap Text UnknownJSON -&gt; OpenRecord xs)
+-&gt; EvalT m (HashMap Text UnknownJSON) -&gt; EvalT m (OpenRecord xs)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">(Value m -&gt; EvalT m UnknownJSON)
+-&gt; HashMap Text (Value m) -&gt; EvalT m (HashMap Text UnknownJSON)
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Traversable t, Applicative f) =&gt;
+(a -&gt; f b) -&gt; t a -&gt; f (t b)
+</span><span class="hs-identifier hs-var">traverse</span></span><span> </span><span class="annot"><span class="annottext">Value m -&gt; EvalT m UnknownJSON
+forall (m :: * -&gt; *) a. ToValue m a =&gt; Value m -&gt; EvalT m a
+</span><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Value m -&gt; Bool)
+-&gt; HashMap Text (Value m) -&gt; HashMap Text (Value m)
+forall v k. (v -&gt; Bool) -&gt; HashMap k v -&gt; HashMap k v
+</span><span class="hs-identifier hs-var">HashMap.filter</span></span><span> </span><span class="annot"><span class="annottext">Value m -&gt; Bool
+forall (m :: * -&gt; *). Value m -&gt; Bool
+</span><a href="#local-6989586621679103844"><span class="hs-identifier hs-var">isUnknownJSON</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103845"><span class="hs-identifier hs-var">o</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span id="local-6989586621679103837"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103837"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-129"></span><span>    </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m (OpenRecord xs)
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Value m -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; Value m -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.TypeMismatch</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;object&quot;</span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103837"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-130"></span><span>
+</span><span id="line-131"></span><span class="hs-keyword">newtype</span><span> </span><span id="Record"><span class="annot"><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-var">Record</span></a></span></span><span> </span><span id="local-6989586621679103988"><span class="annot"><a href="#local-6989586621679103988"><span class="hs-identifier hs-type">xs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Record"><span class="annot"><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-var">Record</span></a></span></span><span> </span><span class="hs-special">{</span><span> </span><span id="getRecord"><span class="annot"><span class="annottext">Record xs -&gt; xs
+</span><a href="Dovetail.Aeson.html#getRecord"><span class="hs-identifier hs-var hs-var">getRecord</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679103988"><span class="hs-identifier hs-type">xs</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-132"></span><span>
+</span><span id="line-133"></span><span id="local-6989586621679103833"><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679103830"><span class="annot"><a href="Dovetail.Aeson.html#FromJSONObject"><span class="hs-identifier hs-type">FromJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103833"><span class="hs-identifier hs-type">xs</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.FromJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-type">Record</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103833"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-134"></span><span>  </span><span id="local-6989586621679103829"><span class="annot"><span class="annottext">parseJSON :: Value -&gt; Parser (Record xs)
+</span><a href="#local-6989586621679103829"><span class="hs-identifier hs-var hs-var hs-var hs-var">parseJSON</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(xs -&gt; Record xs) -&gt; Parser xs -&gt; Parser (Record xs)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">xs -&gt; Record xs
+forall xs. xs -&gt; Record xs
+</span><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-var">Record</span></a></span><span> </span><span class="annot"><span class="annottext">(Parser xs -&gt; Parser (Record xs))
+-&gt; (Value -&gt; Parser xs) -&gt; Value -&gt; Parser (Record xs)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; (Object -&gt; Parser xs) -&gt; Value -&gt; Parser xs
+forall a. String -&gt; (Object -&gt; Parser a) -&gt; Value -&gt; Parser a
+</span><span class="hs-identifier hs-var">Aeson.withObject</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;object&quot;</span></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Parser xs
+forall a. FromJSONObject a =&gt; Object -&gt; Parser a
+</span><a href="Dovetail.Aeson.html#parseJSONObject"><span class="hs-identifier hs-var">parseJSONObject</span></a></span></span><span>
+</span><span id="line-135"></span><span>  </span><span>
+</span><span id="line-136"></span><span id="local-6989586621679103827"><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679103820"><span id="local-6989586621679103822"><span id="local-6989586621679103824"><span class="annot"><a href="Dovetail.Aeson.html#ToJSONObject"><span class="hs-identifier hs-type">ToJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103827"><span class="hs-identifier hs-type">xs</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.ToJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-type">Record</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103827"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-137"></span><span>  </span><span id="local-6989586621679103819"><span class="annot"><span class="annottext">toJSON :: Record xs -&gt; Value
+</span><a href="#local-6989586621679103819"><span class="hs-identifier hs-var hs-var hs-var hs-var">toJSON</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-type">Record</span></a></span><span> </span><span id="local-6989586621679103818"><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103818"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Object -&gt; Value
+</span><span class="hs-identifier hs-var">Aeson.Object</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">xs -&gt; Object
+forall a. ToJSONObject a =&gt; a -&gt; Object
+</span><a href="Dovetail.Aeson.html#toJSONObject"><span class="hs-identifier hs-var">toJSONObject</span></a></span><span> </span><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103818"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span id="local-6989586621679103816"><span id="local-6989586621679103817"><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679103817"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToObject"><span class="hs-identifier hs-type">ToObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103817"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103816"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679103817"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-type">Record</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103816"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-140"></span><span>  </span><span id="local-6989586621679103812"><span class="annot"><span class="annottext">toValue :: Record xs -&gt; Value m
+</span><a href="#local-6989586621679103812"><span class="hs-identifier hs-var hs-var hs-var hs-var">toValue</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m) -&gt; Value m
+forall (m :: * -&gt; *). HashMap Text (Value m) -&gt; Value m
+</span><span class="hs-identifier hs-var">Evaluate.Object</span></span><span> </span><span class="annot"><span class="annottext">(HashMap Text (Value m) -&gt; Value m)
+-&gt; (Record xs -&gt; HashMap Text (Value m)) -&gt; Record xs -&gt; Value m
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">xs -&gt; HashMap Text (Value m)
+forall (m :: * -&gt; *) a. ToObject m a =&gt; a -&gt; HashMap Text (Value m)
+</span><a href="Dovetail.Aeson.html#toObject"><span class="hs-identifier hs-var">toObject</span></a></span><span> </span><span class="annot"><span class="annottext">(xs -&gt; HashMap Text (Value m))
+-&gt; (Record xs -&gt; xs) -&gt; Record xs -&gt; HashMap Text (Value m)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Record xs -&gt; xs
+forall xs. Record xs -&gt; xs
+</span><a href="Dovetail.Aeson.html#getRecord"><span class="hs-identifier hs-var hs-var">getRecord</span></a></span><span>
+</span><span id="line-141"></span><span>  </span><span>
+</span><span id="line-142"></span><span>  </span><span id="local-6989586621679103811"><span class="annot"><span class="annottext">fromValue :: Value m -&gt; EvalT m (Record xs)
+</span><a href="#local-6989586621679103811"><span class="hs-identifier hs-var hs-var hs-var hs-var">fromValue</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Evaluate.Object</span></span><span> </span><span id="local-6989586621679103810"><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103810"><span class="hs-identifier hs-var">o</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-143"></span><span>    </span><span class="annot"><span class="annottext">xs -&gt; Record xs
+forall xs. xs -&gt; Record xs
+</span><a href="Dovetail.Aeson.html#Record"><span class="hs-identifier hs-var">Record</span></a></span><span> </span><span class="annot"><span class="annottext">(xs -&gt; Record xs) -&gt; EvalT m xs -&gt; EvalT m (Record xs)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m) -&gt; EvalT m xs
+forall (m :: * -&gt; *) a.
+ToObject m a =&gt;
+HashMap Text (Value m) -&gt; EvalT m a
+</span><a href="Dovetail.Aeson.html#fromObject"><span class="hs-identifier hs-var">fromObject</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103810"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span>
+</span><span id="line-144"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span id="local-6989586621679103809"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103809"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-145"></span><span>    </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m (Record xs)
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Value m -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; Value m -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.TypeMismatch</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;object&quot;</span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103809"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-146"></span><span>
+</span><span id="line-147"></span><span class="hs-keyword">class</span><span> </span><span id="FromJSONObject"><span class="annot"><a href="Dovetail.Aeson.html#FromJSONObject"><span class="hs-identifier hs-var">FromJSONObject</span></a></span></span><span> </span><span id="local-6989586621679104020"><span class="annot"><a href="#local-6989586621679104020"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-148"></span><span>  </span><span id="parseJSONObject"><span class="annot"><a href="Dovetail.Aeson.html#parseJSONObject"><span class="hs-identifier hs-type">parseJSONObject</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.Object</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.Parser</span></span><span> </span><span class="annot"><a href="#local-6989586621679104020"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-149"></span><span>  </span><span>
+</span><span id="line-150"></span><span class="hs-keyword">class</span><span> </span><span id="ToJSONObject"><span class="annot"><a href="Dovetail.Aeson.html#ToJSONObject"><span class="hs-identifier hs-var">ToJSONObject</span></a></span></span><span> </span><span id="local-6989586621679104009"><span class="annot"><a href="#local-6989586621679104009"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-151"></span><span>  </span><span id="toJSONObject"><span class="annot"><a href="Dovetail.Aeson.html#toJSONObject"><span class="hs-identifier hs-type">toJSONObject</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679104009"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.Object</span></span><span>
+</span><span id="line-152"></span><span>
+</span><span id="line-153"></span><span class="hs-keyword">class</span><span> </span><span id="ToObject"><span class="annot"><a href="Dovetail.Aeson.html#ToObject"><span class="hs-identifier hs-var">ToObject</span></a></span></span><span> </span><span id="local-6989586621679104001"><span class="annot"><a href="#local-6989586621679104001"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679104000"><span class="annot"><a href="#local-6989586621679104000"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-154"></span><span>  </span><span id="toObject"><span class="annot"><a href="Dovetail.Aeson.html#toObject"><span class="hs-identifier hs-type">toObject</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679104000"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HashMap</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679104001"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-155"></span><span>  </span><span id="fromObject"><span class="annot"><a href="Dovetail.Aeson.html#fromObject"><span class="hs-identifier hs-type">fromObject</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HashMap</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679104001"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">EvalT</span></span><span> </span><span class="annot"><a href="#local-6989586621679104001"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104000"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-156"></span><span>
+</span><span id="line-157"></span><span class="hs-keyword">data</span><span> </span><span id="Nil"><span class="annot"><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-var">Nil</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Nil"><span class="annot"><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-var">Nil</span></a></span></span><span>
+</span><span id="line-158"></span><span>
+</span><span id="line-159"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#FromJSONObject"><span class="hs-identifier hs-type">FromJSONObject</span></a></span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-type">Nil</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-160"></span><span>  </span><span id="local-6989586621679103805"><span class="annot"><span class="annottext">parseJSONObject :: Object -&gt; Parser Nil
+</span><a href="#local-6989586621679103805"><span class="hs-identifier hs-var hs-var hs-var hs-var">parseJSONObject</span></a></span></span><span> </span><span class="annot"><span class="annottext">Object
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Nil -&gt; Parser Nil
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Nil
+</span><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-var">Nil</span></a></span><span>
+</span><span id="line-161"></span><span>  </span><span>
+</span><span id="line-162"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToJSONObject"><span class="hs-identifier hs-type">ToJSONObject</span></a></span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-type">Nil</span></a></span><span> </span><span class="hs-keyword">where</span><span> </span><span>
+</span><span id="line-163"></span><span>  </span><span id="local-6989586621679103802"><span class="annot"><span class="annottext">toJSONObject :: Nil -&gt; Object
+</span><a href="#local-6989586621679103802"><span class="hs-identifier hs-var hs-var hs-var hs-var">toJSONObject</span></a></span></span><span> </span><span class="annot"><span class="annottext">Nil
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Object
+forall k v. HashMap k v
+</span><span class="hs-identifier hs-var">HashMap.empty</span></span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span id="local-6989586621679103800"><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679103800"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToObject"><span class="hs-identifier hs-type">ToObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103800"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-type">Nil</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-166"></span><span>  </span><span id="local-6989586621679103796"><span class="annot"><span class="annottext">toObject :: Nil -&gt; HashMap Text (Value m)
+</span><a href="#local-6989586621679103796"><span class="hs-identifier hs-var hs-var hs-var hs-var">toObject</span></a></span></span><span> </span><span class="annot"><span class="annottext">Nil
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+forall k v. HashMap k v
+</span><span class="hs-identifier hs-var">HashMap.empty</span></span><span>
+</span><span id="line-167"></span><span>  </span><span id="local-6989586621679103795"><span class="annot"><span class="annottext">fromObject :: HashMap Text (Value m) -&gt; EvalT m Nil
+</span><a href="#local-6989586621679103795"><span class="hs-identifier hs-var hs-var hs-var hs-var">fromObject</span></a></span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Nil -&gt; EvalT m Nil
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Nil
+</span><a href="Dovetail.Aeson.html#Nil"><span class="hs-identifier hs-var">Nil</span></a></span></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span class="hs-keyword">data</span><span> </span><span id="Cons"><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-var">Cons</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679103971"><span class="annot"><a href="#local-6989586621679103971"><span class="hs-identifier hs-type">k</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Symbol</span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679103973"><span class="annot"><a href="#local-6989586621679103973"><span class="hs-identifier hs-type">x</span></a></span></span><span> </span><span id="local-6989586621679103972"><span class="annot"><a href="#local-6989586621679103972"><span class="hs-identifier hs-type">xs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Cons"><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-var">Cons</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679103973"><span class="hs-identifier hs-type">x</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103972"><span class="hs-identifier hs-type">xs</span></a></span><span>
+</span><span id="line-170"></span><span>  </span><span>
+</span><span id="line-171"></span><span class="hs-keyword">instance</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679103792"><span class="annot"><a href="#local-6989586621679103792"><span class="hs-identifier hs-type">k</span></a></span></span><span> </span><span id="local-6989586621679103791"><span class="annot"><a href="#local-6989586621679103791"><span class="hs-identifier hs-type">x</span></a></span></span><span> </span><span id="local-6989586621679103790"><span class="annot"><a href="#local-6989586621679103790"><span class="hs-identifier hs-type">xs</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">KnownSymbol</span></span><span> </span><span class="annot"><a href="#local-6989586621679103792"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.FromJSON</span></span><span> </span><span class="annot"><a href="#local-6989586621679103791"><span class="hs-identifier hs-type">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#FromJSONObject"><span class="hs-identifier hs-type">FromJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103790"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#FromJSONObject"><span class="hs-identifier hs-type">FromJSONObject</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-type">Cons</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103792"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103791"><span class="hs-identifier hs-type">x</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103790"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-172"></span><span>  </span><span id="local-6989586621679103789"><span class="annot"><span class="annottext">parseJSONObject :: Object -&gt; Parser (Cons k x xs)
+</span><a href="#local-6989586621679103789"><span class="hs-identifier hs-var hs-var hs-var hs-var">parseJSONObject</span></a></span></span><span> </span><span id="local-6989586621679103788"><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679103788"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-173"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679103787"><span class="annot"><span class="annottext">k :: String
+</span><a href="#local-6989586621679103787"><span class="hs-identifier hs-var hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Proxy k -&gt; String
+forall (n :: Symbol) (proxy :: Symbol -&gt; *).
+KnownSymbol n =&gt;
+proxy n -&gt; String
+</span><span class="hs-identifier hs-var">symbolVal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy k
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103792"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-174"></span><span>     </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">x -&gt; xs -&gt; Cons k x xs
+forall (k :: Symbol) x xs. x -&gt; xs -&gt; Cons k x xs
+</span><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-var">Cons</span></a></span><span> </span><span class="annot"><span class="annottext">(x -&gt; xs -&gt; Cons k x xs) -&gt; Parser x -&gt; Parser (xs -&gt; Cons k x xs)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679103788"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Text -&gt; Parser x
+forall a. FromJSON a =&gt; Object -&gt; Text -&gt; Parser a
+</span><span class="hs-operator hs-var">Aeson..:</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679103787"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Parser (xs -&gt; Cons k x xs) -&gt; Parser xs -&gt; Parser (Cons k x xs)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Parser xs
+forall a. FromJSONObject a =&gt; Object -&gt; Parser a
+</span><a href="Dovetail.Aeson.html#parseJSONObject"><span class="hs-identifier hs-var">parseJSONObject</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679103788"><span class="hs-identifier hs-var">o</span></a></span><span>
+</span><span id="line-175"></span><span>  </span><span>
+</span><span id="line-176"></span><span class="hs-keyword">instance</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679103783"><span class="annot"><a href="#local-6989586621679103783"><span class="hs-identifier hs-type">k</span></a></span></span><span> </span><span id="local-6989586621679103782"><span class="annot"><a href="#local-6989586621679103782"><span class="hs-identifier hs-type">x</span></a></span></span><span> </span><span id="local-6989586621679103781"><span class="annot"><a href="#local-6989586621679103781"><span class="hs-identifier hs-type">xs</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">KnownSymbol</span></span><span> </span><span class="annot"><a href="#local-6989586621679103783"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.ToJSON</span></span><span> </span><span class="annot"><a href="#local-6989586621679103782"><span class="hs-identifier hs-type">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToJSONObject"><span class="hs-identifier hs-type">ToJSONObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103781"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToJSONObject"><span class="hs-identifier hs-type">ToJSONObject</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-type">Cons</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103783"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103782"><span class="hs-identifier hs-type">x</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103781"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-177"></span><span>  </span><span id="local-6989586621679103780"><span class="annot"><span class="annottext">toJSONObject :: Cons k x xs -&gt; Object
+</span><a href="#local-6989586621679103780"><span class="hs-identifier hs-var hs-var hs-var hs-var">toJSONObject</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-type">Cons</span></a></span><span> </span><span id="local-6989586621679103779"><span class="annot"><span class="annottext">x
+</span><a href="#local-6989586621679103779"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679103778"><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103778"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-178"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679103777"><span class="annot"><span class="annottext">k :: String
+</span><a href="#local-6989586621679103777"><span class="hs-identifier hs-var hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Proxy k -&gt; String
+forall (n :: Symbol) (proxy :: Symbol -&gt; *).
+KnownSymbol n =&gt;
+proxy n -&gt; String
+</span><span class="hs-identifier hs-var">symbolVal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy k
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103783"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-179"></span><span>     </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value -&gt; Object -&gt; Object
+forall k v.
+(Eq k, Hashable k) =&gt;
+k -&gt; v -&gt; HashMap k v -&gt; HashMap k v
+</span><span class="hs-identifier hs-var">HashMap.insert</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679103777"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">x -&gt; Value
+forall a. ToJSON a =&gt; a -&gt; Value
+</span><span class="hs-identifier hs-var">Aeson.toJSON</span></span><span> </span><span class="annot"><span class="annottext">x
+</span><a href="#local-6989586621679103779"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">xs -&gt; Object
+forall a. ToJSONObject a =&gt; a -&gt; Object
+</span><a href="Dovetail.Aeson.html#toJSONObject"><span class="hs-identifier hs-var">toJSONObject</span></a></span><span> </span><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103778"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-180"></span><span>
+</span><span id="line-181"></span><span class="hs-keyword">instance</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679103773"><span class="annot"><a href="#local-6989586621679103773"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679103772"><span class="annot"><a href="#local-6989586621679103772"><span class="hs-identifier hs-type">k</span></a></span></span><span> </span><span id="local-6989586621679103771"><span class="annot"><a href="#local-6989586621679103771"><span class="hs-identifier hs-type">x</span></a></span></span><span> </span><span id="local-6989586621679103770"><span class="annot"><a href="#local-6989586621679103770"><span class="hs-identifier hs-type">xs</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">KnownSymbol</span></span><span> </span><span class="annot"><a href="#local-6989586621679103772"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679103773"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103771"><span class="hs-identifier hs-type">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToObject"><span class="hs-identifier hs-type">ToObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103773"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103770"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#ToObject"><span class="hs-identifier hs-type">ToObject</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103773"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-type">Cons</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103772"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103771"><span class="hs-identifier hs-type">x</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103770"><span class="hs-identifier hs-type">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-182"></span><span>  </span><span id="local-6989586621679103769"><span class="annot"><span class="annottext">toObject :: Cons k x xs -&gt; HashMap Text (Value m)
+</span><a href="#local-6989586621679103769"><span class="hs-identifier hs-var hs-var hs-var hs-var">toObject</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-type">Cons</span></a></span><span> </span><span id="local-6989586621679103768"><span class="annot"><span class="annottext">x
+</span><a href="#local-6989586621679103768"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679103767"><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103767"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-183"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679103766"><span class="annot"><span class="annottext">k :: String
+</span><a href="#local-6989586621679103766"><span class="hs-identifier hs-var hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Proxy k -&gt; String
+forall (n :: Symbol) (proxy :: Symbol -&gt; *).
+KnownSymbol n =&gt;
+proxy n -&gt; String
+</span><span class="hs-identifier hs-var">symbolVal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy k
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103772"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-184"></span><span>    </span><span class="annot"><span class="annottext">Text -&gt; Value m -&gt; HashMap Text (Value m) -&gt; HashMap Text (Value m)
+forall k v.
+(Eq k, Hashable k) =&gt;
+k -&gt; v -&gt; HashMap k v -&gt; HashMap k v
+</span><span class="hs-identifier hs-var">HashMap.insert</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679103766"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">x -&gt; Value m
+forall (m :: * -&gt; *) a. ToValue m a =&gt; a -&gt; Value m
+</span><span class="hs-identifier hs-var">toValue</span></span><span> </span><span class="annot"><span class="annottext">x
+</span><a href="#local-6989586621679103768"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">xs -&gt; HashMap Text (Value m)
+forall (m :: * -&gt; *) a. ToObject m a =&gt; a -&gt; HashMap Text (Value m)
+</span><a href="Dovetail.Aeson.html#toObject"><span class="hs-identifier hs-var">toObject</span></a></span><span> </span><span class="annot"><span class="annottext">xs
+</span><a href="#local-6989586621679103767"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-185"></span><span>        </span><span>
+</span><span id="line-186"></span><span>  </span><span id="local-6989586621679103765"><span class="annot"><span class="annottext">fromObject :: HashMap Text (Value m) -&gt; EvalT m (Cons k x xs)
+</span><a href="#local-6989586621679103765"><span class="hs-identifier hs-var hs-var hs-var hs-var">fromObject</span></a></span></span><span> </span><span id="local-6989586621679103764"><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103764"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-187"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679103763"><span class="annot"><span class="annottext">k :: String
+</span><a href="#local-6989586621679103763"><span class="hs-identifier hs-var hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Proxy k -&gt; String
+forall (n :: Symbol) (proxy :: Symbol -&gt; *).
+KnownSymbol n =&gt;
+proxy n -&gt; String
+</span><span class="hs-identifier hs-var">symbolVal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Proxy k
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="annot"><a href="#local-6989586621679103772"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-188"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; HashMap Text (Value m) -&gt; Maybe (Value m)
+forall k v. (Eq k, Hashable k) =&gt; k -&gt; HashMap k v -&gt; Maybe v
+</span><span class="hs-identifier hs-var">HashMap.lookup</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679103763"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103764"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-189"></span><span>      </span><span class="annot"><span class="annottext">Maybe (Value m)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-190"></span><span>        </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m (Cons k x xs)
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Value m -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; Value m -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.FieldNotFound</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679103763"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value m) -&gt; Value m
+forall (m :: * -&gt; *). HashMap Text (Value m) -&gt; Value m
+</span><span class="hs-identifier hs-var">Evaluate.Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103764"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-191"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679103760"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103760"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-192"></span><span>        </span><span class="annot"><span class="annottext">x -&gt; xs -&gt; Cons k x xs
+forall (k :: Symbol) x xs. x -&gt; xs -&gt; Cons k x xs
+</span><a href="Dovetail.Aeson.html#Cons"><span class="hs-identifier hs-var">Cons</span></a></span><span> </span><span class="annot"><span class="annottext">(x -&gt; xs -&gt; Cons k x xs)
+-&gt; EvalT m x -&gt; EvalT m (xs -&gt; Cons k x xs)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Value m -&gt; EvalT m x
+forall (m :: * -&gt; *) a. ToValue m a =&gt; Value m -&gt; EvalT m a
+</span><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103760"><span class="hs-identifier hs-var">v</span></a></span><span> </span><span class="annot"><span class="annottext">EvalT m (xs -&gt; Cons k x xs) -&gt; EvalT m xs -&gt; EvalT m (Cons k x xs)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m) -&gt; EvalT m xs
+forall (m :: * -&gt; *) a.
+ToObject m a =&gt;
+HashMap Text (Value m) -&gt; EvalT m a
+</span><a href="Dovetail.Aeson.html#fromObject"><span class="hs-identifier hs-var">fromObject</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value m)
+</span><a href="#local-6989586621679103764"><span class="hs-identifier hs-var">m</span></a></span><span>
+</span><span id="line-193"></span><span>
+</span><span id="line-194"></span><span class="hs-keyword">newtype</span><span> </span><span id="Nullable"><span class="annot"><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-var">Nullable</span></a></span></span><span> </span><span id="local-6989586621679103949"><span class="annot"><a href="#local-6989586621679103949"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Nullable"><span class="annot"><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-var">Nullable</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679103949"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-195"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679103755"><span id="local-6989586621679103757"><span class="annot"><span class="annottext">Value -&gt; Parser [Nullable a]
+Value -&gt; Parser (Nullable a)
+(Value -&gt; Parser (Nullable a))
+-&gt; (Value -&gt; Parser [Nullable a]) -&gt; FromJSON (Nullable a)
+forall a. FromJSON a =&gt; Value -&gt; Parser [Nullable a]
+forall a. FromJSON a =&gt; Value -&gt; Parser (Nullable a)
+forall a.
+(Value -&gt; Parser a) -&gt; (Value -&gt; Parser [a]) -&gt; FromJSON a
+parseJSONList :: Value -&gt; Parser [Nullable a]
+$cparseJSONList :: forall a. FromJSON a =&gt; Value -&gt; Parser [Nullable a]
+parseJSON :: Value -&gt; Parser (Nullable a)
+$cparseJSON :: forall a. FromJSON a =&gt; Value -&gt; Parser (Nullable a)
+</span><a href="#local-6989586621679103755"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Aeson.FromJSON</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679103747"><span id="local-6989586621679103749"><span id="local-6989586621679103751"><span id="local-6989586621679103753"><span class="annot"><span class="annottext">[Nullable a] -&gt; Encoding
+[Nullable a] -&gt; Value
+Nullable a -&gt; Encoding
+Nullable a -&gt; Value
+(Nullable a -&gt; Value)
+-&gt; (Nullable a -&gt; Encoding)
+-&gt; ([Nullable a] -&gt; Value)
+-&gt; ([Nullable a] -&gt; Encoding)
+-&gt; ToJSON (Nullable a)
+forall a. ToJSON a =&gt; [Nullable a] -&gt; Encoding
+forall a. ToJSON a =&gt; [Nullable a] -&gt; Value
+forall a. ToJSON a =&gt; Nullable a -&gt; Encoding
+forall a. ToJSON a =&gt; Nullable a -&gt; Value
+forall a.
+(a -&gt; Value)
+-&gt; (a -&gt; Encoding)
+-&gt; ([a] -&gt; Value)
+-&gt; ([a] -&gt; Encoding)
+-&gt; ToJSON a
+toEncodingList :: [Nullable a] -&gt; Encoding
+$ctoEncodingList :: forall a. ToJSON a =&gt; [Nullable a] -&gt; Encoding
+toJSONList :: [Nullable a] -&gt; Value
+$ctoJSONList :: forall a. ToJSON a =&gt; [Nullable a] -&gt; Value
+toEncoding :: Nullable a -&gt; Encoding
+$ctoEncoding :: forall a. ToJSON a =&gt; Nullable a -&gt; Encoding
+toJSON :: Nullable a -&gt; Value
+$ctoJSON :: forall a. ToJSON a =&gt; Nullable a -&gt; Value
+</span><a href="#local-6989586621679103747"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Aeson.ToJSON</span></a></span></span></span></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679103949"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-196"></span><span>
+</span><span id="line-197"></span><span id="local-6989586621679103745"><span id="local-6989586621679103746"><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679103746"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103745"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679103746"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-type">Nullable</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679103745"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-198"></span><span>  </span><span id="local-6989586621679103741"><span class="annot"><span class="annottext">toValue :: Nullable a -&gt; Value m
+</span><a href="#local-6989586621679103741"><span class="hs-identifier hs-var hs-var hs-var hs-var">toValue</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-type">Nullable</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-199"></span><span>    </span><span class="annot"><span class="annottext">ProperName 'ConstructorName -&gt; [Value m] -&gt; Value m
+forall (m :: * -&gt; *).
+ProperName 'ConstructorName -&gt; [Value m] -&gt; Value m
+</span><span class="hs-identifier hs-var">Evaluate.Constructor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ProperName 'ConstructorName
+forall (a :: ProperNameType). Text -&gt; ProperName a
+</span><span class="hs-identifier hs-var">Names.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Null&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-200"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">toValue</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-type">Nullable</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679103739"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679103739"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-201"></span><span>    </span><span class="annot"><span class="annottext">ProperName 'ConstructorName -&gt; [Value m] -&gt; Value m
+forall (m :: * -&gt; *).
+ProperName 'ConstructorName -&gt; [Value m] -&gt; Value m
+</span><span class="hs-identifier hs-var">Evaluate.Constructor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; ProperName 'ConstructorName
+forall (a :: ProperNameType). Text -&gt; ProperName a
+</span><span class="hs-identifier hs-var">Names.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;NotNull&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">a -&gt; Value m
+forall (m :: * -&gt; *) a. ToValue m a =&gt; a -&gt; Value m
+</span><span class="hs-identifier hs-var">toValue</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679103739"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-202"></span><span>  </span><span>
+</span><span id="line-203"></span><span>  </span><span id="local-6989586621679103738"><span class="annot"><span class="annottext">fromValue :: Value m -&gt; EvalT m (Nullable a)
+</span><a href="#local-6989586621679103738"><span class="hs-identifier hs-var hs-var hs-var hs-var">fromValue</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Evaluate.Constructor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Names.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Null&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-204"></span><span>    </span><span class="annot"><span class="annottext">Nullable a -&gt; EvalT m (Nullable a)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe a -&gt; Nullable a
+forall a. Maybe a -&gt; Nullable a
+</span><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-var">Nullable</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe a
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span>
+</span><span id="line-205"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Evaluate.Constructor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Names.ProperName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;NotNull&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span id="local-6989586621679103737"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103737"><span class="hs-identifier hs-var">val</span></a></span></span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-206"></span><span>    </span><span class="annot"><span class="annottext">Maybe a -&gt; Nullable a
+forall a. Maybe a -&gt; Nullable a
+</span><a href="Dovetail.Aeson.html#Nullable"><span class="hs-identifier hs-var">Nullable</span></a></span><span> </span><span class="annot"><span class="annottext">(Maybe a -&gt; Nullable a) -&gt; (a -&gt; Maybe a) -&gt; a -&gt; Nullable a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; Maybe a
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(a -&gt; Nullable a) -&gt; EvalT m a -&gt; EvalT m (Nullable a)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Value m -&gt; EvalT m a
+forall (m :: * -&gt; *) a. ToValue m a =&gt; Value m -&gt; EvalT m a
+</span><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103737"><span class="hs-identifier hs-var">val</span></a></span><span>
+</span><span id="line-207"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span id="local-6989586621679103736"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103736"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-208"></span><span>    </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m (Nullable a)
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Value m -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; Value m -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.TypeMismatch</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Nullable&quot;</span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103736"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-209"></span><span>    </span><span>
+</span><span id="line-210"></span><span class="hs-keyword">newtype</span><span> </span><span id="UnknownJSON"><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-var">UnknownJSON</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UnknownJSON"><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-var">UnknownJSON</span></a></span></span><span> </span><span class="hs-special">{</span><span> </span><span id="getUnknownJSON"><span class="annot"><span class="annottext">UnknownJSON -&gt; Value
+</span><a href="Dovetail.Aeson.html#getUnknownJSON"><span class="hs-identifier hs-var hs-var">getUnknownJSON</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.Value</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-211"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679103728"><span id="local-6989586621679103730"><span id="local-6989586621679103732"><span id="local-6989586621679103734"><span class="annot"><span class="annottext">[UnknownJSON] -&gt; Encoding
+[UnknownJSON] -&gt; Value
+UnknownJSON -&gt; Encoding
+UnknownJSON -&gt; Value
+(UnknownJSON -&gt; Value)
+-&gt; (UnknownJSON -&gt; Encoding)
+-&gt; ([UnknownJSON] -&gt; Value)
+-&gt; ([UnknownJSON] -&gt; Encoding)
+-&gt; ToJSON UnknownJSON
+forall a.
+(a -&gt; Value)
+-&gt; (a -&gt; Encoding)
+-&gt; ([a] -&gt; Value)
+-&gt; ([a] -&gt; Encoding)
+-&gt; ToJSON a
+toEncodingList :: [UnknownJSON] -&gt; Encoding
+$ctoEncodingList :: [UnknownJSON] -&gt; Encoding
+toJSONList :: [UnknownJSON] -&gt; Value
+$ctoJSONList :: [UnknownJSON] -&gt; Value
+toEncoding :: UnknownJSON -&gt; Encoding
+$ctoEncoding :: UnknownJSON -&gt; Encoding
+toJSON :: UnknownJSON -&gt; Value
+$ctoJSON :: UnknownJSON -&gt; Value
+</span><a href="#local-6989586621679103728"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Aeson.ToJSON</span></a></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679103724"><span id="local-6989586621679103726"><span class="annot"><span class="annottext">Value -&gt; Parser [UnknownJSON]
+Value -&gt; Parser UnknownJSON
+(Value -&gt; Parser UnknownJSON)
+-&gt; (Value -&gt; Parser [UnknownJSON]) -&gt; FromJSON UnknownJSON
+forall a.
+(Value -&gt; Parser a) -&gt; (Value -&gt; Parser [a]) -&gt; FromJSON a
+parseJSONList :: Value -&gt; Parser [UnknownJSON]
+$cparseJSONList :: Value -&gt; Parser [UnknownJSON]
+parseJSON :: Value -&gt; Parser UnknownJSON
+$cparseJSON :: Value -&gt; Parser UnknownJSON
+</span><a href="#local-6989586621679103724"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Aeson.FromJSON</span></a></span></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Aeson.Value</span></span><span>
+</span><span id="line-212"></span><span>  </span><span>
+</span><span id="line-213"></span><span id="local-6989586621679103723"><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679103723"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679103723"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-type">UnknownJSON</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-214"></span><span>  </span><span id="local-6989586621679103719"><span class="annot"><span class="annottext">toValue :: UnknownJSON -&gt; Value m
+</span><a href="#local-6989586621679103719"><span class="hs-identifier hs-var hs-var hs-var hs-var">toValue</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Dynamic -&gt; Value m
+forall (m :: * -&gt; *). Dynamic -&gt; Value m
+</span><span class="hs-identifier hs-var">Foreign</span></span><span> </span><span class="annot"><span class="annottext">(Dynamic -&gt; Value m)
+-&gt; (UnknownJSON -&gt; Dynamic) -&gt; UnknownJSON -&gt; Value m
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Typeable UnknownJSON =&gt; UnknownJSON -&gt; Dynamic
+forall a. Typeable a =&gt; a -&gt; Dynamic
+</span><span class="hs-identifier hs-var">Dynamic.toDyn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-type">UnknownJSON</span></a></span><span>
+</span><span id="line-215"></span><span>  </span><span id="local-6989586621679103718"><span class="annot"><span class="annottext">fromValue :: Value m -&gt; EvalT m UnknownJSON
+</span><a href="#local-6989586621679103718"><span class="hs-identifier hs-var hs-var hs-var hs-var">fromValue</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Evaluate.Foreign</span></span><span> </span><span id="local-6989586621679103717"><span class="annot"><span class="annottext">Dynamic
+</span><a href="#local-6989586621679103717"><span class="hs-identifier hs-var">dyn</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-216"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Dynamic -&gt; Maybe UnknownJSON
+forall a. Typeable a =&gt; Dynamic -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Dynamic.fromDynamic</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="Dovetail.Aeson.html#UnknownJSON"><span class="hs-identifier hs-type">UnknownJSON</span></a></span><span> </span><span class="annot"><span class="annottext">Dynamic
+</span><a href="#local-6989586621679103717"><span class="hs-identifier hs-var">dyn</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-217"></span><span>      </span><span class="annot"><span class="annottext">Maybe UnknownJSON
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-218"></span><span>        </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m UnknownJSON
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Value m -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; Value m -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.TypeMismatch</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;UnknownJSON&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Dynamic -&gt; Value m
+forall (m :: * -&gt; *). Dynamic -&gt; Value m
+</span><span class="hs-identifier hs-var">Evaluate.Foreign</span></span><span> </span><span class="annot"><span class="annottext">Dynamic
+</span><a href="#local-6989586621679103717"><span class="hs-identifier hs-var">dyn</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-219"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679103716"><span class="annot"><span class="annottext">UnknownJSON
+</span><a href="#local-6989586621679103716"><span class="hs-identifier hs-var">json</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-220"></span><span>        </span><span class="annot"><span class="annottext">UnknownJSON -&gt; EvalT m UnknownJSON
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">UnknownJSON
+</span><a href="#local-6989586621679103716"><span class="hs-identifier hs-var">json</span></a></span><span>
+</span><span id="line-221"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">fromValue</span></span><span> </span><span id="local-6989586621679103715"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103715"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-222"></span><span>    </span><span class="annot"><span class="annottext">EvaluationErrorType m -&gt; EvalT m UnknownJSON
+forall (x :: * -&gt; *) (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">Evaluate.throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Value m -&gt; EvaluationErrorType m
+forall (m :: * -&gt; *). Text -&gt; Value m -&gt; EvaluationErrorType m
+</span><span class="hs-identifier hs-var">Evaluate.TypeMismatch</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;UnknownJSON&quot;</span></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679103715"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-223"></span><span>  </span><span>
+</span><span id="line-224"></span><span id="local-6989586621679103714"><span class="annot"><a href="Dovetail.Aeson.html#stdlib"><span class="hs-identifier hs-type">stdlib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679103714"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">InterpretT</span></span><span> </span><span class="annot"><a href="#local-6989586621679103714"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Module</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ann</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-225"></span><span id="stdlib"><span class="annot"><span class="annottext">stdlib :: InterpretT m (Module Ann)
+</span><a href="Dovetail.Aeson.html#stdlib"><span class="hs-identifier hs-var hs-var">stdlib</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; InterpretT m (Module Ann)
+forall (m :: * -&gt; *).
+MonadFix m =&gt;
+Text -&gt; InterpretT m (Module Ann)
+</span><span class="hs-identifier hs-var">build</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; InterpretT m (Module Ann))
+-&gt; ([Text] -&gt; Text) -&gt; [Text] -&gt; InterpretT m (Module Ann)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+</span><span class="hs-identifier hs-var">Text.unlines</span></span><span> </span><span class="annot"><span class="annottext">([Text] -&gt; InterpretT m (Module Ann))
+-&gt; [Text] -&gt; InterpretT m (Module Ann)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-226"></span><span>  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;module JSON where&quot;</span></span><span>
+</span><span id="line-227"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-228"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;data Nullable a = Null | NotNull a&quot;</span></span><span>
+</span><span id="line-229"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-230"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;foreign import data JSON :: Type&quot;</span></span><span>
+</span><span id="line-231"></span><span>  </span><span class="hs-special">]</span><span>
+</span><span id="line-232"></span></pre></body></html>

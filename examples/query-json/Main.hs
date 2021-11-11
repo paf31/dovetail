@@ -56,8 +56,8 @@ checkTypeOfMain :: P.SourceType -> Maybe (P.SourceType, P.SourceType)
 checkTypeOfMain (P.TypeApp _ (P.TypeApp _ fn inputTy) outputTy)
   | fn == P.tyFunction
   = Just (inputTy, outputTy)
-checkTypeOfMain (P.ForAll _ _ _ ty _) = 
-  checkTypeOfMain ty
+checkTypeOfMain (P.ForAll _ name _ ty _) = 
+  checkTypeOfMain (P.replaceTypeVars name (P.TypeConstructor P.nullSourceAnn (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "JSON"))) ty)
 checkTypeOfMain _ =
   Nothing
       

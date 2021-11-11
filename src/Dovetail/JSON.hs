@@ -11,6 +11,7 @@
 {-# LANGUAGE PatternSynonyms       #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TupleSections         #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
@@ -18,11 +19,14 @@
 module Dovetail.JSON 
   ( tryReifySerializableType 
   , stdlib
+  , Nullable(..)
+  , UnknownJSON(..)
   ) where
 
 import Control.Monad.Fix (MonadFix)  
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
+import Data.Dynamic qualified as Dynamic
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Proxy (Proxy(..))
@@ -61,12 +65,22 @@ tryReifySerializableType (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "
 tryReifySerializableType (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Boolean"))) f =
   f (Proxy :: Proxy Bool)
 tryReifySerializableType (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Record"))) ty) f = do
-  let (knownFields, _unknownFields) = P.rowToSortedList ty
-  tryReifyRecordType knownFields (\(Proxy :: Proxy xs) -> f (Proxy :: Proxy (Record xs)))
+  let (knownFields, unknownFields) = P.rowToSortedList ty
+  
+      go :: P.SourceType -> EvalT m r
+      go (P.KindApp _ P.REmpty{} _) =
+        tryReifyRecordType knownFields (\(Proxy :: Proxy xs) -> f (Proxy :: Proxy (Record xs)))
+      go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "JSON"))) = 
+        tryReifyRecordType knownFields (\(Proxy :: Proxy xs) -> f (Proxy :: Proxy (OpenRecord xs)))
+      go _ =
+        Evaluate.throwErrorWithContext (Evaluate.OtherError "record type is not serializable")
+  go unknownFields
 tryReifySerializableType (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Array"))) ty) f =
   tryReifySerializableType ty (\(Proxy :: Proxy a) -> f (Proxy :: Proxy (Vector a)))
 tryReifySerializableType (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "Nullable"))) ty) f =
   tryReifySerializableType ty (\(Proxy :: Proxy a) -> f (Proxy :: Proxy (Nullable a)))
+tryReifySerializableType (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "JSON"))) f =
+  f (Proxy :: Proxy UnknownJSON)  
 tryReifySerializableType _  _ =
   Evaluate.throwErrorWithContext (Evaluate.OtherError "type is not serializable")
 
@@ -91,6 +105,29 @@ tryReifyRecordType (P.RowListItem _ (Label.Label k) x : xs) f = do
     tryReifySerializableType x \(Proxy :: Proxy x) ->
       tryReifyRecordType xs \(Proxy :: Proxy xs) ->
         f (Proxy :: Proxy (Cons k x xs))
+
+data OpenRecord xs = OpenRecord
+  { _knownFields :: xs
+  , _allFields :: HashMap Text UnknownJSON
+  }
+
+instance FromJSONObject xs => Aeson.FromJSON (OpenRecord xs) where
+  parseJSON = Aeson.withObject "object" \o -> 
+    OpenRecord <$> parseJSONObject o <*> pure (fmap UnknownJSON o)
+  
+instance ToJSONObject xs => Aeson.ToJSON (OpenRecord xs) where
+  toJSON (OpenRecord xs o) = Aeson.Object (toJSONObject xs <> fmap getUnknownJSON o)
+
+instance (MonadFix m, ToObject m xs) => ToValue m (OpenRecord xs) where
+  toValue (OpenRecord xs o) = Evaluate.Object (toObject xs <> fmap toValue o)
+  
+  fromValue (Evaluate.Object o) = 
+    let isUnknownJSON (Evaluate.Foreign dyn)
+          | Just{} <- Dynamic.fromDynamic @UnknownJSON dyn = True
+        isUnknownJSON _ = False
+     in OpenRecord <$> fromObject o <*> traverse fromValue (HashMap.filter isUnknownJSON o)
+  fromValue other = 
+    Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "object" other)
 
 newtype Record xs = Record { getRecord :: xs }
 
@@ -170,9 +207,26 @@ instance ToValue m a => ToValue m (Nullable a) where
     Nullable . Just <$> fromValue val
   fromValue other =
     Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "Nullable" other)
-
+    
+newtype UnknownJSON = UnknownJSON { getUnknownJSON :: Aeson.Value }
+  deriving (Aeson.ToJSON, Aeson.FromJSON) via Aeson.Value
+  
+instance MonadFix m => ToValue m UnknownJSON where
+  toValue = Foreign . Dynamic.toDyn @UnknownJSON
+  fromValue (Evaluate.Foreign dyn) =
+    case Dynamic.fromDynamic @UnknownJSON dyn of
+      Nothing ->
+        Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "UnknownJSON" (Evaluate.Foreign dyn))
+      Just json ->
+        pure json
+  fromValue other = 
+    Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "UnknownJSON" other)
+  
 stdlib :: MonadFix m => InterpretT m (Module Ann)
-stdlib = build
-  "module JSON where\n\
-  \\n\
-  \data Nullable a = Null | NotNull a"
+stdlib = build . Text.unlines $
+  [ "module JSON where"
+  , ""
+  , "data Nullable a = Null | NotNull a"
+  , ""
+  , "foreign import data JSON :: Type"
+  ]

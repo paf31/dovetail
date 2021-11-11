@@ -68,6 +68,9 @@ Closure :: (Value m -> EvalT m (Value m)) -> Value m
 -- | Fully-applied data constructors
 Constructor :: ProperName 'ConstructorName -> [Value m] -> Value m
 
+-- | Foreign data types
+Foreign :: Dynamic -> Value m
+
 -- | An environment, i.e. a mapping from names to evaluated values.
 --   
 --   An environment for a single built-in function can be constructed using
@@ -725,8 +728,19 @@ instance Control.Monad.Trans.Class.MonadTrans Dovetail.InterpretT
 module Dovetail.JSON
 tryReifySerializableType :: forall m r. MonadFix m => SourceType -> (forall a. (FromJSON a, ToJSON a, ToValue m a) => Proxy a -> EvalT m r) -> EvalT m r
 stdlib :: MonadFix m => InterpretT m (Module Ann)
+newtype Nullable a
+Nullable :: Maybe a -> Nullable a
+newtype UnknownJSON
+UnknownJSON :: Value -> UnknownJSON
+[getUnknownJSON] :: UnknownJSON -> Value
 instance Data.Aeson.Types.ToJSON.ToJSON a => Data.Aeson.Types.ToJSON.ToJSON (Dovetail.JSON.Nullable a)
 instance Data.Aeson.Types.FromJSON.FromJSON a => Data.Aeson.Types.FromJSON.FromJSON (Dovetail.JSON.Nullable a)
+instance Data.Aeson.Types.FromJSON.FromJSON Dovetail.JSON.UnknownJSON
+instance Data.Aeson.Types.ToJSON.ToJSON Dovetail.JSON.UnknownJSON
+instance Dovetail.JSON.FromJSONObject xs => Data.Aeson.Types.FromJSON.FromJSON (Dovetail.JSON.OpenRecord xs)
+instance Dovetail.JSON.ToJSONObject xs => Data.Aeson.Types.ToJSON.ToJSON (Dovetail.JSON.OpenRecord xs)
+instance (Control.Monad.Fix.MonadFix m, Dovetail.JSON.ToObject m xs) => Dovetail.Evaluate.ToValue m (Dovetail.JSON.OpenRecord xs)
+instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m Dovetail.JSON.UnknownJSON
 instance Dovetail.Evaluate.ToValue m a => Dovetail.Evaluate.ToValue m (Dovetail.JSON.Nullable a)
 instance (GHC.TypeLits.KnownSymbol k, Data.Aeson.Types.FromJSON.FromJSON x, Dovetail.JSON.FromJSONObject xs) => Dovetail.JSON.FromJSONObject (Dovetail.JSON.Cons k x xs)
 instance (GHC.TypeLits.KnownSymbol k, Data.Aeson.Types.ToJSON.ToJSON x, Dovetail.JSON.ToJSONObject xs) => Dovetail.JSON.ToJSONObject (Dovetail.JSON.Cons k x xs)

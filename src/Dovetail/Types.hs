@@ -47,6 +47,7 @@ import Control.Monad.Fix (MonadFix(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT)
+import Data.Dynamic (Dynamic)
 import Data.Foldable (fold)
 import Data.Functor.Identity (Identity(..))
 import Data.HashMap.Strict (HashMap)
@@ -86,6 +87,8 @@ data Value m
   -- ^ Closures, represented in higher-order abstract syntax style.
   | Constructor (Names.ProperName 'Names.ConstructorName) [Value m]
   -- ^ Fully-applied data constructors
+  | Foreign Dynamic
+  -- ^ Foreign data types
 
 -- | Options when rendering values as strings using 'renderValue'.
 data RenderValueOptions = RenderValueOptions
@@ -132,6 +135,7 @@ renderValue RenderValueOptions{ colorOutput, maximumDepth } = fst . go 0 where
                   , True
                   )
   go n (Constructor ctor args) = (Text.unwords (P.runProperName ctor : map (goParens (n + 1)) args), null args)
+  go _ (Foreign{}) = (Text.pack (blue "<foreign>"), True)
 
   goParens :: Int -> Value m -> Text
   goParens n x = 

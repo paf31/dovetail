@@ -39,7 +39,6 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Foldable (traverse_)
-import Data.Proxy (Proxy)
 import Data.Text.IO qualified as Text
 import Data.Vector ((!))
 import Dovetail
@@ -83,9 +82,9 @@ main = do
               pure (xs ! idx)
               
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
-        (val, ty) <- eval (Just moduleName) "main"
-        liftEvalT $ JSON.tryReifySerializableType ty \(_ :: Proxy a) -> 
-          Aeson.toJSON <$> (fromValue @_ @a =<< val)
+        
+        -- Evaluate "main", returning JSON
+        JSON.evalJSON (Just moduleName) "main"
           
   let seed = read seedString :: Int
   

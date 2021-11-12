@@ -16,7 +16,8 @@
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Dovetail.Aeson 
-  ( tryReifySerializableType 
+  ( evalJSON
+  , tryReifySerializableType 
   , stdlib
   , Nullable(..)
   , UnknownJSON(..)
@@ -39,6 +40,16 @@ import Dovetail.Evaluate qualified as Evaluate
 import Language.PureScript qualified as P
 import Language.PureScript.Names qualified as Names
 import Language.PureScript.Label qualified as Label
+
+evalJSON 
+  :: MonadFix m
+  => Maybe ModuleName 
+  -> Text
+  -> InterpretT m Aeson.Value
+evalJSON defaultModuleName expr = do
+  (val, ty) <- eval defaultModuleName expr
+  liftEvalT $ tryReifySerializableType ty \(_ :: Proxy a) -> 
+    Aeson.toJSON <$> (fromValue @_ @a =<< val)
 
 tryReifySerializableType 
   :: forall m r
@@ -122,7 +133,7 @@ instance (MonadFix m, ToObject m xs) => ToValue m (OpenRecord xs) where
   
   fromValue (Evaluate.Object o) = 
     let isUnknownJSON (Evaluate.Foreign dyn)
-          | Just{} <- Dynamic.fromDynamic @UnknownJSON dyn = True
+          | Just{} <- Dynamic.fromDynamic @Aeson.Value dyn = True
         isUnknownJSON _ = False
      in OpenRecord <$> fromObject o <*> traverse fromValue (HashMap.filter isUnknownJSON o)
   fromValue other = 
@@ -211,15 +222,8 @@ newtype UnknownJSON = UnknownJSON { getUnknownJSON :: Aeson.Value }
   deriving (Aeson.ToJSON, Aeson.FromJSON) via Aeson.Value
   
 instance MonadFix m => ToValue m UnknownJSON where
-  toValue = Foreign . Dynamic.toDyn @UnknownJSON
-  fromValue (Evaluate.Foreign dyn) =
-    case Dynamic.fromDynamic @UnknownJSON dyn of
-      Nothing ->
-        Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "UnknownJSON" (Evaluate.Foreign dyn))
-      Just json ->
-        pure json
-  fromValue other = 
-    Evaluate.throwErrorWithContext (Evaluate.TypeMismatch "UnknownJSON" other)
+  toValue = toValue . Evaluate.ForeignType . getUnknownJSON
+  fromValue = fmap (UnknownJSON . Evaluate.getForeignType) . fromValue
   
 stdlib :: MonadFix m => InterpretT m (Module Ann)
 stdlib = build . Text.unlines $

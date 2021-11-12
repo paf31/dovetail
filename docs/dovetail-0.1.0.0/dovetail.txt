@@ -359,6 +359,12 @@ class ToValueRHS m a
 toValueRHS :: ToValueRHS m a => a -> EvalT m (Value m)
 fromValueRHS :: ToValueRHS m a => EvalT m (Value m) -> a
 
+-- | This type can be used to make custom Haskell types accessible to
+--   PureScript code via the FFI's <tt>foreign import data</tt> feature.
+newtype ForeignType a
+ForeignType :: a -> ForeignType a
+[getForeignType] :: ForeignType a -> a
+
 -- | Options for customizing generic deriving of record instances
 data ObjectOptions
 ObjectOptions :: (Text -> Text) -> ObjectOptions
@@ -398,6 +404,7 @@ instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Types.C
 instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Types.Bool
 instance (Control.Monad.Fix.MonadFix m, Dovetail.Evaluate.ToValue m a, Dovetail.Evaluate.ToValueRHS m b) => Dovetail.Evaluate.ToValue m (a -> b)
 instance Dovetail.Evaluate.ToValue m a => Dovetail.Evaluate.ToValue m (Data.Vector.Vector a)
+instance (Control.Monad.Fix.MonadFix m, Data.Typeable.Internal.Typeable a) => Dovetail.Evaluate.ToValue m (Dovetail.Evaluate.ForeignType a)
 instance (Control.Monad.Fix.MonadFix m, Dovetail.Evaluate.ToValue m a, Dovetail.Evaluate.ToValueRHS m b) => Dovetail.Evaluate.ToValueRHS m (a -> b)
 instance (Dovetail.Evaluate.ToValue m a, n GHC.Types.~ m) => Dovetail.Evaluate.ToValueRHS m (Dovetail.Types.EvalT n a)
 instance (GHC.TypeLits.KnownSymbol field, Dovetail.Evaluate.ToValue m a) => Dovetail.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))

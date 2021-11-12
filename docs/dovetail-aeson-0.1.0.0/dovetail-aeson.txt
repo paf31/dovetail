@@ -7,6 +7,7 @@
 @version 0.1.0.0
 
 module Dovetail.Aeson
+evalJSON :: MonadFix m => Maybe ModuleName -> Text -> InterpretT m Value
 tryReifySerializableType :: forall m r. MonadFix m => SourceType -> (forall a. (FromJSON a, ToJSON a, ToValue m a) => Proxy a -> EvalT m r) -> EvalT m r
 stdlib :: MonadFix m => InterpretT m (Module Ann)
 newtype Nullable a

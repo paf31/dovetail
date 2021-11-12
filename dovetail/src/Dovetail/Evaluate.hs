@@ -35,6 +35,8 @@ module Dovetail.Evaluate
   , ToValue(..)
   -- ** Higher-order functions
   , ToValueRHS(..)
+  -- ** Foreign data types
+  , ForeignType(..)
   -- ** Records
   , ObjectOptions(..)
   , defaultObjectOptions
@@ -54,6 +56,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Control.Monad.Reader.Class
 import Data.Align qualified as Align
+import Data.Dynamic qualified as Dynamic
 import Data.Foldable (asum, fold)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
@@ -62,6 +65,7 @@ import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.These (These(..))
+import Data.Typeable (Typeable, TypeRep, typeRep)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail.Types
@@ -385,6 +389,19 @@ instance ToValue m a => ToValue m (Vector a) where
     Array xs -> traverse fromValue xs
     val -> throwErrorWithContext (TypeMismatch "array" val)
     
+-- | This type can be used to make custom Haskell types accessible to 
+-- PureScript code via the FFI's @foreign import data@ feature.
+newtype ForeignType a = ForeignType { getForeignType :: a }
+
+instance forall m a. (MonadFix m, Typeable a) => ToValue m (ForeignType a) where
+  toValue = Foreign . Dynamic.toDyn . getForeignType
+  fromValue = \case
+    Foreign dyn 
+      | Just a <- Dynamic.fromDynamic @a dyn -> pure (ForeignType a)
+    val -> 
+      let typeName = show @TypeRep (typeRep (Proxy :: Proxy a))
+       in throwErrorWithContext (TypeMismatch (Text.pack typeName) val)
+
 -- | 'ToValue' should support functions with types such as
 --
 -- @

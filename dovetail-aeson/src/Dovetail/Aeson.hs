@@ -16,8 +16,16 @@
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Dovetail.Aeson 
-  ( evalJSON
+  ( 
+  -- * Serializable types
+  
+  -- ** Evaluation
+    evalJSON
+  
+  -- ** Type reification
   , tryReifySerializableType 
+  
+  -- ** Supporting code
   , stdlib
   , Nullable(..)
   , UnknownJSON(..)
@@ -74,13 +82,15 @@ tryReifySerializableType (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "
   f (Proxy :: Proxy Char)
 tryReifySerializableType (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Boolean"))) f =
   f (Proxy :: Proxy Bool)
+tryReifySerializableType P.TypeVar{} f =
+  f (Proxy :: Proxy UnknownJSON) 
 tryReifySerializableType (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Record"))) ty) f = do
   let (knownFields, unknownFields) = P.rowToSortedList ty
   
       go :: P.SourceType -> EvalT m r
       go (P.KindApp _ P.REmpty{} _) =
         tryReifyRecordType knownFields (\(Proxy :: Proxy xs) -> f (Proxy :: Proxy (Record xs)))
-      go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "JSON"))) = 
+      go P.TypeVar{} = 
         tryReifyRecordType knownFields (\(Proxy :: Proxy xs) -> f (Proxy :: Proxy (OpenRecord xs)))
       go _ =
         Evaluate.throwErrorWithContext (Evaluate.OtherError "record type is not serializable")
@@ -88,9 +98,7 @@ tryReifySerializableType (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P
 tryReifySerializableType (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Array"))) ty) f =
   tryReifySerializableType ty (\(Proxy :: Proxy a) -> f (Proxy :: Proxy (Vector a)))
 tryReifySerializableType (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "Nullable"))) ty) f =
-  tryReifySerializableType ty (\(Proxy :: Proxy a) -> f (Proxy :: Proxy (Nullable a)))
-tryReifySerializableType (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "JSON")) (P.ProperName "JSON"))) f =
-  f (Proxy :: Proxy UnknownJSON)  
+  tryReifySerializableType ty (\(Proxy :: Proxy a) -> f (Proxy :: Proxy (Nullable a))) 
 tryReifySerializableType _  _ =
   Evaluate.throwErrorWithContext (Evaluate.OtherError "type is not serializable")
 
@@ -230,6 +238,4 @@ stdlib = build . Text.unlines $
   [ "module JSON where"
   , ""
   , "data Nullable a = Null | NotNull a"
-  , ""
-  , "foreign import data JSON :: Type"
   ]

@@ -4,17 +4,19 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ddd56d835023ffb0034c083311635ef37148653dda041a926a338a2bb842e60c
+-- hash: cb1ca8864955f74b550a60c0c3085d6d0eb0d0f6dc9135e9684b02c06a291202
 
 name:           dovetail-aeson
 version:        0.1.0.0
-description:    Use Aeson from your Dovetail programs.
+synopsis:       Use Aeson from your Dovetail programs
+category:       Language
 homepage:       https://github.com/paf31/dovetail#readme
 bug-reports:    https://github.com/paf31/dovetail/issues
 author:         Phil Freeman
 maintainer:     freeman.phil@gmail.com
 copyright:      2021 Phil Freeman
 license:        BSD3
+license-file:   ../LICENSE
 build-type:     Simple
 
 source-repository head

@@ -4,17 +4,20 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 761bcf2fba5f0316e0ec5e29a508d978e3d6372fdf1a29c89a2c971d65f62665
+-- hash: ccd0cccec35a6f7fff8c70c028f45af040c698bdd3bbb7ab46ba2870982518b1
 
 name:           dovetail
 version:        0.1.0.0
+synopsis:       A PureScript interpreter with a Haskell FFI.
 description:    Dovetail is a general-purpose PureScript corefn interpreter with an FFI to Haskell. Please see the README on GitHub at <https://github.com/paf31/dovetail#readme>, or check out the examples directory, to learn how to use the library.
+category:       Language
 homepage:       https://github.com/paf31/dovetail#readme
 bug-reports:    https://github.com/paf31/dovetail/issues
 author:         Phil Freeman
 maintainer:     freeman.phil@gmail.com
 copyright:      2021 Phil Freeman
 license:        BSD3
+license-file:   ../LICENSE
 build-type:     Simple
 
 source-repository head

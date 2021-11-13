@@ -2,10 +2,12 @@ name:                dovetail
 version:             0.1.0.0
 github:              "paf31/dovetail"
 license:             BSD3
+license-file:        LICENSE
 author:              "Phil Freeman"
 maintainer:          "freeman.phil@gmail.com"
 copyright:           "2021 Phil Freeman"
-
+category:            Language
+synopsis:            A PureScript interpreter with a Haskell FFI.
 description:         Dovetail is a general-purpose PureScript corefn interpreter with an FFI to Haskell. 
                      Please see the README on GitHub at <https://github.com/paf31/dovetail#readme>, or 
                      check out the examples directory, to learn how to use the library.
@@ -20,7 +22,6 @@ library:
   - -rtsopts
   - -with-rtsopts=-N
   - -Wall
-  - -Werror
   - -fwarn-unused-imports
   dependencies:
   - ansi-terminal

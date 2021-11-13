@@ -2,11 +2,12 @@ name:                dovetail-aeson
 version:             0.1.0.0
 github:              "paf31/dovetail"
 license:             BSD3
+license-file:        ../LICENSE
 author:              "Phil Freeman"
 maintainer:          "freeman.phil@gmail.com"
 copyright:           "2021 Phil Freeman"
-
-description:         Use Aeson from your Dovetail programs.
+category:            Language
+synopsis:            Use Aeson from your Dovetail programs
 
 dependencies:
 - base >= 4.7 && < 5

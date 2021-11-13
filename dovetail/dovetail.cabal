@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ccd0cccec35a6f7fff8c70c028f45af040c698bdd3bbb7ab46ba2870982518b1
+-- hash: 8e19e51ff69a860795e7b3909da11ef1e97bfc1266ab5075a42721d37c2f5f23
 
 name:           dovetail
 version:        0.1.0.0
@@ -17,7 +17,7 @@ author:         Phil Freeman
 maintainer:     freeman.phil@gmail.com
 copyright:      2021 Phil Freeman
 license:        BSD3
-license-file:   ../LICENSE
+license-file:   LICENSE
 build-type:     Simple
 
 source-repository head
@@ -39,7 +39,7 @@ library
       Paths_dovetail
   hs-source-dirs:
       src
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-unused-imports
+  ghc-options: -Wall -fwarn-unused-imports
   build-depends:
       ansi-terminal
     , base >=4.7 && <5

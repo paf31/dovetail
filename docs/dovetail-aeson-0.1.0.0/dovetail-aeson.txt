@@ -6,12 +6,108 @@
 @package dovetail-aeson
 @version 0.1.0.0
 
+
+-- | This module provides support for using <a>Dovetail</a> with
+--   <tt>aeson</tt>.
+--   
+--   For certain appliations, it is useful to use JSON as an input or
+--   output format, but to let the user decide the exact schema for that
+--   JSON data. The simplest way to let the user have control over this
+--   from Dovetail is to use PureScript's types to define the serialization
+--   functions. That is, just like with generic deriving, our serializers
+--   will be inferred from our types. But with Dovetail, we will use the
+--   inferred *PureScript* type to synthesize a serializer, not the Haskell
+--   types.
+--   
+--   The <tt>query-json</tt> example in the repository is a good example.
+--   The user's program defines a function from JSON inputs to JSON
+--   outputs, and the types and format of the input and output data are
+--   determined by the type of the user's program, which is allowed to be a
+--   function between any two *serializable* PureScript types.
+--   
+--   Serializable types include primitives (strings, chars, ints, numbers
+--   and booleans), records and arrays of other serializable types, and the
+--   special <a>Nullable</a> type which is provided for handling
+--   serialization of nullable JSON substructures.
+--   
+--   Note: you do not need to use this module if you are working with JSON
+--   whose structure is known ahead of time. In that case, you can simply
+--   use Dovetail directly to marshall Haskell data back and forth over the
+--   FFI boundary, and Aeson for serialization. This module should be used
+--   when the structure is not known ahead of time, because it is
+--   controlled by the user.
+--   
+--   The user's program may have a polymorphic type signature. This can
+--   happen easily: for example, if the user's program in the
+--   <tt>query-json</tt> example is a record accessor such as
+--   <tt>_.foo</tt>, then it will have a polymorphic (indeed, also
+--   row-polymorphic) type. We cannot know what JSON data the user will
+--   pass as an input to a polymorphic program, and we can't synthesize a
+--   specific type for that input data. So, this module also provides the
+--   <a>UnknownJSON</a> type for handling these cases, which is simply a
+--   wrapper around Aeson's <a>Value</a> type. Since a polymorphic program
+--   cannot inspect a value with a polymorphic type (thanks to
+--   parametricity), it is safe to make this data accessible to the program
+--   in this way. However, this also means that such data will not be
+--   visible in the debugger (and instead, will appear as an abstract
+--   <tt><a>foreign</a></tt> value).
 module Dovetail.Aeson
+
+-- | Evaluate a PureScript expression from source, returning its value as
+--   encoded JSON.
+--   
+--   This function is a convenient counterpart to <a>eval</a> which can be
+--   useful for applications whose output format is JSON.
 evalJSON :: MonadFix m => Maybe ModuleName -> Text -> InterpretT m Value
-tryReifySerializableType :: forall m r. MonadFix m => SourceType -> (forall a. (FromJSON a, ToJSON a, ToValue m a) => Proxy a -> EvalT m r) -> EvalT m r
+
+-- | A constraint synonym for the constraint our reified types will
+--   satisfy: serialization via <a>ToJSON</a>, deserialization via
+--   <a>FromJSON</a>, and transport via the FFI, via <a>ToValue</a>.
+--   
+--   This synonym is provided just for the convenience of tidying up the
+--   type signatures.
+type Serializable m a = (FromJSON a, ToJSON a, ToValue m a)
+
+-- | Reify a PureScript <a>SourceType</a> as a Haskell type which supports
+--   transport via the FFI using <a>ToValue</a>, and JSON serialization
+--   using <a>ToJSON</a> and <a>FromJSON</a>.
+--   
+--   Just as <tt>DeriveGeneric</tt> allows us to derive a type-directed
+--   serialization method based on the Haskell type of our values, this
+--   function allows us to derive a serialization method based on the
+--   *PureScript* type of a value.
+--   
+--   This can be useful in more advanced use cases where <a>evalJSON</a>
+--   won't suffice. For example, if we want to take data as input from a
+--   JSON structure, then we can reify the PureScript type of the domain of
+--   a PureScript function.
+reify :: forall m r. MonadFix m => SourceType -> (forall a. Serializable m a => Proxy a -> EvalT m r) -> EvalT m r
+
+-- | This action makes a module named <tt>JSON</tt> available to your
+--   PureScript code.
+--   
+--   It defines the PureScript counterpart of the <a>Nullable</a> type,
+--   which is used to serialize nullable types when deriving serializers
+--   using <a>reify</a>.
+--   
+--   Any PureScript code which needs to support type-directed serialization
+--   for values which may involve <tt>null</tt> should import this module.
 stdlib :: MonadFix m => InterpretT m (Module Ann)
+
+-- | A representation of nullable values for use in derived serializers.
+--   
+--   See <a>reify</a> and <a>stdlib</a>.
 newtype Nullable a
 Nullable :: Maybe a -> Nullable a
+
+-- | A representation of arbitrary JSON values for use in derived
+--   serializers.
+--   
+--   This type is reified to stand in for any polymorphic type variables in
+--   a PureScript type, since we cannot know the structure of values of
+--   those types ahead of time.
+--   
+--   See <a>reify</a> and <a>stdlib</a>.
 newtype UnknownJSON
 UnknownJSON :: Value -> UnknownJSON
 [getUnknownJSON] :: UnknownJSON -> Value

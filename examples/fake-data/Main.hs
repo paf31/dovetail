@@ -65,6 +65,8 @@ main = do
       buildResult = runInterpretT do
         traverse_ ffi stdlib
         
+        -- Include the JSON library, in case the user wants to return
+        -- nulls using 'JSON.Nullable'.
         _ <- JSON.stdlib
         
         -- This example defines a single interesting function on the

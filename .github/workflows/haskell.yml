@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         stack: ["2.3.1"]
-        ghc: ["8.10.7"]
+        ghc: ["8.10.5"]
 
     steps:
     - uses: actions/checkout@v2
@@ -33,12 +33,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        stack build --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+        stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
 
     - name: Build
       run: |
-        stack build --test --bench --no-run-tests --no-run-benchmarks
+        stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
 
     - name: Test
       run: |
-        stack test
+        stack test --system-ghc

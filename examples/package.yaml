@@ -1,0 +1,63 @@
+name:                dovetail-examples
+version:             0.1.0.0
+github:              "paf31/dovetail"
+license:             BSD3
+author:              "Phil Freeman"
+maintainer:          "freeman.phil@gmail.com"
+copyright:           "2021 Phil Freeman"
+
+description:         Dovetail example programs
+
+dependencies:
+- base >= 4.7 && < 5
+
+executables:
+  query-json:
+    main:                Main.hs
+    source-dirs:         query-json
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    - -Werror
+    - -fwarn-unused-imports
+    dependencies:
+    - aeson
+    - aeson-pretty
+    - bytestring
+    - containers
+    - dovetail
+    - dovetail-aeson
+    - mtl
+    - purescript
+    - purescript-cst
+    - text
+    - transformers
+    - vector
+    
+  fake-data:
+    main:                Main.hs
+    source-dirs:         fake-data
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    - -Werror
+    - -fwarn-unused-imports
+    dependencies:
+    - aeson
+    - aeson-pretty
+    - bytestring
+    - containers
+    - dovetail
+    - dovetail-aeson
+    - mtl
+    - purescript
+    - purescript-cst
+    - random
+    - reflection
+    - text
+    - transformers
+    - vector

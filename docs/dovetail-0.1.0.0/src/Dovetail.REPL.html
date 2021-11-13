@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments        #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost   #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE FlexibleInstances     #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE MultiParamTypeClasses #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings     #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE RankNTypes            #-}</span><span>
+</span><span id="line-7"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables   #-}</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.REPL</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.REPL.html#defaultMain"><span class="hs-identifier">defaultMain</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Catch</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadMask</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Fix</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadFix</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Class</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">lift</span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Text</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Build.html"><span class="hs-identifier">Dovetail.Build</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Build</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Evaluate.html"><span class="hs-identifier">Dovetail.Evaluate</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Evaluate</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Types.html"><span class="hs-identifier">Dovetail.Types</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.AST.Binders</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">AST</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.AST.Declarations</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">AST</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.PureScript.CoreFn</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">CoreFn</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Console.Haskeline</span></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="annot"><a href="Dovetail.REPL.html#renderOptions"><span class="hs-identifier hs-type">renderOptions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Dovetail.Types.html#RenderValueOptions"><span class="hs-identifier hs-type">RenderValueOptions</span></a></span><span>
+</span><span id="line-27"></span><span id="renderOptions"><span class="annot"><span class="annottext">renderOptions :: RenderValueOptions
+</span><a href="Dovetail.REPL.html#renderOptions"><span class="hs-identifier hs-var hs-var">renderOptions</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">RenderValueOptions :: Bool -&gt; Maybe Int -&gt; RenderValueOptions
+</span><a href="Dovetail.Types.html#RenderValueOptions"><span class="hs-identifier hs-type">RenderValueOptions</span></a></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">colorOutput :: Bool
+</span><a href="Dovetail.Types.html#colorOutput"><span class="hs-identifier hs-var">colorOutput</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">maximumDepth :: Maybe Int
+</span><a href="Dovetail.Types.html#maximumDepth"><span class="hs-identifier hs-var">maximumDepth</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Int
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- | Starts a minimal interactive debugger (REPL) session. </span><span>
+</span><span id="line-33"></span><span class="hs-comment">--</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- It is more likely that you will want to use the 'Dovetail.repl' function to</span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- start a REPL session from within an 'Dovetail.InterpretT' block.</span><span>
+</span><span id="line-36"></span><span class="annot"><a href="Dovetail.REPL.html#defaultMain"><span class="hs-identifier hs-type">defaultMain</span></a></span><span> </span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679120376"><span class="annot"><a href="#local-6989586621679120376"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-38"></span><span>   </span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679120376"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679120376"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadMask</span></span><span> </span><span class="annot"><a href="#local-6989586621679120376"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">P.ModuleName</span></span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-comment">-- ^ The default module, whose members will be available unqualified in scope.</span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">P.ExternsFile</span></span><span class="hs-special">]</span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-comment">-- ^ Any externs files to load</span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">P.Ident</span></span><span class="hs-special">]</span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-comment">-- ^ Any additional identifiers which are available in the environment, but not</span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-comment">-- given types in the externs file. These will be made available without type</span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-comment">-- information, for debugging purposes.</span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Types.html#Env"><span class="hs-identifier hs-type">Env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120376"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-comment">-- ^ The evaluation environment</span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679120376"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span id="defaultMain"><span class="annot"><span class="annottext">defaultMain :: Maybe ModuleName -&gt; [ExternsFile] -&gt; [Ident] -&gt; Env m -&gt; m ()
+</span><a href="Dovetail.REPL.html#defaultMain"><span class="hs-identifier hs-var hs-var">defaultMain</span></a></span></span><span> </span><span id="local-6989586621679120375"><span class="annot"><span class="annottext">Maybe ModuleName
+</span><a href="#local-6989586621679120375"><span class="hs-identifier hs-var">defaultModule</span></a></span></span><span> </span><span id="local-6989586621679120374"><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679120374"><span class="hs-identifier hs-var">externs</span></a></span></span><span> </span><span id="local-6989586621679120373"><span class="annot"><span class="annottext">[Ident]
+</span><a href="#local-6989586621679120373"><span class="hs-identifier hs-var">additionalIdentsInScope</span></a></span></span><span> </span><span id="local-6989586621679120372"><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679120372"><span class="hs-identifier hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Settings m -&gt; InputT m () -&gt; m ()
+forall (m :: * -&gt; *) a.
+(MonadIO m, MonadMask m) =&gt;
+Settings m -&gt; InputT m a -&gt; m a
+</span><span class="hs-identifier hs-var">runInputT</span></span><span> </span><span class="annot"><span class="annottext">Settings m
+</span><a href="#local-6989586621679120370"><span class="hs-identifier hs-var">settings</span></a></span><span> </span><span class="annot"><span class="annottext">InputT m ()
+</span><a href="#local-6989586621679120369"><span class="hs-identifier hs-var">loop</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-51"></span><span>  </span><span class="annot"><a href="#local-6989586621679120369"><span class="hs-identifier hs-type">loop</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">InputT</span></span><span> </span><span class="annot"><a href="#local-6989586621679120376"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>  </span><span id="local-6989586621679120369"><span class="annot"><span class="annottext">loop :: InputT m ()
+</span><a href="#local-6989586621679120369"><span class="hs-identifier hs-var hs-var">loop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-53"></span><span>    </span><span id="local-6989586621679120368"><span class="annot"><span class="annottext">Maybe String
+</span><a href="#local-6989586621679120368"><span class="hs-identifier hs-var">minput</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; InputT m (Maybe String)
+forall (m :: * -&gt; *).
+(MonadIO m, MonadMask m) =&gt;
+String -&gt; InputT m (Maybe String)
+</span><span class="hs-identifier hs-var">getInputLine</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt; &quot;</span></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe String
+</span><a href="#local-6989586621679120368"><span class="hs-identifier hs-var">minput</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-55"></span><span>      </span><span class="annot"><span class="annottext">Maybe String
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; InputT m ()
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679120366"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679120366"><span class="hs-identifier hs-var">input</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-57"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">(Expr -&gt; Expr)
+-&gt; Maybe ModuleName
+-&gt; [ExternsFile]
+-&gt; Text
+-&gt; Either BuildError (Expr Ann, SourceType)
+</span><a href="Dovetail.Build.html#buildSingleExpressionWith"><span class="hs-identifier hs-var">Build.buildSingleExpressionWith</span></a></span><span> </span><span class="annot"><span class="annottext">Expr -&gt; Expr
+</span><a href="#local-6989586621679120364"><span class="hs-identifier hs-var">abstractAdditionalInputs</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe ModuleName
+</span><a href="#local-6989586621679120375"><span class="hs-identifier hs-var">defaultModule</span></a></span><span> </span><span class="annot"><span class="annottext">[ExternsFile]
+</span><a href="#local-6989586621679120374"><span class="hs-identifier hs-var">externs</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679120366"><span class="hs-identifier hs-var">input</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-58"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679120362"><span class="annot"><span class="annottext">Expr Ann
+</span><a href="#local-6989586621679120362"><span class="hs-identifier hs-var">expr</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">SourceType
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-59"></span><span>            </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679120361"><span class="annot"><span class="annottext">appliedExpr :: Expr Ann
+</span><a href="#local-6989586621679120361"><span class="hs-identifier hs-var hs-var">appliedExpr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Expr Ann -&gt; Expr Ann
+</span><a href="#local-6989586621679120360"><span class="hs-identifier hs-var">applyAdditionalInputs</span></a></span><span> </span><span class="annot"><span class="annottext">Expr Ann
+</span><a href="#local-6989586621679120362"><span class="hs-identifier hs-var">expr</span></a></span><span>
+</span><span id="line-60"></span><span>            </span><span id="local-6989586621679120359"><span class="annot"><span class="annottext">Either (EvaluationError m) (Value m)
+</span><a href="#local-6989586621679120359"><span class="hs-identifier hs-var">mresult</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m (Either (EvaluationError m) (Value m))
+-&gt; InputT m (Either (EvaluationError m) (Value m))
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(m (Either (EvaluationError m) (Value m))
+ -&gt; InputT m (Either (EvaluationError m) (Value m)))
+-&gt; (EvalT m (Value m) -&gt; m (Either (EvaluationError m) (Value m)))
+-&gt; EvalT m (Value m)
+-&gt; InputT m (Either (EvaluationError m) (Value m))
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">EvalT m (Value m) -&gt; m (Either (EvaluationError m) (Value m))
+forall (m :: * -&gt; *) a.
+EvalT m a -&gt; m (Either (EvaluationError m) a)
+</span><a href="Dovetail.Types.html#runEvalT"><span class="hs-identifier hs-var">runEvalT</span></a></span><span> </span><span class="annot"><span class="annottext">(EvalT m (Value m)
+ -&gt; InputT m (Either (EvaluationError m) (Value m)))
+-&gt; EvalT m (Value m)
+-&gt; InputT m (Either (EvaluationError m) (Value m))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Env m -&gt; Expr Ann -&gt; EvalT m (Value m)
+forall (m :: * -&gt; *).
+MonadFix m =&gt;
+Env m -&gt; Expr Ann -&gt; EvalT m (Value m)
+</span><a href="Dovetail.Evaluate.html#eval"><span class="hs-identifier hs-var">Evaluate.eval</span></a></span><span> </span><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679120372"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="annot"><span class="annottext">Expr Ann
+</span><a href="#local-6989586621679120361"><span class="hs-identifier hs-var">appliedExpr</span></a></span><span>
+</span><span id="line-61"></span><span>            </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either (EvaluationError m) (Value m)
+</span><a href="#local-6989586621679120359"><span class="hs-identifier hs-var">mresult</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-62"></span><span>              </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679120355"><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679120355"><span class="hs-identifier hs-var">result</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-63"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; InputT m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; String -&gt; InputT m ()
+</span><span class="hs-identifier hs-var">outputStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; InputT m ()) -&gt; (Text -&gt; String) -&gt; Text -&gt; InputT m ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">Text.unpack</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; InputT m ()) -&gt; Text -&gt; InputT m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">RenderValueOptions -&gt; Value m -&gt; Text
+forall (m :: * -&gt; *). RenderValueOptions -&gt; Value m -&gt; Text
+</span><a href="Dovetail.Types.html#renderValue"><span class="hs-identifier hs-var">renderValue</span></a></span><span> </span><span class="annot"><span class="annottext">RenderValueOptions
+</span><a href="Dovetail.REPL.html#renderOptions"><span class="hs-identifier hs-var">renderOptions</span></a></span><span> </span><span class="annot"><span class="annottext">Value m
+</span><a href="#local-6989586621679120355"><span class="hs-identifier hs-var">result</span></a></span><span>
+</span><span id="line-64"></span><span>              </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679120351"><span class="annot"><span class="annottext">EvaluationError m
+</span><a href="#local-6989586621679120351"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-65"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; InputT m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; String -&gt; InputT m ()
+</span><span class="hs-identifier hs-var">outputStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; InputT m ()) -&gt; String -&gt; InputT m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">RenderValueOptions -&gt; EvaluationError m -&gt; String
+forall (m :: * -&gt; *).
+RenderValueOptions -&gt; EvaluationError m -&gt; String
+</span><a href="Dovetail.Types.html#renderEvaluationError"><span class="hs-identifier hs-var">renderEvaluationError</span></a></span><span> </span><span class="annot"><span class="annottext">RenderValueOptions
+</span><a href="Dovetail.REPL.html#renderOptions"><span class="hs-identifier hs-var">renderOptions</span></a></span><span> </span><span class="annot"><span class="annottext">EvaluationError m
+</span><a href="#local-6989586621679120351"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-66"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679120349"><span class="annot"><span class="annottext">BuildError
+</span><a href="#local-6989586621679120349"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-67"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; InputT m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; String -&gt; InputT m ()
+</span><span class="hs-identifier hs-var">outputStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; InputT m ()) -&gt; String -&gt; InputT m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">BuildError -&gt; String
+</span><a href="Dovetail.Build.html#renderBuildError"><span class="hs-identifier hs-var">Build.renderBuildError</span></a></span><span> </span><span class="annot"><span class="annottext">BuildError
+</span><a href="#local-6989586621679120349"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-68"></span><span>        </span><span class="annot"><span class="annottext">InputT m ()
+</span><a href="#local-6989586621679120369"><span class="hs-identifier hs-var">loop</span></a></span><span>
+</span><span id="line-69"></span><span>        </span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-comment">-- Since we might have additional identifiers in scope which are not defined</span><span>
+</span><span id="line-71"></span><span>  </span><span class="hs-comment">-- in the externs files (for example, if we stopped at an error), we need to</span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-comment">-- introduce those names into scope another way, without running afoul of the</span><span>
+</span><span id="line-73"></span><span>  </span><span class="hs-comment">-- typechecker. We do this by binding them to the arguments of a temporary</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-comment">-- function, typechecking _that_ function, and applying it in the evaluator</span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-comment">-- after type checking is complete.</span><span>
+</span><span id="line-76"></span><span>  </span><span id="local-6989586621679120364"><span class="annot"><span class="annottext">abstractAdditionalInputs :: Expr -&gt; Expr
+</span><a href="#local-6989586621679120364"><span class="hs-identifier hs-var hs-var">abstractAdditionalInputs</span></a></span></span><span> </span><span id="local-6989586621679120347"><span class="annot"><span class="annottext">Expr
+</span><a href="#local-6989586621679120347"><span class="hs-identifier hs-var">expr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><span class="annottext">(Expr -&gt; Ident -&gt; Expr) -&gt; Expr -&gt; [Ident] -&gt; Expr
+forall (t :: * -&gt; *) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldl</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679120345"><span class="annot"><span class="annottext">Expr
+</span><a href="#local-6989586621679120345"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span id="local-6989586621679120344"><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679120344"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-78"></span><span>      </span><span class="annot"><span class="annottext">Binder -&gt; Expr -&gt; Expr
+</span><span class="hs-identifier hs-var">AST.Abs</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceSpan -&gt; Ident -&gt; Binder
+</span><span class="hs-identifier hs-var">AST.VarBinder</span></span><span> </span><span class="annot"><span class="annottext">SourceSpan
+</span><span class="hs-identifier hs-var">P.nullSourceSpan</span></span><span> </span><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679120344"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Expr
+</span><a href="#local-6989586621679120345"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>      </span><span class="annot"><span class="annottext">Expr
+</span><a href="#local-6989586621679120347"><span class="hs-identifier hs-var">expr</span></a></span><span> </span><span>
+</span><span id="line-80"></span><span>      </span><span class="annot"><span class="annottext">[Ident]
+</span><a href="#local-6989586621679120373"><span class="hs-identifier hs-var">additionalIdentsInScope</span></a></span><span>
+</span><span id="line-81"></span><span>  </span><span>
+</span><span id="line-82"></span><span>  </span><span id="local-6989586621679120360"><span class="annot"><span class="annottext">applyAdditionalInputs :: Expr Ann -&gt; Expr Ann
+</span><a href="#local-6989586621679120360"><span class="hs-identifier hs-var hs-var">applyAdditionalInputs</span></a></span></span><span> </span><span id="local-6989586621679120340"><span class="annot"><span class="annottext">Expr Ann
+</span><a href="#local-6989586621679120340"><span class="hs-identifier hs-var">expr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-83"></span><span>    </span><span class="annot"><span class="annottext">(Expr Ann -&gt; Ident -&gt; Expr Ann) -&gt; Expr Ann -&gt; [Ident] -&gt; Expr Ann
+forall (t :: * -&gt; *) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldl</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679120339"><span class="annot"><span class="annottext">Expr Ann
+</span><a href="#local-6989586621679120339"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span id="local-6989586621679120338"><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679120338"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-84"></span><span>      </span><span class="annot"><span class="annottext">Ann -&gt; Expr Ann -&gt; Expr Ann -&gt; Expr Ann
+forall a. a -&gt; Expr a -&gt; Expr a -&gt; Expr a
+</span><span class="hs-identifier hs-var">CoreFn.App</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceSpan -&gt; Ann
+</span><span class="hs-identifier hs-var">CoreFn.ssAnn</span></span><span> </span><span class="annot"><span class="annottext">SourceSpan
+</span><span class="hs-identifier hs-var">P.nullSourceSpan</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Expr Ann
+</span><a href="#local-6989586621679120339"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span>
+</span><span id="line-85"></span><span>       </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ann -&gt; Qualified Ident -&gt; Expr Ann
+forall a. a -&gt; Qualified Ident -&gt; Expr a
+</span><span class="hs-identifier hs-var">CoreFn.Var</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourceSpan -&gt; Ann
+</span><span class="hs-identifier hs-var">CoreFn.ssAnn</span></span><span> </span><span class="annot"><span class="annottext">SourceSpan
+</span><span class="hs-identifier hs-var">P.nullSourceSpan</span></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>         </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe ModuleName -&gt; Ident -&gt; Qualified Ident
+forall a. Maybe ModuleName -&gt; a -&gt; Qualified a
+</span><span class="hs-identifier hs-var">P.Qualified</span></span><span> </span><span class="annot"><span class="annottext">Maybe ModuleName
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Ident
+</span><a href="#local-6989586621679120338"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span>
+</span><span id="line-87"></span><span>      </span><span class="annot"><span class="annottext">Expr Ann
+</span><a href="#local-6989586621679120340"><span class="hs-identifier hs-var">expr</span></a></span><span> </span><span>
+</span><span id="line-88"></span><span>      </span><span class="annot"><span class="annottext">[Ident]
+</span><a href="#local-6989586621679120373"><span class="hs-identifier hs-var">additionalIdentsInScope</span></a></span><span>
+</span><span id="line-89"></span><span>        </span><span>
+</span><span id="line-90"></span><span>  </span><span id="local-6989586621679120370"><span class="annot"><span class="annottext">settings :: Settings m
+</span><a href="#local-6989586621679120370"><span class="hs-identifier hs-var hs-var">settings</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CompletionFunc m -&gt; Settings m -&gt; Settings m
+forall (m :: * -&gt; *). CompletionFunc m -&gt; Settings m -&gt; Settings m
+</span><span class="hs-identifier hs-var">setComplete</span></span><span> </span><span class="annot"><span class="annottext">CompletionFunc m
+</span><a href="#local-6989586621679120332"><span class="hs-identifier hs-var">completionFunc</span></a></span><span> </span><span class="annot"><span class="annottext">Settings m
+forall (m :: * -&gt; *). MonadIO m =&gt; Settings m
+</span><span class="hs-identifier hs-var">defaultSettings</span></span><span>
+</span><span id="line-91"></span><span>  </span><span>
+</span><span id="line-92"></span><span>  </span><span id="local-6989586621679120332"><span class="annot"><span class="annottext">completionFunc :: CompletionFunc m
+</span><a href="#local-6989586621679120332"><span class="hs-identifier hs-var hs-var">completionFunc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Char
+-&gt; String -&gt; (String -&gt; m [Completion]) -&gt; CompletionFunc m
+forall (m :: * -&gt; *).
+Monad m =&gt;
+Maybe Char
+-&gt; String -&gt; (String -&gt; m [Completion]) -&gt; CompletionFunc m
+</span><span class="hs-identifier hs-var">completeWord</span></span><span> </span><span class="annot"><span class="annottext">Maybe Char
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; \t&quot;</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679120329"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679120329"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><span class="annottext">[Completion] -&gt; m [Completion]
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span>
+</span><span id="line-94"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Completion
+</span><span class="hs-identifier hs-var">simpleCompletion</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">Text.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679120327"><span class="hs-identifier hs-var">ident</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679120327"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679120327"><span class="hs-identifier hs-var">ident</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Text]
+</span><a href="#local-6989586621679120326"><span class="hs-identifier hs-var">allCompletions</span></a></span><span>
+</span><span id="line-96"></span><span>      </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+</span><span class="hs-identifier hs-var">Text.isPrefixOf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679120329"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679120327"><span class="hs-identifier hs-var">ident</span></a></span><span>
+</span><span id="line-97"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-98"></span><span>    </span><span>
+</span><span id="line-99"></span><span>  </span><span id="local-6989586621679120326"><span class="annot"><span class="annottext">allCompletions :: [Text]
+</span><a href="#local-6989586621679120326"><span class="hs-identifier hs-var hs-var">allCompletions</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Qualified Ident -&gt; Text) -&gt; [Qualified Ident] -&gt; [Text]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Ident -&gt; Text) -&gt; Qualified Ident -&gt; Text
+forall a. (a -&gt; Text) -&gt; Qualified a -&gt; Text
+</span><span class="hs-identifier hs-var">P.showQualified</span></span><span> </span><span class="annot"><span class="annottext">Ident -&gt; Text
+</span><span class="hs-identifier hs-var">P.showIdent</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Env m -&gt; [Qualified Ident]
+forall k a. Map k a -&gt; [k]
+</span><span class="hs-identifier hs-var">Map.keys</span></span><span> </span><span class="annot"><span class="annottext">Env m
+</span><a href="#local-6989586621679120372"><span class="hs-identifier hs-var">env</span></a></span><span class="hs-special">)</span></pre></body></html>

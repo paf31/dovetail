@@ -7,6 +7,7 @@
 {-# LANGUAGE NamedFieldPuns             #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeApplications           #-}
 
 -- | This example implements a generator for randomized fake data, which
 -- takes its instructions in the form of a PureScript program.
@@ -41,8 +42,8 @@ import Data.Foldable (traverse_)
 import Data.Text.IO qualified as Text
 import Data.Vector ((!))
 import Dovetail
+import Dovetail.Aeson qualified as JSON
 import Dovetail.FFI.Builder qualified as FFI
-import Dovetail.JSON (JSON(..))
 import Dovetail.Prelude (stdlib)
 import Language.PureScript qualified as P
 import Language.PureScript.CoreFn qualified as CoreFn
@@ -60,9 +61,13 @@ main = do
   -- computation may involve side-effects in the 'M' monad.
   let buildResult 
         :: (MonadState Random.StdGen m, MonadFix m)
-        => m (Either (InterpretError m) (EvalT m (JSON Aeson.Value)))
+        => m (Either (InterpretError m) Aeson.Value)
       buildResult = runInterpretT do
         traverse_ ffi stdlib
+        
+        -- Include the JSON library, in case the user wants to return
+        -- nulls using 'JSON.Nullable'.
+        _ <- JSON.stdlib
         
         -- This example defines a single interesting function on the
         -- Haskell side: the @choose@ function demonstrates the idea of using
@@ -79,7 +84,9 @@ main = do
               pure (xs ! idx)
               
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
-        evalMain moduleName
+        
+        -- Evaluate "main", returning JSON
+        JSON.evalJSON (Just moduleName) "main"
           
   let seed = read seedString :: Int
   
@@ -93,9 +100,7 @@ main = do
   flip evalStateT gen do
     -- Interpret the main function of the PureScript module as a non-deterministic
     -- JSON result
-    value <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
+    output <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
   
-    -- Evaluate that function, then render the output as pretty-printed JSON on
-    -- standard output.
-    output <- runEvalT value `orDie` renderEvaluationError defaultTerminalRenderValueOptions
-    lift (BL8.putStrLn (Pretty.encodePretty (getJSON output)))
+    -- Render the output as pretty-printed JSON on standard output.
+    lift (BL8.putStrLn (Pretty.encodePretty output))

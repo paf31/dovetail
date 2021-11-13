@@ -1,0 +1,70 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: f0acb9b9ef21d09cde531935770dd32bba0d4c1069a2be8b8d968e07a5ed4a68
+
+name:           dovetail-examples
+version:        0.1.0.0
+description:    Dovetail example programs
+homepage:       https://github.com/paf31/dovetail#readme
+bug-reports:    https://github.com/paf31/dovetail/issues
+author:         Phil Freeman
+maintainer:     freeman.phil@gmail.com
+copyright:      2021 Phil Freeman
+license:        BSD3
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/paf31/dovetail
+
+executable fake-data
+  main-is: Main.hs
+  other-modules:
+      Paths_dovetail_examples
+  hs-source-dirs:
+      fake-data
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-unused-imports
+  build-depends:
+      aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , dovetail
+    , dovetail-aeson
+    , mtl
+    , purescript
+    , purescript-cst
+    , random
+    , reflection
+    , text
+    , transformers
+    , vector
+  default-language: Haskell2010
+
+executable query-json
+  main-is: Main.hs
+  other-modules:
+      Paths_dovetail_examples
+  hs-source-dirs:
+      query-json
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-unused-imports
+  build-depends:
+      aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , dovetail
+    , dovetail-aeson
+    , mtl
+    , purescript
+    , purescript-cst
+    , text
+    , transformers
+    , vector
+  default-language: Haskell2010

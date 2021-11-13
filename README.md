@@ -3,10 +3,8 @@
 Dovetail is a general-purpose PureScript interpreter written in Haskell.
 
 It has excellent support for interop with Haskell code via PureScript's foreign function interface, along with a high-level Haskell API for integrating such code.
-As such, it is possible to write low-level or domain-specific code in Haskell,
-and then to write the "glue code" in PureScript. In this way, Dovetail is a tool
-for reusing the frontend of the PureScript compiler (its syntax and type checker)
-to build domain specific languages in Haskell.
+
+As such, it is possible to write low-level or domain-specific code in Haskell, and then to write the "glue code" in PureScript. In this way, Dovetail is a tool for reusing the frontend of the PureScript compiler (its syntax and type checker) to build domain specific languages in Haskell.
 
 ## Getting Started
 

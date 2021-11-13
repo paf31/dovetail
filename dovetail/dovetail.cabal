@@ -1,0 +1,78 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 761bcf2fba5f0316e0ec5e29a508d978e3d6372fdf1a29c89a2c971d65f62665
+
+name:           dovetail
+version:        0.1.0.0
+description:    Dovetail is a general-purpose PureScript corefn interpreter with an FFI to Haskell. Please see the README on GitHub at <https://github.com/paf31/dovetail#readme>, or check out the examples directory, to learn how to use the library.
+homepage:       https://github.com/paf31/dovetail#readme
+bug-reports:    https://github.com/paf31/dovetail/issues
+author:         Phil Freeman
+maintainer:     freeman.phil@gmail.com
+copyright:      2021 Phil Freeman
+license:        BSD3
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/paf31/dovetail
+
+library
+  exposed-modules:
+      Dovetail
+      Dovetail.Build
+      Dovetail.Evaluate
+      Dovetail.FFI
+      Dovetail.FFI.Builder
+      Dovetail.FFI.Internal
+      Dovetail.Prelude
+      Dovetail.REPL
+      Dovetail.Types
+  other-modules:
+      Paths_dovetail
+  hs-source-dirs:
+      src
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-unused-imports
+  build-depends:
+      ansi-terminal
+    , base >=4.7 && <5
+    , containers
+    , exceptions
+    , haskeline
+    , mtl
+    , purescript
+    , purescript-cst
+    , semialign
+    , text
+    , these
+    , transformers
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+test-suite dovetail-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_dovetail
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -fwarn-unused-imports
+  build-depends:
+      QuickCheck
+    , base >=4.7 && <5
+    , directory
+    , dovetail
+    , filepath
+    , generic-arbitrary
+    , hspec
+    , hspec-golden
+    , purescript
+    , quickcheck-instances
+    , text
+    , vector
+  default-language: Haskell2010

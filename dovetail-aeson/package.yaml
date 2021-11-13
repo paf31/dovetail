@@ -1,0 +1,31 @@
+name:                dovetail-aeson
+version:             0.1.0.0
+github:              "paf31/dovetail"
+license:             BSD3
+author:              "Phil Freeman"
+maintainer:          "freeman.phil@gmail.com"
+copyright:           "2021 Phil Freeman"
+
+description:         Use Aeson from your Dovetail programs.
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+  - -Wall
+  - -Werror
+  - -fwarn-unused-imports
+  dependencies:
+  - aeson
+  - dovetail
+  - purescript
+  - purescript-cst
+  - reflection
+  - text
+  - unordered-containers
+  - vector

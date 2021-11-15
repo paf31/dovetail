@@ -2,7 +2,9 @@
 -- See Hoogle, http://www.haskell.org/hoogle/
 
 
--- | Use Aeson from your Dovetail programs.
+-- | Use Aeson from your Dovetail programs
+--   
+--   Use Aeson from your Dovetail programs
 @package dovetail-aeson
 @version 0.1.0.0
 

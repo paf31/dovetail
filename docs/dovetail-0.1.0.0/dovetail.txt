@@ -2,7 +2,9 @@
 -- See Hoogle, http://www.haskell.org/hoogle/
 
 
--- | Dovetail is a general-purpose PureScript corefn interpreter with an
+-- | A PureScript interpreter with a Haskell FFI.
+--   
+--   Dovetail is a general-purpose PureScript corefn interpreter with an
 --   FFI to Haskell. Please see the README on GitHub at
 --   <a>https://github.com/paf31/dovetail#readme</a>, or check out the
 --   examples directory, to learn how to use the library.

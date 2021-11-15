@@ -12,6 +12,8 @@ description:         Dovetail is a general-purpose PureScript corefn interpreter
                      Please see the README on GitHub at <https://github.com/paf31/dovetail#readme>, or 
                      check out the examples directory, to learn how to use the library.
 
+extra-source-files:  README.md
+
 dependencies:
 - base >= 4.7 && < 5
 

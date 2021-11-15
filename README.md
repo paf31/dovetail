@@ -10,7 +10,12 @@ As such, it is possible to write low-level or domain-specific code in Haskell, a
 
 To understand the library and how to use it, it is recommended that you read through the Haddock documentation, alongside the provided examples:
 
-- [Haddock documentation](http://functorial.com/dovetail)
+- Hackage documentation
+  - [`dovetail` on Hackage](https://hackage.haskell.org/package/dovetail)
+  - [`dovetail-aeson` on Hackage]https://hackage.haskell.org/package/dovetail-aeson)
+  - [Haddocks on GitHub Pages](http://functorial.com/dovetail)
 - Examples:
-  - [JSON query language](examples/query-json)
-  - [Fake data generator](examples/fake-data)
+  - [JSON query language](https://github.com/paf31/dovetail/blob/main/examples/query-json/Main.hs)
+  - [Fake data generator](https://github.com/paf31/dovetail/blob/main/examples/fake-data/Main.hs)
+  
+You can build the code and examples in this repository using `stack build`, and run the test suite with `stack test`.

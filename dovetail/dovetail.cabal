@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8e19e51ff69a860795e7b3909da11ef1e97bfc1266ab5075a42721d37c2f5f23
+-- hash: 132f551f0b42d1e212e4c099dc6b389b506bb5132e654b2011c27cec62b146e6
 
 name:           dovetail
 version:        0.1.0.0
@@ -19,6 +19,8 @@ copyright:      2021 Phil Freeman
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
+extra-source-files:
+    README.md
 
 source-repository head
   type: git

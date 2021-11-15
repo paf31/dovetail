@@ -12,7 +12,7 @@ To understand the library and how to use it, it is recommended that you read thr
 
 - Hackage documentation
   - [`dovetail` on Hackage](https://hackage.haskell.org/package/dovetail)
-  - [`dovetail-aeson` on Hackage]https://hackage.haskell.org/package/dovetail-aeson)
+  - [`dovetail-aeson` on Hackage](https://hackage.haskell.org/package/dovetail-aeson)
   - [Haddocks on GitHub Pages](http://functorial.com/dovetail)
 - Examples:
   - [JSON query language](https://github.com/paf31/dovetail/blob/main/examples/query-json/Main.hs)

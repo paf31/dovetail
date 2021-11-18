@@ -398,7 +398,7 @@ class ToObject m f
 toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
 fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
 evalPSString :: MonadFix m => PSString -> EvalT m Text
-instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m (Dovetail.Types.Value m)
+instance (Control.Monad.Fix.MonadFix m, m GHC.Types.~ m') => Dovetail.Evaluate.ToValue m (Dovetail.Types.Value m')
 instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Integer.Type.Integer
 instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Types.Double
 instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m Data.Text.Internal.Text
@@ -539,6 +539,7 @@ preludeNumber :: MonadFix m => FFI m
 preludeInt :: MonadFix m => FFI m
 preludeBoolean :: MonadFix m => FFI m
 preludeDebug :: MonadFix m => FFI m
+preludePartial :: forall m. MonadFix m => FFI m
 eqOps :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
 numOps :: (ToValue m a, ToValueRHS m (EvalT m a), Num a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
 ordOps :: (ToValue m a, ToValueRHS m (EvalT m a), Ord a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()

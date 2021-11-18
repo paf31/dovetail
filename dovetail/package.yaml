@@ -17,6 +17,9 @@ extra-source-files:  README.md
 dependencies:
 - base >= 4.7 && < 5
 
+other-extensions:
+- ImportQualifiedPost
+
 library:
   source-dirs: src
   ghc-options:

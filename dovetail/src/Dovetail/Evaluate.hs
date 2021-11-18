@@ -333,7 +333,7 @@ class MonadFix m => ToValue m a where
   default fromValue :: (G.Generic a, ToObject m (G.Rep a)) => Value m -> EvalT m a
   fromValue = genericFromValue defaultObjectOptions
   
-instance MonadFix m => ToValue m (Value m) where
+instance (MonadFix m, m ~ m') => ToValue m (Value m') where
   toValue = id
   fromValue = pure
 

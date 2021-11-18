@@ -2,7 +2,9 @@
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE PatternSynonyms     #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
@@ -11,15 +13,18 @@
 module Dovetail.Prelude where
   
 import Control.Monad.Fix (MonadFix)
+import Control.Monad.Error.Class (catchError, throwError)
 import Data.Char (chr, ord)
 import Data.Text qualified as Text
 import Data.Vector qualified as Vector
-import Dovetail.Evaluate (ToValue, ToValueRHS)
-import Dovetail.FFI (FFI(..))
+import Dovetail.Evaluate (ToValue, ToValueRHS, toValue)
+import Dovetail.FFI (FFI(..), ForeignImport(..))
 import Dovetail.FFI.Builder (array, boolean, char, int, string, number, (~>))
 import Dovetail.FFI.Builder qualified as FFI
+import Dovetail.FFI.Internal (forAll, function)
 import Dovetail.Types
 import Language.PureScript qualified as P
+import Language.PureScript.Constants.Prim (pattern Partial)
 
 stdlib :: MonadFix m => [FFI m]
 stdlib = 
@@ -31,6 +36,7 @@ stdlib =
   , preludeInt
   , preludeBoolean
   , preludeDebug
+  , preludePartial
   ]
 
 prelude :: MonadFix m => FFI m
@@ -144,6 +150,40 @@ preludeDebug =
     FFI.foreignImport (P.Ident "crash")
       (\a -> string ~> a)
       (throwErrorWithContext . OtherError)
+      
+preludePartial :: forall m. MonadFix m => FFI m
+preludePartial = 
+  let partial ty =
+        P.ConstrainedType P.nullSourceAnn 
+          (P.Constraint P.nullSourceAnn Partial [] [] Nothing) 
+          ty
+   in FFI
+        { ffi_moduleName = P.ModuleName "Prelude.Partial"
+        , ffi_values = 
+            [ ForeignImport
+                { fv_name = P.Ident "unsafePartial"
+                , fv_type = 
+                    forAll \a -> partial a `function` a
+                , fv_value =
+                    toValue @m @((Value m -> EvalT m (Value m)) -> EvalT m (Value m)) 
+                      \f -> f (Object mempty)
+                }
+            , ForeignImport
+                { fv_name = P.Ident "fromPartial"
+                , fv_type = 
+                    forAll \a -> 
+                      a `function` (partial a `function` a)
+                , fv_value =
+                    toValue @m @(Value m -> (Value m -> EvalT m (Value m)) -> EvalT m (Value m)) 
+                      \def f -> do
+                        catchError (f (Object mempty)) \case
+                          EvaluationError { errorType = InexhaustivePatternMatch _ } ->
+                            pure def
+                          err ->
+                            throwError err
+                }
+            ]
+        }
 
 eqOps 
   :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a)

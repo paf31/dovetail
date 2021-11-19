@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.5.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9fd50996176509cb603dec378bf3364eb1637ccbf382d164e1e386e97d2e5da8
+-- hash: 493a3ebecaf0a67bdab29dff916257323ec7dfd6b8d07b61c0c382391a6078b4
 
 name:           dovetail
 version:        0.1.1.0
@@ -41,6 +41,8 @@ library
       Paths_dovetail
   hs-source-dirs:
       src
+  other-extensions:
+      ImportQualifiedPost
   ghc-options: -Wall -fwarn-unused-imports
   build-depends:
       ansi-terminal
@@ -66,6 +68,8 @@ test-suite dovetail-test
       Paths_dovetail
   hs-source-dirs:
       test
+  other-extensions:
+      ImportQualifiedPost
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -fwarn-unused-imports
   build-depends:
       QuickCheck

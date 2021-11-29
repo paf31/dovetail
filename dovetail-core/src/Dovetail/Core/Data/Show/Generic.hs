@@ -12,19 +12,17 @@ import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
+  let _ModuleName = ModuleName "Data.Show.Generic"
 
-      _ModuleName = P.ModuleName "Data.Show.Generic"
-
-  fold
-    [ 
-    ]
+  -- intercalate :: String -> Array String -> String
+  builtIn @m @(Text -> Vector Text -> EvalT m Text)
+    _ModuleName "intercalate"
+    \sep xs ->
+      pure (Text.intercalate sep (Vector.toList xs))
     
--- intercalate :: String -> Array String -> String

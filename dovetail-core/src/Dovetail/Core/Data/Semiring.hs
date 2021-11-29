@@ -11,11 +11,10 @@ import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let _ModuleName = P.ModuleName "Data.Semiring"
+  let _ModuleName = ModuleName "Data.Semiring"
 
   fold
     [ -- intAdd :: Int -> Int -> Int

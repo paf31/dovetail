@@ -12,21 +12,22 @@ import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
-
-      _ModuleName = P.ModuleName "Data.Foldable"
+  let _ModuleName = ModuleName "Data.Foldable"
 
   fold
-    [
+    [ -- foldrArray :: forall a b. (a -> b -> b) -> b -> Array a -> b
+      builtIn @m @((Value m -> Value m -> EvalT m (Value m)) -> Value m -> Vector (Value m) -> EvalT m (Value m))
+        _ModuleName "foldrArray"
+        \f b -> Vector.foldM (flip f) b . Vector.reverse
+      -- foldlArray :: forall a b. (b -> a -> b) -> b -> Array a -> b
+    , builtIn @m @((Value m -> Value m -> EvalT m (Value m)) -> Value m -> Vector (Value m) -> EvalT m (Value m))
+        _ModuleName "foldlArray"
+        Vector.foldM 
     ]
 
--- foldrArray :: forall a b. (a -> b -> b) -> b -> Array a -> b
--- 
--- foldlArray :: forall a b. (b -> a -> b) -> b -> Array a -> b

@@ -11,11 +11,11 @@ import Control.Monad.Fix (MonadFix)
 import Data.Text (Text)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
+
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let _ModuleName = P.ModuleName "Partial"
+  let _ModuleName = ModuleName "Partial"
 
   builtIn @m @(Text -> EvalT m (Value m))
     _ModuleName "_crashWith"

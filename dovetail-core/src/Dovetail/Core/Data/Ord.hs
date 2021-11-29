@@ -13,11 +13,11 @@ import Data.Text (Text)
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
+
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let _ModuleName = P.ModuleName "Data.Ord"
+  let _ModuleName = ModuleName "Data.Ord"
       
       compareImpl lt eq gt x y = pure
         case compare x y of

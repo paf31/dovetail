@@ -14,11 +14,11 @@ import Data.Text qualified as Text
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
+
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let _ModuleName = P.ModuleName "Data.EuclideanRing"
+  let _ModuleName = ModuleName "Data.EuclideanRing"
 
   fold
     [ -- intDegree :: Int -> Int

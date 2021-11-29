@@ -15,14 +15,14 @@ import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
+
 
 env :: forall m. MonadFix m => Env m
 env = do
   let notImplemented :: Text -> EvalT m a
       notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
 
-      _ModuleName = P.ModuleName "Data.String.CodeUnits"
+      _ModuleName = ModuleName "Data.String.CodeUnits"
 
   fold
     [ builtIn @m @(Char -> EvalT m Text)

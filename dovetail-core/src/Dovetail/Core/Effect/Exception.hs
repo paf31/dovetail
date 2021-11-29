@@ -16,14 +16,13 @@ import Data.Typeable (Typeable)
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (ForeignType(..), builtIn)
-import Language.PureScript qualified as P
 
 env :: forall m. (MonadFix m, Typeable m) => Env m
 env = do
   let notImplemented :: Text -> EvalT m a
       notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
 
-      _ModuleName = P.ModuleName "Effect.Exception"
+      _ModuleName = ModuleName "Effect.Exception"
 
   fold
     [ -- throwException :: forall a. Error -> Effect a
@@ -47,7 +46,4 @@ env = do
 -- name :: Error -> String
 -- 
 -- stackImpl :: (forall a. a -> Maybe a) -> (forall a. Maybe a) -> Error -> Maybe String
--- 
-
--- 
 

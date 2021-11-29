@@ -14,14 +14,14 @@ import Data.Text qualified as Text
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
+
 
 env :: forall m. MonadFix m => Env m
 env = do
   let notImplemented :: Text -> EvalT m a
       notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
 
-      _ModuleName = P.ModuleName "Data.String.Unsafe"
+      _ModuleName = ModuleName "Data.String.Unsafe"
 
   fold
     [ builtIn @m @(Value m -> EvalT m (Value m))  --  :: Int -> Text -> Char

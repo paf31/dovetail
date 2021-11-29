@@ -13,11 +13,10 @@ import Data.Text (Text)
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let _ModuleName = P.ModuleName "Data.Semigroup"
+  let _ModuleName = ModuleName "Data.Semigroup"
 
   fold
     [ -- concatString :: String -> String -> String

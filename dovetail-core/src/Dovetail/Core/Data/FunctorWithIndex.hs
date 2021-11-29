@@ -8,23 +8,19 @@
 module Dovetail.Core.Data.FunctorWithIndex where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-import Language.PureScript qualified as P
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
+  let _ModuleName = ModuleName "Data.FunctorWithIndex"
 
-      _ModuleName = P.ModuleName "Data.FunctorWithIndex"
-
-  fold
-    [
-    ]
-  
--- mapWithIndexArray :: forall i a b. (i -> a -> b) -> Array a -> Array b
+  -- mapWithIndexArray :: forall i a b. (i -> a -> b) -> Array a -> Array b
+  builtIn @m @((Integer -> Value m -> EvalT m (Value m)) -> Vector (Value m) -> EvalT m (Vector (Value m)))
+    _ModuleName "mapWithIndexArray"
+    \f -> 
+      Vector.imapM (f . fromIntegral)

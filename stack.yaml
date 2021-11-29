@@ -2,6 +2,7 @@ resolver: lts-17.6
 packages:
 - dovetail
 - dovetail-aeson
+- dovetail-core
 - examples
 extra-deps:
 - git: https://github.com/purescript/purescript.git

@@ -96,4 +96,4 @@ defaultMain defaultModule externs additionalIdentsInScope env = runInputT settin
       , Text.isPrefixOf (Text.pack s) ident
       ]
     
-  allCompletions = map (P.showQualified P.showIdent) (Map.keys env)
+  allCompletions = map (P.showQualified P.showIdent) (Map.keys (envToMap env))

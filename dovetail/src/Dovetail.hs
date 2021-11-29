@@ -25,6 +25,7 @@ module Dovetail
   
   -- ** Foreign function interface
   , ffi
+  , loadEnv
   
   -- ** Building PureScript source
   , build
@@ -82,7 +83,7 @@ import Language.PureScript.Names
 -- exposed via the foreign function interface to PureScript code, in the same sense
 -- as 'EvalT'.
 newtype InterpretT m a = InterpretT { unInterpretT :: ExceptT (InterpretError m) (StateT ([P.ExternsFile], Env m) m) a }
-  deriving newtype (Functor, Applicative, Monad, MonadError (InterpretError m))
+  deriving newtype (Functor, Applicative, Monad, MonadError (InterpretError m), MonadIO)
   
 instance MonadTrans InterpretT where
   lift = InterpretT . lift . lift
@@ -132,7 +133,7 @@ runInterpretTWithDebugger x = do
                   _ -> env
               additionalNames = 
                 [ P.disqualify ident
-                | ident <- Map.keys (withEnvAtError Map.\\ env)
+                | ident <- Map.keys (envToMap withEnvAtError Map.\\ envToMap env)
                 , not (P.isQualified ident)
                 ]
           REPL.defaultMain Nothing externs additionalNames withEnvAtError
@@ -162,6 +163,12 @@ ffi f = InterpretT . lift $ modify \(externs, env) ->
   , env <> FFI.toEnv f
   )
 
+loadEnv :: Monad m => Env m -> InterpretT m ()
+loadEnv env = InterpretT . lift $ modify \(externs, env') -> 
+  ( externs
+  , env <> env'
+  )
+  
 -- | The type of errors that can occur in the 'InterpretT' monad.
 data InterpretError m
   = ErrorDuringEvaluation (Evaluate.EvaluationError m)

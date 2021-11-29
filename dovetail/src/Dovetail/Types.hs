@@ -17,6 +17,12 @@ module Dovetail.Types (
   
   -- ** Evaluation monad
   , Env
+  , lookupEnv
+  , envToMap
+  , envFromMap
+  , bindEnv
+  , bindEnv'
+  
   , EvalT(..)
   , runEvalT
   , Eval
@@ -57,6 +63,8 @@ import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (listToMaybe)
 import Data.Ord (comparing)
+import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
@@ -162,7 +170,27 @@ renderValue RenderValueOptions{ colorOutput, maximumDepth } = fst . go 0 where
 -- An environment for a single built-in function can be constructed
 -- using the 'builtIn' function, and environments can be combined
 -- easily using the 'Monoid' instance for 'Map'.
-type Env m = Map (Qualified Ident) (Value m)
+newtype Env m = Env { _getEnv :: [(Set (Qualified Ident), Map (Qualified Ident) (Value m))] }
+  deriving newtype (Semigroup, Monoid)
+
+lookupEnv :: Qualified Ident -> Env m -> Maybe (Value m)
+lookupEnv q (Env envs) = go envs where
+  go [] = Nothing
+  go ((s, e) : es)
+    | q `Set.member` s = Map.lookup q e
+    | otherwise = go es
+
+envToMap :: Env m -> Map (Qualified Ident) (Value m)
+envToMap (Env es) = foldMap snd es
+
+envFromMap :: Map (Qualified Ident) (Value m) -> Env m
+envFromMap m = Env [(Map.keysSet m, m)]
+
+bindEnv :: [(Qualified Ident, Value m)] -> Env m -> Env m
+bindEnv xs = bindEnv' (Set.fromList (fmap fst xs)) xs
+
+bindEnv' :: Set (Qualified Ident) -> [(Qualified Ident, Value m)] -> Env m -> Env m
+bindEnv' s xs (Env es) = Env ((s, Map.fromList xs) : es)
 
 -- | An evaluation context currently consists of an evaluation stack, which
 -- is only used for debugging purposes.
@@ -295,7 +323,7 @@ renderEvaluationError opts (EvaluationError{ errorType, errorContext }) =
       , ""
       ]
     | headFrame <- take 1 (getEvaluationContext errorContext)
-    , (ident, value) <- Map.toList (frameEnv headFrame)
+    , (ident, value) <- Map.toList (envToMap (frameEnv headFrame))
     , P.isUnqualified ident
     ] <> 
     [ Text.unpack (renderSourceSpan frame)

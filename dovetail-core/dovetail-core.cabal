@@ -1,0 +1,88 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: a924cbeb124ba55e3b6d312a176a42ac9e043ce43aea4ba26bc6c7ca159697fa
+
+name:           dovetail-core
+version:        0.1.0.0
+synopsis:       Dovetail support for the PureScript core library set
+category:       Language
+homepage:       https://github.com/paf31/dovetail#readme
+bug-reports:    https://github.com/paf31/dovetail/issues
+author:         Phil Freeman
+maintainer:     freeman.phil@gmail.com
+copyright:      2021 Phil Freeman
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/paf31/dovetail
+
+library
+  exposed-modules:
+      Dovetail.Core
+      Dovetail.Core.Control.Apply
+      Dovetail.Core.Control.Bind
+      Dovetail.Core.Control.Extend
+      Dovetail.Core.Control.Monad.ST.Internal
+      Dovetail.Core.Data.Bounded
+      Dovetail.Core.Data.Eq
+      Dovetail.Core.Data.EuclideanRing
+      Dovetail.Core.Data.Foldable
+      Dovetail.Core.Data.Function.Uncurried
+      Dovetail.Core.Data.Functor
+      Dovetail.Core.Data.FunctorWithIndex
+      Dovetail.Core.Data.HeytingAlgebra
+      Dovetail.Core.Data.Int
+      Dovetail.Core.Data.Int.Bits
+      Dovetail.Core.Data.Number
+      Dovetail.Core.Data.Number.Format
+      Dovetail.Core.Data.Ord
+      Dovetail.Core.Data.Ring
+      Dovetail.Core.Data.Semigroup
+      Dovetail.Core.Data.Semiring
+      Dovetail.Core.Data.Show
+      Dovetail.Core.Data.Show.Generic
+      Dovetail.Core.Data.String.CodePoints
+      Dovetail.Core.Data.String.CodeUnits
+      Dovetail.Core.Data.String.Common
+      Dovetail.Core.Data.String.Regex
+      Dovetail.Core.Data.String.Unsafe
+      Dovetail.Core.Data.Symbol
+      Dovetail.Core.Data.Unit
+      Dovetail.Core.Effect
+      Dovetail.Core.Effect.Console
+      Dovetail.Core.Effect.Exception
+      Dovetail.Core.Effect.Random
+      Dovetail.Core.Effect.Ref
+      Dovetail.Core.Effect.Uncurried
+      Dovetail.Core.Effect.Unsafe
+      Dovetail.Core.Math
+      Dovetail.Core.Partial
+      Dovetail.Core.Partial.Unsafe
+      Dovetail.Core.Record.Builder
+      Dovetail.Core.Record.Unsafe
+      Dovetail.Core.Record.Unsafe.Union
+      Dovetail.Core.Test.Assert
+      Dovetail.Core.Unsafe.Coerce
+  other-modules:
+      Paths_dovetail_core
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -fwarn-unused-imports
+  build-depends:
+      base >=4.7 && <5
+    , dovetail
+    , filepath
+    , mtl
+    , purescript
+    , purescript-cst
+    , text
+    , unordered-containers
+    , vector
+  default-language: Haskell2010

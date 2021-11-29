@@ -54,6 +54,7 @@ import Control.Monad (guard, foldM, mzero, zipWithM)
 import Control.Monad.Fix (MonadFix, mfix)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(..))
+import Control.Monad.Trans.State (StateT(..))
 import Control.Monad.Reader.Class
 import Data.Align qualified as Align
 import Data.Dynamic qualified as Dynamic
@@ -62,6 +63,7 @@ import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map qualified as Map
 import Data.Proxy (Proxy(..))
+import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.These (These(..))
@@ -71,6 +73,7 @@ import Data.Vector qualified as Vector
 import Dovetail.Types
 import GHC.Generics qualified as G
 import GHC.TypeLits (KnownSymbol, symbolVal)
+import Language.PureScript.Constants.Prim qualified as Prim
 import Language.PureScript.CoreFn qualified as CoreFn
 import Language.PureScript.Names (Qualified(..))
 import Language.PureScript.Names qualified as Names
@@ -110,7 +113,7 @@ buildCoreFn env CoreFn.Module{ CoreFn.moduleName, CoreFn.moduleDecls } =
 builtIn :: ToValue m a => Names.ModuleName -> Text -> a -> Env m
 builtIn mn name value =
   let qualName = Names.mkQualified (Names.Ident name) mn
-   in Map.singleton qualName $ toValue value
+   in envFromMap . Map.singleton qualName $ toValue value
 
 evalPSString :: MonadFix m => PSString.PSString -> EvalT m Text
 evalPSString pss = 
@@ -141,15 +144,21 @@ eval env expr = pushStackFrame env expr (evalHelper expr) where
           Just x -> pure x
           Nothing -> throwErrorWithContext (FieldNotFound field val)
       _ -> throwErrorWithContext (TypeMismatch "object" val)
+  evalHelper (CoreFn.Abs (_, _, _, Just CoreFn.IsNewtype) _ _) = do
+    pure . Closure $ pure
+  evalHelper (CoreFn.Abs (_, _, _, Just CoreFn.IsTypeClassConstructor) _ _) = do
+    pure . Closure $ pure
   evalHelper (CoreFn.Abs _ arg body) = do
     ctx <- ask
-    pure . Closure $ \v -> local (const ctx) $ eval (Map.insert (Qualified Nothing arg) v env) body
+    pure . Closure $ \v -> local (const ctx) $ eval (bindEnv [(Qualified Nothing arg, v)] env) body
   evalHelper (CoreFn.App _ f x) = do
     x_ <- eval env x
     f_ <- eval env f
     apply f_ x_
+  evalHelper (CoreFn.Var _ (Qualified (Just Prim.Prim) (Names.Ident u))) | u == Prim.undefined =
+    pure (Object mempty)
   evalHelper (CoreFn.Var _ name) =
-    case Map.lookup name env of
+    case lookupEnv name env of
       Nothing -> throwErrorWithContext $ UnknownIdent name
       Just val -> pure val
   evalHelper (CoreFn.Let _ binders body) = do
@@ -214,10 +223,13 @@ matchOne
 matchOne _ (CoreFn.NullBinder _) = pure mempty
 matchOne val (CoreFn.LiteralBinder _ lit) = matchLit val lit
 matchOne val (CoreFn.VarBinder _ ident) = do
-  pure (Map.singleton (Qualified Nothing ident) val)
+  pure (envFromMap (Map.singleton (Qualified Nothing ident) val))
 matchOne val (CoreFn.NamedBinder _ ident b) = do
   env <- matchOne val b
-  pure (Map.insert (Qualified Nothing ident) val env)
+  pure (bindEnv [(Qualified Nothing ident, val)] env)
+matchOne val (CoreFn.ConstructorBinder (_, _, _, Just meta) _tyName _ctor [b]) 
+  | meta == CoreFn.IsNewtype || meta == CoreFn.IsTypeClassConstructor
+  = matchOne val b
 matchOne (Constructor ctor vals) (CoreFn.ConstructorBinder _ _tyName ctor' bs) 
   | ctor == Names.disqualify ctor'
   = if length vals == length bs 
@@ -290,12 +302,14 @@ bind scope = foldM go where
   go :: Env m -> CoreFn.Bind CoreFn.Ann -> EvalT m (Env m)
   go env (CoreFn.NonRec _ name e) = do
     val <- eval env e
-    pure $ Map.insert (Qualified scope name) val env
-  go env (CoreFn.Rec exprs) = mfix \newEnv -> do
-    vals <- flip traverse exprs \((_, name), e) -> do
-      val <- eval newEnv e
-      pure $ Map.singleton (Qualified scope name) val
-    pure (fold vals <> env)
+    pure $ bindEnv [(Qualified scope name, val)] env
+  go env (CoreFn.Rec exprs) = do
+    let newNames = Set.fromList [Qualified scope name | ((_, name), _) <- exprs]
+    let traverseWithState s xs f = flip runStateT s $ traverse (StateT . f) xs
+    (_, newEnv) <- mfix \ ~(vals, _) -> traverseWithState env exprs (\((_, name), e) env' -> do
+      val <- eval (bindEnv' (newNames Set.\\ Map.keysSet (envToMap env')) vals env') e
+      pure ((Qualified scope name, val), bindEnv [(Qualified scope name, val)] env'))
+    pure newEnv
 
 -- | Apply a value which represents an unevaluated closure to an argument.
 apply
@@ -389,6 +403,12 @@ instance ToValue m a => ToValue m (Vector a) where
     Array xs -> traverse fromValue xs
     val -> throwErrorWithContext (TypeMismatch "array" val)
     
+instance (k ~ Text, ToValue m a) => ToValue m (HashMap k a) where
+  toValue = Object . fmap toValue
+  fromValue = \case
+    Object o -> traverse fromValue o
+    val -> throwErrorWithContext (TypeMismatch "object" val)
+
 -- | This type can be used to make custom Haskell types accessible to 
 -- PureScript code via the FFI's @foreign import data@ feature.
 newtype ForeignType a = ForeignType { getForeignType :: a }

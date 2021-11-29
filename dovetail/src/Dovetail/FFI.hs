@@ -73,4 +73,4 @@ toExterns (FFI mn vals) =
 -- "Dovetail.Evaluate" module.
 toEnv :: FFI m -> Env m
 toEnv (FFI mn vals) = 
-  Map.fromList [ (P.mkQualified name mn, val) | ForeignImport name _ val <- vals ]
+  envFromMap $ Map.fromList [ (P.mkQualified name mn, val) | ForeignImport name _ val <- vals ]

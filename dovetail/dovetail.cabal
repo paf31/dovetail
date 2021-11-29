@@ -47,6 +47,7 @@ library
     , base >=4.7 && <5
     , containers
     , exceptions
+    , hashable
     , haskeline
     , mtl
     , purescript

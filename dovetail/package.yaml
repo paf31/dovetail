@@ -26,6 +26,7 @@ library:
   - ansi-terminal
   - containers
   - exceptions
+  - hashable
   - haskeline
   - mtl
   - purescript

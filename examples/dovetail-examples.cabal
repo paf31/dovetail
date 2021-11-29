@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f0acb9b9ef21d09cde531935770dd32bba0d4c1069a2be8b8d968e07a5ed4a68
+-- hash: 7991eb45236a6726cefe7ed63e4c2e221dc32689b8a4ed92c7ecd7bb8f1c1a60
 
 name:           dovetail-examples
 version:        0.1.0.0
@@ -61,9 +61,32 @@ executable query-json
     , containers
     , dovetail
     , dovetail-aeson
+    , dovetail-core
     , mtl
     , purescript
     , purescript-cst
+    , text
+    , transformers
+    , vector
+  default-language: Haskell2010
+
+executable repl
+  main-is: Main.hs
+  other-modules:
+      Paths_dovetail_examples
+  hs-source-dirs:
+      repl
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-unused-imports
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , containers
+    , dovetail
+    , dovetail-core
+    , mtl
+    , purescript
+    , purescript-cst
+    , random
     , text
     , transformers
     , vector

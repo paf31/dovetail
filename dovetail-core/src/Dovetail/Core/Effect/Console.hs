@@ -27,17 +27,10 @@ env = do
     ]
 
 -- log :: String -> Effect Unit
--- 
 -- warn :: String -> Effect Unit
--- 
 -- error :: String -> Effect Unit
--- 
 -- info :: String -> Effect Unit
--- 
 -- time :: String -> Effect Unit
--- 
 -- timeLog :: String -> Effect Unit
--- 
 -- timeEnd :: String -> Effect Unit
--- 
 -- clear :: Effect Unit

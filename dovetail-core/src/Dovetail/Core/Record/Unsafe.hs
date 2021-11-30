@@ -28,9 +28,6 @@ env = do
     ]
 
 -- unsafeHas :: forall r1. String -> Record r1 -> Boolean
--- 
 -- unsafeGet :: forall r a. String -> Record r -> a
--- 
 -- unsafeSet :: forall r1 r2 a. String -> a -> Record r1 -> Record r2
--- 
 -- unsafeDelete :: forall r1 r2. String -> Record r1 -> Record r2

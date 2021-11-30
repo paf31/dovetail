@@ -30,4 +30,3 @@ env = do
         _ModuleName "foldlArray"
         Vector.foldM 
     ]
-

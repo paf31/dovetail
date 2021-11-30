@@ -32,6 +32,7 @@ module Dovetail.Types (
   , EvaluationError(..)
   , EvaluationErrorType(..)
   , renderEvaluationError
+  , renderEvaluationErrorType
   
   -- ** Evaluation contexts
   , EvaluationContext(..)
@@ -40,6 +41,7 @@ module Dovetail.Types (
   , EvaluationStackFrame(..)
   , pushStackFrame
   , throwErrorWithContext
+  , renderEvaluationStack
   
   -- * Debugging
   , renderValue
@@ -48,6 +50,7 @@ module Dovetail.Types (
   ) where
   
 import Control.Monad.Error.Class (MonadError(..))
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.Fix (MonadFix(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
@@ -253,6 +256,7 @@ newtype EvalT m a = EvalT { unEvalT :: ReaderT (EvaluationContext m) (ExceptT (E
     , MonadError (EvaluationError m)
     , MonadReader (EvaluationContext m)
     , MonadFix
+    , MonadIO
     )
 
 instance MonadTrans EvalT where
@@ -310,7 +314,7 @@ renderEvaluationError :: RenderValueOptions -> EvaluationError m -> String
 renderEvaluationError opts (EvaluationError{ errorType, errorContext }) =
   unlines $
     [ maybe "Error"
-        (("Error " <>) . Text.unpack . renderSourceSpan)
+        (("Error " <>) . Text.unpack . renderEvaluationStackFrame)
         (listToMaybe (getEvaluationContext errorContext))
     ] <>
     [ ""
@@ -326,16 +330,24 @@ renderEvaluationError opts (EvaluationError{ errorType, errorContext }) =
     , (ident, value) <- Map.toList (envToMap (frameEnv headFrame))
     , P.isUnqualified ident
     ] <> 
-    [ Text.unpack (renderSourceSpan frame)
-    | frame <- drop 1 (getEvaluationContext errorContext)
+    [ Text.unpack 
+        (renderEvaluationStack (drop 1 (getEvaluationContext errorContext)))
     ]
-  where
-    renderSourceSpan frame =
-      "at " <> fold
-        [ P.displaySourcePos (P.spanStart (frameSource frame)) 
-        , " - " 
-        , P.displaySourcePos (P.spanEnd (frameSource frame))
-        ]
+  
+renderEvaluationStack :: [EvaluationStackFrame m] -> Text
+renderEvaluationStack frames =
+  Text.unlines
+    [ renderEvaluationStackFrame frame
+    | frame <- frames 
+    ]
+
+renderEvaluationStackFrame :: EvaluationStackFrame m -> Text
+renderEvaluationStackFrame frame =
+  "at " <> fold
+    [ P.displaySourcePos (P.spanStart (frameSource frame)) 
+    , " - " 
+    , P.displaySourcePos (P.spanEnd (frameSource frame))
+    ]
   
 renderEvaluationErrorType :: RenderValueOptions -> EvaluationErrorType m -> String
 renderEvaluationErrorType _ (UnknownIdent x) =

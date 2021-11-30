@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a924cbeb124ba55e3b6d312a176a42ac9e043ce43aea4ba26bc6c7ca159697fa
+-- hash: de87a3e8d9e1d346b52f8f114308eae01f0021d7174f511835ba2ade39c929f4
 
 name:           dovetail-core
 version:        0.1.0.0
@@ -54,6 +54,8 @@ library
       Dovetail.Core.Data.String.Regex
       Dovetail.Core.Data.String.Unsafe
       Dovetail.Core.Data.Symbol
+      Dovetail.Core.Data.Unfoldable
+      Dovetail.Core.Data.Unfoldable1
       Dovetail.Core.Data.Unit
       Dovetail.Core.Effect
       Dovetail.Core.Effect.Console
@@ -82,6 +84,7 @@ library
     , mtl
     , purescript
     , purescript-cst
+    , random
     , text
     , unordered-containers
     , vector

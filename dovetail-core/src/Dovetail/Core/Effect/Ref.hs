@@ -1,44 +1,80 @@
-{-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE BlockArguments        #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE ImportQualifiedPost   #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 module Dovetail.Core.Effect.Ref where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.Fix (MonadFix(..))
 import Data.Foldable (fold)
+import Data.HashMap.Strict (HashMap)
+import Data.HashMap.Strict qualified as HashMap
+import Data.IORef (IORef)
+import Data.IORef qualified as IORef
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Typeable (Typeable)
 import Data.Vector (Vector)
 import Dovetail
-import Dovetail.Evaluate (builtIn)
+import Dovetail.Evaluate (ForeignType(..), builtIn)
+import GHC.Generics (Generic)
 
+type Ref m = ForeignType (IORef (Value m))
 
-env :: forall m. MonadFix m => Env m
+data ModifyResult m = ModifyResult
+  { state :: Value m
+  , value :: Value m 
+  } deriving Generic
+  
+instance MonadFix m => ToValue m (ModifyResult m) 
+
+env :: forall m. (MonadFix m, MonadIO m, Typeable m) => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
-
-      _ModuleName = ModuleName "Effect.Ref"
+  let _ModuleName = ModuleName "Effect.Ref"
 
   fold
-    [
+    [ -- new :: forall s. s -> Effect (Ref s)
+      builtIn @m @(Value m -> Value m -> EvalT m (Ref m))
+        _ModuleName "new"
+        \s _ -> 
+          ForeignType <$> liftIO (IORef.newIORef s)
+      -- newWithSelf :: forall s. (Ref s -> s) -> Effect (Ref s)
+    , builtIn @m @((Ref m -> EvalT m (Value m)) -> Value m -> EvalT m (Ref m))
+        _ModuleName "newWithSelf"
+        \f _ -> 
+          mfix \ref -> do
+            s <- f ref
+            ForeignType <$> liftIO (IORef.newIORef s)
+      -- read :: forall s. Ref s -> Effect s
+    , builtIn @m @(Ref m -> Value m -> EvalT m (Value m))
+        _ModuleName "read"
+        \(ForeignType ref) _ ->
+          liftIO (IORef.readIORef ref)
+      -- write :: forall s. s -> Ref s -> Effect Unit
+    , builtIn @m @(Value m -> Ref m -> Value m -> EvalT m (Value m))
+        _ModuleName "write"
+        \s (ForeignType ref) _ -> do
+          liftIO (IORef.writeIORef ref s)
+          pure (Object mempty)
+      -- modifyImpl :: forall s b.           
+      --   (s                  
+      --    -> { state :: s    
+      --       , value :: b    
+      --       }               
+      --   )                   
+      --   -> Ref s -> Effect b
+    , builtIn @m @((Value m -> EvalT m (ModifyResult m)) -> Ref m -> Value m -> EvalT m (Value m))
+        _ModuleName "modifyImpl"
+        \f (ForeignType ref) _ -> do
+          s <- liftIO (IORef.readIORef ref)
+          ModifyResult state value <- f s
+          liftIO (IORef.writeIORef ref state)
+          pure value
     ]
 
--- new :: forall s. s -> Effect (Ref s)
--- 
--- newWithSelf :: forall s. (Ref s -> s) -> Effect (Ref s)
--- 
--- read :: forall s. Ref s -> Effect s
--- 
--- modifyImpl :: forall s b.           
---   (s                  
---    -> { state :: s    
---       , value :: b    
---       }               
---   )                   
---   -> Ref s -> Effect b
--- 
--- write :: forall s. s -> Ref s -> Effect Unit

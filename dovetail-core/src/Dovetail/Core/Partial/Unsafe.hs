@@ -16,6 +16,6 @@ env = do
   let _ModuleName = ModuleName "Partial.Unsafe"
 
   -- _unsafePartial :: forall a b. a -> b
-  builtIn @m @(Value m -> EvalT m (Value m))
+  builtIn @m @((Value m -> EvalT m (Value m)) -> EvalT m (Value m))
     _ModuleName "_unsafePartial"
-    pure
+    \f -> f (Object mempty)

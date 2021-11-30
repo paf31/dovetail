@@ -28,15 +28,9 @@ env = do
     ]
 
 -- and :: Int -> Int -> Int
--- 
 -- or :: Int -> Int -> Int
--- 
 -- xor :: Int -> Int -> Int
--- 
 -- shl :: Int -> Int -> Int
--- 
 -- shr :: Int -> Int -> Int
--- 
 -- zshr :: Int -> Int -> Int
--- 
 -- complement :: Int -> Int

@@ -15,7 +15,6 @@ import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-
 env :: forall m. MonadFix m => Env m
 env = do
   let notImplemented :: Text -> EvalT m a

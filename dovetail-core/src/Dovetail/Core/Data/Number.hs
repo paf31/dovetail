@@ -28,11 +28,7 @@ env = do
     ]
 
 -- nan :: Number
--- 
 -- isNaN :: Number -> Boolean
--- 
 -- infinity :: Number
--- 
 -- isFinite :: Number -> Boolean
--- 
 -- fromStringImpl :: Fn4 String (Number -> Boolean) (forall a. a -> Maybe a) (forall a. Maybe a) (Maybe Number)

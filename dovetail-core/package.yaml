@@ -23,6 +23,7 @@ library:
   - mtl
   - purescript
   - purescript-cst
+  - random
   - text
   - unordered-containers
   - vector

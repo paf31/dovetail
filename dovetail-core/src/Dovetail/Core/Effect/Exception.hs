@@ -17,33 +17,54 @@ import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (ForeignType(..), builtIn)
 
+type Error m = ForeignType (EvaluationError m)
+
+renderValueOptions :: RenderValueOptions
+renderValueOptions = RenderValueOptions
+  { colorOutput = False
+  , maximumDepth = Nothing
+  }
+
 env :: forall m. (MonadFix m, Typeable m) => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
-
-      _ModuleName = ModuleName "Effect.Exception"
+  let _ModuleName = ModuleName "Effect.Exception"
 
   fold
     [ -- throwException :: forall a. Error -> Effect a
-      builtIn @m @(ForeignType (EvaluationError m) -> Value m -> EvalT m (Value m))
+      builtIn @m @(Error m -> Value m -> EvalT m (Value m))
         _ModuleName "throwException" 
         \(ForeignType e) _ -> 
           throwErrorWithContext (errorType e)
     , -- catchException :: forall a. (Error -> Effect a) -> Effect a -> Effect a
-      builtIn @m @((ForeignType (EvaluationError m) -> Value m -> EvalT m (Value m)) -> (Value m -> EvalT m (Value m)) -> Value m -> EvalT m (Value m))
+      builtIn @m @((Error m -> Value m -> EvalT m (Value m)) -> (Value m -> EvalT m (Value m)) -> Value m -> EvalT m (Value m))
         _ModuleName "catchException" 
         \c t rw -> 
           catchError (t rw) (\e -> c (ForeignType e) rw)
+      -- showErrorImpl :: Error -> String
+    , builtIn @m @(Error m -> EvalT m Text)
+        _ModuleName "showErrorImpl"
+        \(ForeignType e) ->
+          pure (Text.pack (renderEvaluationError renderValueOptions e))
+      -- error :: String -> Error
+    , builtIn @m @(Text -> EvalT m (Error m))
+        _ModuleName "error"
+        \msg ->
+          pure (ForeignType (EvaluationError (OtherError msg) (EvaluationContext mempty)))
+      -- message :: Error -> String
+    , builtIn @m @(Error m -> EvalT m Text)
+        _ModuleName "message"
+        \(ForeignType e) -> 
+          pure (Text.pack (renderEvaluationErrorType renderValueOptions (errorType e)))
+      -- name :: Error -> String
+    , builtIn @m @(Error m -> EvalT m Text)
+        _ModuleName "name"
+        \_ ->
+          pure "Error"
+      -- stackImpl :: (forall a. a -> Maybe a) -> (forall a. Maybe a) -> Error -> Maybe String
+    , builtIn @m @((Text -> EvalT m (Value m)) -> Value m -> Error m -> EvalT m (Value m))
+        _ModuleName "stackImpl"
+        \_just _nothing (ForeignType e) ->
+          case getEvaluationContext (errorContext e) of
+            [] -> pure _nothing
+            stack -> _just (renderEvaluationStack stack)
     ]
-
--- showErrorImpl :: Error -> String
--- 
--- error :: String -> Error
--- 
--- message :: Error -> String
--- 
--- name :: Error -> String
--- 
--- stackImpl :: (forall a. a -> Maybe a) -> (forall a. Maybe a) -> Error -> Maybe String
-

@@ -49,6 +49,8 @@ import Dovetail.Core.Data.String.Common qualified as Data.String.Common
 import Dovetail.Core.Data.String.Regex qualified as Data.String.Regex
 import Dovetail.Core.Data.String.Unsafe qualified as Data.String.Unsafe
 import Dovetail.Core.Data.Symbol qualified as Data.Symbol
+import Dovetail.Core.Data.Unfoldable qualified as Data.Unfoldable
+import Dovetail.Core.Data.Unfoldable1 qualified as Data.Unfoldable1
 import Dovetail.Core.Data.Unit qualified as Data.Unit
 import Dovetail.Core.Effect qualified as Effect
 import Dovetail.Core.Effect.Console qualified as Effect.Console
@@ -77,8 +79,6 @@ core sourceFiles = do
       build moduleText
     
     toPath fileName = sourceFiles </> fileName
-    
-    
     
     modules =
       [ "prelude/v5.0.1/src/Type/Proxy.purs"
@@ -208,15 +208,15 @@ core sourceFiles = do
       , "foldable-traversable/v5.0.1/src/Data/TraversableWithIndex.purs"
       , "partial/v3.0.0/src/Partial.purs"
       , "partial/v3.0.0/src/Partial/Unsafe.purs"
-      -- , "unfoldable/v5.0.0/src/Data/Unfoldable1.purs"
-      -- , "unfoldable/v5.0.0/src/Data/Unfoldable.purs"
-      -- , "nonempty/v6.0.0/src/Data/NonEmpty.purs"
-      -- , "effect/v3.0.0/src/Effect.purs"
-      -- , "effect/v3.0.0/src/Effect/Unsafe.purs"
-      -- , "effect/v3.0.0/src/Effect/Uncurried.purs"
-      -- , "effect/v3.0.0/src/Effect/Class.purs"
-      -- , "refs/v5.0.0/src/Effect/Ref.purs"
-      -- , "tailrec/v5.0.1/src/Control/Monad/Rec/Class.purs"
+      , "unfoldable/v5.0.0/src/Data/Unfoldable1.purs"
+      , "unfoldable/v5.0.0/src/Data/Unfoldable.purs"
+      , "nonempty/v6.0.0/src/Data/NonEmpty.purs"
+      , "effect/v3.0.0/src/Effect.purs"
+      , "effect/v3.0.0/src/Effect/Unsafe.purs"
+      , "effect/v3.0.0/src/Effect/Uncurried.purs"
+      , "effect/v3.0.0/src/Effect/Class.purs"
+      , "refs/v5.0.0/src/Effect/Ref.purs"
+      , "tailrec/v5.0.1/src/Control/Monad/Rec/Class.purs"
       -- , "st/v5.0.1/src/Control/Monad/ST/Internal.purs"
       -- , "st/v5.0.1/src/Control/Monad/ST.purs"
       -- , "st/v5.0.1/src/Control/Monad/ST/Global.purs"
@@ -278,8 +278,8 @@ core sourceFiles = do
       -- , "datetime/v5.0.2/src/Data/Interval/Duration.purs"
       -- , "datetime/v5.0.2/src/Data/Interval.purs"
       -- , "datetime/v5.0.2/src/Data/Interval/Duration/Iso.purs"
-      -- , "exceptions/v5.0.0/src/Effect/Exception.purs"
-      -- , "exceptions/v5.0.0/src/Effect/Exception/Unsafe.purs"
+      , "exceptions/v5.0.0/src/Effect/Exception.purs"
+      , "exceptions/v5.0.0/src/Effect/Exception/Unsafe.purs"
       -- , "strings/v5.0.0/src/Data/String/Unsafe.purs"
       -- , "strings/v5.0.0/src/Data/String/Pattern.purs"
       -- , "strings/v5.0.0/src/Data/String/Common.purs"
@@ -369,7 +369,7 @@ core sourceFiles = do
       -- , "validation/v5.0.0/src/Data/Validation/Semiring.purs"
       ]
 
-env :: forall m. (MonadFix m, Typeable m) => Env m
+env :: forall m. (MonadFix m, MonadIO m, Typeable m) => Env m
 env = 
   fold
     [ Control.Apply.env
@@ -399,6 +399,8 @@ env =
     , Data.String.Regex.env
     , Data.String.Unsafe.env
     , Data.Symbol.env
+    , Data.Unfoldable.env
+    , Data.Unfoldable1.env
     , Data.Unit.env
     , Effect.env
     , Effect.Console.env

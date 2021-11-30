@@ -32,13 +32,8 @@ env = do
     ]
 
 -- toNumber :: Int -> Number
--- 
 -- quot :: Int -> Int -> Int
--- 
 -- rem :: Int -> Int -> Int
--- 
 -- pow :: Int -> Int -> Int
--- 
 -- fromStringAsImpl :: (forall a. a -> Maybe a) -> (forall a. Maybe a) -> Radix -> String -> Maybe Int
--- 
 -- toStringAs :: Radix -> Int -> String

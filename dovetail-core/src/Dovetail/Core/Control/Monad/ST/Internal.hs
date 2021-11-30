@@ -27,23 +27,14 @@ env = do
     ]
 
 -- map_ :: forall r a b. (a -> b) -> ST r a -> ST r b
--- 
 -- pure_ :: forall r a. a -> ST r a
--- 
 -- bind_ :: forall r a b. ST r a -> (a -> ST r b) -> ST r b
--- 
 -- run :: forall a. (forall r. ST r a) -> a
--- 
 -- while :: forall r a. ST r Boolean -> ST r a -> ST r Unit
--- 
 -- for :: forall r a. Int -> Int -> (Int -> ST r a) -> ST r Unit
--- 
 -- foreach :: forall r a. Array a -> (a -> ST r Unit) -> ST r Unit
--- 
 -- new :: forall a r. a -> ST r (STRef r a)
--- 
 -- read :: forall a r. STRef r a -> ST r a
--- 
 -- modifyImpl :: forall r a b.           
 --   (a                    
 --    -> { state :: a      
@@ -51,5 +42,4 @@ env = do
 --       }                 
 --   )                     
 --   -> STRef r a -> ST r b
--- 
 -- write :: forall a r. a -> STRef r a -> ST r a

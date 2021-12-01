@@ -353,7 +353,9 @@ instance (MonadFix m, m ~ m') => ToValue m (Value m') where
 
 -- | The Haskell 'Integer' type corresponds to PureScript's integer type.
 instance MonadFix m => ToValue m Integer where
+  {-# INLINE toValue #-}
   toValue = Int
+  {-# INLINE fromValue #-}
   fromValue = \case
     Int i -> pure i
     val -> throwErrorWithContext (TypeMismatch "integer" val)
@@ -361,7 +363,9 @@ instance MonadFix m => ToValue m Integer where
 -- | The Haskell 'Douvle' type corresponds to the subset of PureScript
 -- values consisting of its Number type.
 instance MonadFix m => ToValue m Double where
+  {-# INLINE toValue #-}
   toValue = Number
+  {-# INLINE fromValue #-}
   fromValue = \case
     Number s -> pure s
     val -> throwErrorWithContext (TypeMismatch "number" val)
@@ -369,21 +373,27 @@ instance MonadFix m => ToValue m Double where
 -- | The Haskell 'Text' type is represented by PureScript strings
 -- which contain no lone surrogates.
 instance MonadFix m => ToValue m Text where
+  {-# INLINE toValue #-}
   toValue = String
+  {-# INLINE fromValue #-}
   fromValue = \case
     String s -> pure s
     val -> throwErrorWithContext (TypeMismatch "string" val)
 
 -- | The Haskell 'Char' type is represented by PureScript characters.
 instance MonadFix m => ToValue m Char where
+  {-# INLINE toValue #-}
   toValue = Char
+  {-# INLINE fromValue #-}
   fromValue = \case
     Char c -> pure c
     val -> throwErrorWithContext (TypeMismatch "char" val)
 
 -- | Haskell booleans are represented by boolean values.
 instance MonadFix m => ToValue m Bool where
+  {-# INLINE toValue #-}
   toValue = Bool
+  {-# INLINE fromValue #-}
   fromValue = \case
     Bool b -> pure b
     val -> throwErrorWithContext (TypeMismatch "boolean" val)
@@ -398,13 +408,17 @@ instance (MonadFix m, ToValue m a, ToValueRHS m b) => ToValue m (a -> b) where
 -- | Haskell vectors are represented as homogeneous vectors of values, each of
 -- which are valid representations of the element type.
 instance ToValue m a => ToValue m (Vector a) where
+  {-# INLINE toValue #-}
   toValue = Array . fmap toValue
+  {-# INLINE fromValue #-}
   fromValue = \case
     Array xs -> traverse fromValue xs
     val -> throwErrorWithContext (TypeMismatch "array" val)
     
 instance (k ~ Text, ToValue m a) => ToValue m (HashMap k a) where
+  {-# INLINE toValue #-}
   toValue = Object . fmap toValue
+  {-# INLINE fromValue #-}
   fromValue = \case
     Object o -> traverse fromValue o
     val -> throwErrorWithContext (TypeMismatch "object" val)
@@ -414,7 +428,9 @@ instance (k ~ Text, ToValue m a) => ToValue m (HashMap k a) where
 newtype ForeignType a = ForeignType { getForeignType :: a }
 
 instance forall m a. (MonadFix m, Typeable a) => ToValue m (ForeignType a) where
+  {-# INLINE toValue #-}
   toValue = Foreign . Dynamic.toDyn . getForeignType
+  {-# INLINE fromValue #-}
   fromValue = \case
     Foreign dyn 
       | Just a <- Dynamic.fromDynamic @a dyn -> pure (ForeignType a)
@@ -452,13 +468,17 @@ class ToValueRHS m a where
   fromValueRHS :: EvalT m (Value m) -> a
   
 instance (MonadFix m, ToValue m a, ToValueRHS m b) => ToValueRHS m (a -> b) where
+  {-# INLINE toValueRHS #-}
   toValueRHS f = pure (Closure (\v -> toValueRHS . f =<< fromValue v))
+  {-# INLINE fromValueRHS #-}
   fromValueRHS mv a = fromValueRHS do
     v <- mv
     fromValueRHS (apply v (toValue a))
    
 instance (ToValue m a, n ~ m) => ToValueRHS m (EvalT n a) where
+  {-# INLINE toValueRHS #-}
   toValueRHS = fmap toValue
+  {-# INLINE fromValueRHS #-}
   fromValueRHS = (>>= fromValue)
   
 -- | Options for customizing generic deriving of record instances

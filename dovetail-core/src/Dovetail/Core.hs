@@ -49,6 +49,7 @@ import Dovetail.Core.Data.String.Common qualified as Data.String.Common
 import Dovetail.Core.Data.String.Regex qualified as Data.String.Regex
 import Dovetail.Core.Data.String.Unsafe qualified as Data.String.Unsafe
 import Dovetail.Core.Data.Symbol qualified as Data.Symbol
+import Dovetail.Core.Data.Traversable qualified as Data.Traversable
 import Dovetail.Core.Data.Unfoldable qualified as Data.Unfoldable
 import Dovetail.Core.Data.Unfoldable1 qualified as Data.Unfoldable1
 import Dovetail.Core.Data.Unit qualified as Data.Unit
@@ -217,11 +218,11 @@ core sourceFiles = do
       , "effect/v3.0.0/src/Effect/Class.purs"
       , "refs/v5.0.0/src/Effect/Ref.purs"
       , "tailrec/v5.0.1/src/Control/Monad/Rec/Class.purs"
-      -- , "st/v5.0.1/src/Control/Monad/ST/Internal.purs"
-      -- , "st/v5.0.1/src/Control/Monad/ST.purs"
-      -- , "st/v5.0.1/src/Control/Monad/ST/Global.purs"
-      -- , "st/v5.0.1/src/Control/Monad/ST/Ref.purs"
-      -- , "st/v5.0.1/src/Control/Monad/ST/Class.purs"
+      , "st/v5.0.1/src/Control/Monad/ST/Internal.purs"
+      , "st/v5.0.1/src/Control/Monad/ST.purs"
+      , "st/v5.0.1/src/Control/Monad/ST/Global.purs"
+      , "st/v5.0.1/src/Control/Monad/ST/Ref.purs"
+      , "st/v5.0.1/src/Control/Monad/ST/Class.purs"
       -- , "arrays/v6.0.1/src/Data/Array/ST.purs"
       -- , "arrays/v6.0.1/src/Data/Array/ST/Partial.purs"
       -- , "arrays/v6.0.1/src/Data/Array/ST/Iterator.purs"
@@ -229,9 +230,9 @@ core sourceFiles = do
       -- , "arrays/v6.0.1/src/Data/Array.purs"
       -- , "arrays/v6.0.1/src/Data/Array/Partial.purs"
       -- , "arrays/v6.0.1/src/Data/Array/NonEmpty.purs"
-      -- , "console/v5.0.0/src/Effect/Console.purs"
-      -- , "console/v5.0.0/src/Effect/Class/Console.purs"
-      -- , "assert/v5.0.0/src/Test/Assert.purs"
+      , "console/v5.0.0/src/Effect/Console.purs"
+      , "console/v5.0.0/src/Effect/Class/Console.purs"
+      , "assert/v5.0.0/src/Test/Assert.purs"
       -- , "lazy/v5.0.0/src/Data/Lazy.purs"
       -- , "lists/v6.0.1/src/Data/List/Lazy/Types.purs"
       -- , "lists/v6.0.1/src/Data/List/Types.purs"
@@ -399,6 +400,7 @@ env =
     , Data.String.Regex.env
     , Data.String.Unsafe.env
     , Data.Symbol.env
+    , Data.Traversable.env
     , Data.Unfoldable.env
     , Data.Unfoldable1.env
     , Data.Unit.env

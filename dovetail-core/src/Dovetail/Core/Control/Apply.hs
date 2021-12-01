@@ -8,7 +8,6 @@
 module Dovetail.Core.Control.Apply where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Traversable (sequence)
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)

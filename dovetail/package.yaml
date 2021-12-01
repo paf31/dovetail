@@ -20,6 +20,7 @@ dependencies:
 library:
   source-dirs: src
   ghc-options:
+  - -O2
   - -Wall
   - -fwarn-unused-imports
   dependencies:

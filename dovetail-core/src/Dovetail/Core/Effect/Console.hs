@@ -7,30 +7,61 @@
 
 module Dovetail.Core.Effect.Console where
 
+import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Text.IO qualified as Text.IO
+import Data.Typeable (Typeable)
 import Data.Vector (Vector)
 import Dovetail
+import Dovetail.Core.Effect (Effect)
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. (MonadFix m, MonadIO m, Typeable m) => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
+  let _ModuleName = ModuleName "Effect.Console"
+
+      logImpl :: Text -> Effect m (Value m)
+      logImpl s _ = do
+        liftIO (Text.IO.putStrLn s)
+        pure (Object mempty)
+        
+      notImplemented :: Text -> EvalT m a
       notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
 
-      _ModuleName = ModuleName "Effect.Console"
-
   fold
-    [
+    [ -- log :: String -> Effect Unit
+      builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "log"
+        logImpl
+      -- warn :: String -> Effect Unit
+    , builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "warn"
+        logImpl
+      -- error :: String -> Effect Unit
+    , builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "error"
+        logImpl
+      -- info :: String -> Effect Unit
+    , builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "info"
+        logImpl
+      -- time :: String -> Effect Unit
+    , builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "time"
+        \_ _ -> notImplemented "time"
+      -- timeLog :: String -> Effect Unit
+    , builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "timeLog"
+        \_ _ -> notImplemented "timeLog"
+      -- timeEnd :: String -> Effect Unit
+    , builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "timeEnd"
+        \_ _ -> notImplemented "timeEnd"
+      -- clear :: Effect Unit
+    , builtIn @m @(Text -> Effect m (Value m))
+        _ModuleName "clear"
+        \_ _ -> notImplemented "clear"
     ]
-
--- log :: String -> Effect Unit
--- warn :: String -> Effect Unit
--- error :: String -> Effect Unit
--- info :: String -> Effect Unit
--- time :: String -> Effect Unit
--- timeLog :: String -> Effect Unit
--- timeEnd :: String -> Effect Unit
--- clear :: Effect Unit

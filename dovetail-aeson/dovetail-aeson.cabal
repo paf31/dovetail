@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7d4dce6b707b74a3b9317eae0c627e812de98f8e6a533535f74e233434a40bf2
+-- hash: ca594615c0d0b00646d8ea5ecc7ad5d81a68141d09b5413897247006ae972e5e
 
 name:           dovetail-aeson
 version:        0.1.0.0
@@ -30,7 +30,7 @@ library
       Paths_dovetail_aeson
   hs-source-dirs:
       src
-  ghc-options: -Wall -fwarn-unused-imports
+  ghc-options: -O2 -Wall -fwarn-unused-imports
   build-depends:
       aeson
     , base >=4.7 && <5

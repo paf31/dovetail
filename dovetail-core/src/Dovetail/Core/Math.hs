@@ -9,50 +9,148 @@ module Dovetail.Core.Math where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
-import Data.Text (Text)
-import Data.Text qualified as Text
-import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
-
-      _ModuleName = ModuleName "Math"
+  let _ModuleName = ModuleName "Math"
 
   fold
-    [
+    [ -- abs :: Number -> Number
+      builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "abs"
+        \a -> 
+          pure (abs a)
+      -- acos :: Number -> Radians
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "acos"
+        \a -> 
+          pure (acos a)
+      -- asin :: Number -> Radians
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "asin"
+        \a -> 
+          pure (asin a)
+      -- atan :: Number -> Radians
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "atan"
+        \a -> 
+          pure (atan a)
+      -- atan2 :: Number -> Number -> Radians
+    , builtIn @m @(Double -> Double -> EvalT m Double)
+        _ModuleName "atan2"
+        \a b -> 
+          pure (atan2 a b)
+      -- ceil :: Number -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "ceil"
+        \a -> 
+          pure (fromIntegral (ceiling a))
+      -- cos :: Radians -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "cos"
+        \a -> 
+          pure (cos a)
+      -- exp :: Number -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "exp"
+        \a -> 
+          pure (exp a)
+      -- floor :: Number -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "floor"
+        \a -> 
+          pure (fromIntegral (floor a))
+      -- imul :: Int -> Int -> Int
+    , builtIn @m @(Integer -> Integer -> EvalT m Integer)
+        _ModuleName "imul"
+        \a b ->
+          pure (a * b)
+      -- log :: Number -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "log"
+        \a -> 
+          pure (log a)
+      -- max :: Number -> Number -> Number
+    , builtIn @m @(Double -> Double -> EvalT m Double)
+        _ModuleName "max"
+        \a b -> 
+          pure (max a b)
+      -- min :: Number -> Number -> Number
+    , builtIn @m @(Double -> Double -> EvalT m Double)
+        _ModuleName "min"
+        \a b -> 
+          pure (min a b)
+      -- pow :: Number -> Number -> Number
+    , builtIn @m @(Double -> Double -> EvalT m Double)
+        _ModuleName "pow"
+        \a b -> 
+          pure (a ** b)
+      -- round :: Number -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "round"
+        \a -> 
+          pure (fromIntegral (round a))
+      -- sin :: Radians -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "sin"
+        \a -> 
+          pure (sin a)
+      -- sqrt :: Number -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "sqrt"
+        \a -> 
+          pure (sqrt a)
+      -- tan :: Radians -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "tan"
+        \a -> 
+          pure (tan a)
+      -- trunc :: Number -> Number
+    , builtIn @m @(Double -> EvalT m Double)
+        _ModuleName "trunc"
+        \a -> 
+          pure (fromIntegral (truncate a))
+      -- remainder :: Number -> Number -> Number
+    , builtIn @m @(Double -> Double -> EvalT m Double)
+        _ModuleName "remainder"
+        \a b -> 
+          pure (a - fromIntegral (truncate (a / b)) * b)
+      -- e :: Number
+    , builtIn @m @Double
+        _ModuleName "e"
+          (exp 1)
+      -- ln2 :: Number
+    , builtIn @m @Double
+        _ModuleName "ln2"
+          (log 2)
+      -- ln10 :: Number
+    , builtIn @m @Double
+        _ModuleName "ln10"
+          (log 10)
+      -- log2e :: Number
+    , builtIn @m @Double
+        _ModuleName "log2e"
+          (1 / log 2)
+      -- log10e :: Number
+    , builtIn @m @Double
+        _ModuleName "log10e"
+          (1 /  log 10)
+      -- pi :: Number
+    , builtIn @m @Double
+        _ModuleName "pi"
+          pi
+      -- tau :: Number
+    , builtIn @m @Double
+        _ModuleName "tau"
+          (2 * pi)
+      -- sqrt1_2 :: Number
+    , builtIn @m @Double
+        _ModuleName "sqrt1_2"
+          (sqrt 0.5)
+      -- sqrt2 :: Number
+    , builtIn @m @Double
+        _ModuleName "sqrt2"
+          (sqrt 2)
     ]
-
--- abs :: Number -> Number
--- acos :: Number -> Radians
--- asin :: Number -> Radians
--- atan :: Number -> Radians
--- atan2 :: Number -> Number -> Radians
--- ceil :: Number -> Number
--- cos :: Radians -> Number
--- exp :: Number -> Number
--- floor :: Number -> Number
--- imul :: Int -> Int -> Int
--- log :: Number -> Number
--- max :: Number -> Number -> Number
--- min :: Number -> Number -> Number
--- pow :: Number -> Number -> Number
--- round :: Number -> Number
--- sin :: Radians -> Number
--- sqrt :: Number -> Number
--- tan :: Radians -> Number
--- trunc :: Number -> Number
--- remainder :: Number -> Number -> Number
--- e :: Number
--- ln2 :: Number
--- ln10 :: Number
--- log2e :: Number
--- log10e :: Number
--- pi :: Number
--- tau :: Number
--- sqrt1_2 :: Number
--- sqrt2 :: Number

@@ -3,46 +3,57 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE UndecidableInstances     #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE AllowAmbiguousTypes     #-}
 
 module Dovetail.Core.Effect.Uncurried where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
 import Data.Text (Text)
-import Data.Text qualified as Text
-import Data.Vector (Vector)
 import Dovetail
+import Dovetail.Core.Effect (Effect)
 import Dovetail.Evaluate (builtIn)
+import GHC.TypeLits (Nat, type (-))
+
+type family Fn (n :: Nat) (m :: * -> *) where
+  Fn 1 m = Value m -> Effect m (Value m)
+  Fn n m = Value m -> Fn (n - 1) m
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
+  let _ModuleName = ModuleName "Effect.Uncurried"
 
-      _ModuleName = ModuleName "Effect.Uncurried"
+      effectFn :: forall (n :: Nat)
+                . (ToValue m (Fn n m), ToValueRHS m (Fn n m))
+               => Text
+               -> Env m
+      effectFn name = builtIn @m @(Fn n m -> Fn n m) _ModuleName name id
 
   fold
-    [
+    [ effectFn @1 "runEffectFn1"
+    , effectFn @2 "runEffectFn2"
+    , effectFn @3 "runEffectFn3"
+    , effectFn @4 "runEffectFn4"
+    , effectFn @5 "runEffectFn5"
+    , effectFn @6 "runEffectFn6"
+    , effectFn @7 "runEffectFn7"
+    , effectFn @8 "runEffectFn8"
+    , effectFn @9 "runEffectFn9"
+    , effectFn @10 "runEffectFn10"
+    
+    , effectFn @1 "mkEffectFn1"
+    , effectFn @2 "mkEffectFn2"
+    , effectFn @3 "mkEffectFn3"
+    , effectFn @4 "mkEffectFn4"
+    , effectFn @5 "mkEffectFn5"
+    , effectFn @6 "mkEffectFn6"
+    , effectFn @7 "mkEffectFn7"
+    , effectFn @8 "mkEffectFn8"
+    , effectFn @9 "mkEffectFn9"
+    , effectFn @10 "mkEffectFn10"
     ]
-
--- mkEffectFn1 :: forall a r. (a -> Effect r) -> EffectFn1 a r
--- mkEffectFn2 :: forall a b r. (a -> b -> Effect r) -> EffectFn2 a b r
--- mkEffectFn3 :: forall a b c r. (a -> b -> c -> Effect r) -> EffectFn3 a b c r
--- mkEffectFn4 :: forall a b c d r. (a -> b -> c -> d -> Effect r) -> EffectFn4 a b c d r
--- mkEffectFn5 :: forall a b c d e r. (a -> b -> c -> d -> e -> Effect r) -> EffectFn5 a b c d e r
--- mkEffectFn6 :: forall a b c d e f r. (a -> b -> c -> d -> e -> f -> Effect r) -> EffectFn6 a b c d e f r
--- mkEffectFn7 :: forall a b c d e f g r. (a -> b -> c -> d -> e -> f -> g -> Effect r) -> EffectFn7 a b c d e f g r
--- mkEffectFn8 :: forall a b c d e f g h r. (a -> b -> c -> d -> e -> f -> g -> h -> Effect r) -> EffectFn8 a b c d e f g h r
--- mkEffectFn9 :: forall a b c d e f g h i r. (a -> b -> c -> d -> e -> f -> g -> h -> i -> Effect r) -> EffectFn9 a b c d e f g h i r
--- mkEffectFn10 :: forall a b c d e f g h i j r. (a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> Effect r) -> EffectFn10 a b c d e f g h i j r
--- runEffectFn1 :: forall a r. EffectFn1 a r -> a -> Effect r
--- runEffectFn2 :: forall a b r. EffectFn2 a b r -> a -> b -> Effect r
--- runEffectFn3 :: forall a b c r. EffectFn3 a b c r -> a -> b -> c -> Effect r
--- runEffectFn4 :: forall a b c d r. EffectFn4 a b c d r -> a -> b -> c -> d -> Effect r
--- runEffectFn5 :: forall a b c d e r. EffectFn5 a b c d e r -> a -> b -> c -> d -> e -> Effect r
--- runEffectFn6 :: forall a b c d e f r. EffectFn6 a b c d e f r -> a -> b -> c -> d -> e -> f -> Effect r
--- runEffectFn7 :: forall a b c d e f g r. EffectFn7 a b c d e f g r -> a -> b -> c -> d -> e -> f -> g -> Effect r
--- runEffectFn8 :: forall a b c d e f g h r. EffectFn8 a b c d e f g h r -> a -> b -> c -> d -> e -> f -> g -> h -> Effect r
--- runEffectFn9 :: forall a b c d e f g h i r. EffectFn9 a b c d e f g h i r -> a -> b -> c -> d -> e -> f -> g -> h -> i -> Effect r
--- runEffectFn10 :: forall a b c d e f g h i j r. EffectFn10 a b c d e f g h i j r -> a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> Effect r

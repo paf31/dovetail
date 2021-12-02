@@ -15,20 +15,32 @@ import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
-
-      _ModuleName = ModuleName "Data.Number"
+  let _ModuleName = ModuleName "Data.Number"
 
   fold
-    [
+    [ -- nan :: Number
+      builtIn @m @Double
+        _ModuleName "nan"
+        (0 / 0)
+    -- isNaN :: Number -> Boolean
+    , builtIn @m @(Double -> EvalT m Bool)
+        _ModuleName "isNaN"
+        \a -> 
+          pure (isNaN a)
+    -- infinity :: Number
+    , builtIn @m @Double
+        _ModuleName "infinity"
+        (recip 0)
+    -- isFinite :: Number -> Boolean
+    , builtIn @m @(Double -> EvalT m Bool)
+        _ModuleName "isFinite"
+        \a -> 
+          pure (not (isInfinite a))
+    -- fromStringImpl :: Fn4 String (Number -> Boolean) (forall a. a -> Maybe a) (forall a. Maybe a) (Maybe Number)
+    , builtIn @m @(Text -> (Double -> EvalT m Bool) -> (Double -> EvalT m (Value m)) -> Value m -> EvalT m (Value m))
+        _ModuleName "fromStringImpl"
+        \s _isFinite _just _nothing ->
+          throwErrorWithContext (OtherError "fromStringImpl is not implemented")
     ]
-
--- nan :: Number
--- isNaN :: Number -> Boolean
--- infinity :: Number
--- isFinite :: Number -> Boolean
--- fromStringImpl :: Fn4 String (Number -> Boolean) (forall a. a -> Maybe a) (forall a. Maybe a) (Maybe Number)

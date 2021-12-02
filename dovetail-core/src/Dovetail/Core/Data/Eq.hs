@@ -12,6 +12,7 @@ import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
@@ -47,6 +48,8 @@ env = do
       -- eqArrayImpl :: forall a. (a -> a -> Boolean) -> Array a -> Array a -> Boolean
     , builtIn @m @((Value m -> Value m -> EvalT m Bool) -> Vector (Value m) -> Vector (Value m) -> EvalT m Bool)
         _ModuleName "eqArrayImpl"
-        \_eq xs ys -> 
-          undefined -- TODO
+        \f xs ys -> 
+          if Vector.length xs == Vector.length ys
+            then Vector.and <$> Vector.zipWithM f xs ys
+            else pure False
     ]

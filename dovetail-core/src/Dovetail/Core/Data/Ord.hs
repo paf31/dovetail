@@ -11,9 +11,9 @@ import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
-
 
 env :: forall m. MonadFix m => Env m
 env = do
@@ -50,5 +50,8 @@ env = do
       builtIn @m @((Value m -> Value m -> EvalT m Integer) -> Vector (Value m) -> Vector (Value m) -> EvalT m Integer)
         _ModuleName "ordArrayImpl"
         \cmp xs ys ->
-          undefined -- TODO
+          Vector.foldr 
+            (\new old -> if new == 0 then old else new) 
+            (fromIntegral (Vector.length ys - Vector.length xs)) 
+            <$> Vector.zipWithM cmp xs ys
     ]

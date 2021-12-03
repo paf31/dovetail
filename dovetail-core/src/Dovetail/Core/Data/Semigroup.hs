@@ -30,5 +30,3 @@ env = do
         \xs ys ->
           pure (xs <> ys)
     ]
-
-

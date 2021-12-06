@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 75aef165acd355841b6c745a3d732a62126e70c333d432434925f381ce970c45
+-- hash: 0adc4b1ef077bad7469d76d932844e1d5674a46b211af8ca18aeb19e72976547
 
 name:           dovetail-core
 version:        0.1.0.0
@@ -30,7 +30,12 @@ library
       Dovetail.Core.Control.Bind
       Dovetail.Core.Control.Extend
       Dovetail.Core.Control.Monad.ST.Internal
+      Dovetail.Core.Data.Array
+      Dovetail.Core.Data.Array.NonEmpty.Internal
+      Dovetail.Core.Data.Array.ST
+      Dovetail.Core.Data.Array.ST.Partial
       Dovetail.Core.Data.Bounded
+      Dovetail.Core.Data.Enum
       Dovetail.Core.Data.Eq
       Dovetail.Core.Data.EuclideanRing
       Dovetail.Core.Data.Foldable
@@ -40,6 +45,7 @@ library
       Dovetail.Core.Data.HeytingAlgebra
       Dovetail.Core.Data.Int
       Dovetail.Core.Data.Int.Bits
+      Dovetail.Core.Data.Lazy
       Dovetail.Core.Data.Number
       Dovetail.Core.Data.Number.Format
       Dovetail.Core.Data.Ord

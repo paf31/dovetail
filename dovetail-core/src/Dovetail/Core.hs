@@ -26,7 +26,12 @@ import Dovetail.Core.Control.Apply qualified as Control.Apply
 import Dovetail.Core.Control.Bind qualified as Control.Bind
 import Dovetail.Core.Control.Extend qualified as Control.Extend
 import Dovetail.Core.Control.Monad.ST.Internal qualified as Control.Monad.ST.Internal
+import Dovetail.Core.Data.Array qualified as Data.Array
+import Dovetail.Core.Data.Array.NonEmpty.Internal qualified as Data.Array.NonEmpty.Internal
+import Dovetail.Core.Data.Array.ST qualified as Data.Array.ST
+import Dovetail.Core.Data.Array.ST.Partial qualified as Data.Array.ST.Partial
 import Dovetail.Core.Data.Bounded qualified as Data.Bounded
+import Dovetail.Core.Data.Enum qualified as Data.Enum
 import Dovetail.Core.Data.Eq qualified as Data.Eq
 import Dovetail.Core.Data.EuclideanRing qualified as Data.EuclideanRing
 import Dovetail.Core.Data.Foldable qualified as Data.Foldable
@@ -36,6 +41,7 @@ import Dovetail.Core.Data.FunctorWithIndex qualified as Data.FunctorWithIndex
 import Dovetail.Core.Data.HeytingAlgebra qualified as Data.HeytingAlgebra
 import Dovetail.Core.Data.Int qualified as Data.Int
 import Dovetail.Core.Data.Int.Bits qualified as Data.Int.Bits
+import Dovetail.Core.Data.Lazy qualified as Data.Lazy
 import Dovetail.Core.Data.Number qualified as Data.Number
 import Dovetail.Core.Data.Number.Format qualified as Data.Number.Format
 import Dovetail.Core.Data.Ord qualified as Data.Ord
@@ -223,34 +229,34 @@ core sourceFiles = do
       , "st/v5.0.1/src/Control/Monad/ST/Global.purs"
       , "st/v5.0.1/src/Control/Monad/ST/Ref.purs"
       , "st/v5.0.1/src/Control/Monad/ST/Class.purs"
-      -- , "arrays/v6.0.1/src/Data/Array/ST.purs"
-      -- , "arrays/v6.0.1/src/Data/Array/ST/Partial.purs"
-      -- , "arrays/v6.0.1/src/Data/Array/ST/Iterator.purs"
-      -- , "arrays/v6.0.1/src/Data/Array/NonEmpty/Internal.purs"
-      -- , "arrays/v6.0.1/src/Data/Array.purs"
-      -- , "arrays/v6.0.1/src/Data/Array/Partial.purs"
-      -- , "arrays/v6.0.1/src/Data/Array/NonEmpty.purs"
+      , "arrays/v6.0.1/src/Data/Array/ST.purs"
+      , "arrays/v6.0.1/src/Data/Array/ST/Partial.purs"
+      , "arrays/v6.0.1/src/Data/Array/ST/Iterator.purs"
+      , "arrays/v6.0.1/src/Data/Array/NonEmpty/Internal.purs"
+      , "arrays/v6.0.1/src/Data/Array.purs"
+      , "arrays/v6.0.1/src/Data/Array/Partial.purs"
+      , "arrays/v6.0.1/src/Data/Array/NonEmpty.purs"
       , "console/v5.0.0/src/Effect/Console.purs"
       , "console/v5.0.0/src/Effect/Class/Console.purs"
       , "assert/v5.0.0/src/Test/Assert.purs"
-      -- , "lazy/v5.0.0/src/Data/Lazy.purs"
-      -- , "lists/v6.0.1/src/Data/List/Lazy/Types.purs"
-      -- , "lists/v6.0.1/src/Data/List/Types.purs"
-      -- , "lists/v6.0.1/src/Data/List/Internal.purs"
-      -- , "lists/v6.0.1/src/Data/List/Lazy.purs"
-      -- , "lists/v6.0.1/src/Data/List.purs"
-      -- , "lists/v6.0.1/src/Data/List/ZipList.purs"
-      -- , "lists/v6.0.1/src/Data/List/Lazy/NonEmpty.purs"
-      -- , "lists/v6.0.1/src/Data/List/Partial.purs"
-      -- , "lists/v6.0.1/src/Data/List/NonEmpty.purs"
-      -- , "catenable-lists/v6.0.1/src/Data/CatQueue.purs"
-      -- , "catenable-lists/v6.0.1/src/Data/CatList.purs"
-      -- , "gen/v3.0.0/src/Control/Monad/Gen/Class.purs"
-      -- , "gen/v3.0.0/src/Control/Monad/Gen.purs"
-      -- , "gen/v3.0.0/src/Control/Monad/Gen/Common.purs"
-      -- , "enums/v5.0.0/src/Data/Enum.purs"
-      -- , "enums/v5.0.0/src/Data/Enum/Generic.purs"
-      -- , "enums/v5.0.0/src/Data/Enum/Gen.purs"
+      , "lazy/v5.0.0/src/Data/Lazy.purs"
+      , "lists/v6.0.1/src/Data/List/Lazy/Types.purs"
+      , "lists/v6.0.1/src/Data/List/Types.purs"
+      , "lists/v6.0.1/src/Data/List/Internal.purs"
+      , "lists/v6.0.1/src/Data/List/Lazy.purs"
+      , "lists/v6.0.1/src/Data/List.purs"
+      , "lists/v6.0.1/src/Data/List/ZipList.purs"
+      , "lists/v6.0.1/src/Data/List/Lazy/NonEmpty.purs"
+      , "lists/v6.0.1/src/Data/List/Partial.purs"
+      , "lists/v6.0.1/src/Data/List/NonEmpty.purs"
+      , "catenable-lists/v6.0.1/src/Data/CatQueue.purs"
+      , "catenable-lists/v6.0.1/src/Data/CatList.purs"
+      , "gen/v3.0.0/src/Control/Monad/Gen/Class.purs"
+      , "gen/v3.0.0/src/Control/Monad/Gen.purs"
+      , "gen/v3.0.0/src/Control/Monad/Gen/Common.purs"
+      , "enums/v5.0.0/src/Data/Enum.purs"
+      , "enums/v5.0.0/src/Data/Enum/Generic.purs"
+      , "enums/v5.0.0/src/Data/Enum/Gen.purs"
       , "functions/v5.0.0/src/Data/Function/Uncurried.purs"
       , "math/v3.0.0/src/Math.purs"
       , "numbers/v8.0.0/src/Data/Number/Approximate.purs"
@@ -258,11 +264,11 @@ core sourceFiles = do
       , "numbers/v8.0.0/src/Data/Number.purs"
       , "integers/v5.0.0/src/Data/Int/Bits.purs"
       , "integers/v5.0.0/src/Data/Int.purs"
-      -- , "ordered-collections/v2.0.1/src/Data/Map/Internal.purs"
-      -- , "ordered-collections/v2.0.1/src/Data/Set.purs"
-      -- , "ordered-collections/v2.0.1/src/Data/Map.purs"
-      -- , "ordered-collections/v2.0.1/src/Data/Set/NonEmpty.purs"
-      -- , "ordered-collections/v2.0.1/src/Data/Map/Gen.purs"
+      , "ordered-collections/v2.0.1/src/Data/Map/Internal.purs"
+      , "ordered-collections/v2.0.1/src/Data/Set.purs"
+      , "ordered-collections/v2.0.1/src/Data/Map.purs"
+      , "ordered-collections/v2.0.1/src/Data/Set/NonEmpty.purs"
+      , "ordered-collections/v2.0.1/src/Data/Map/Gen.purs"
       -- , "datetime/v5.0.2/src/Data/Time/Duration.purs"
       -- , "datetime/v5.0.2/src/Data/Time/Duration/Gen.purs"
       -- , "datetime/v5.0.2/src/Data/Time/Component.purs"
@@ -281,13 +287,13 @@ core sourceFiles = do
       -- , "datetime/v5.0.2/src/Data/Interval/Duration/Iso.purs"
       , "exceptions/v5.0.0/src/Effect/Exception.purs"
       , "exceptions/v5.0.0/src/Effect/Exception/Unsafe.purs"
-      -- , "strings/v5.0.0/src/Data/String/Unsafe.purs"
-      -- , "strings/v5.0.0/src/Data/String/Pattern.purs"
-      -- , "strings/v5.0.0/src/Data/String/Common.purs"
-      -- , "strings/v5.0.0/src/Data/String/CodeUnits.purs"
-      -- , "strings/v5.0.0/src/Data/Char.purs"
-      -- , "strings/v5.0.0/src/Data/Char/Gen.purs"
-      -- , "strings/v5.0.0/src/Data/String/Gen.purs"
+      , "strings/v5.0.0/src/Data/String/Unsafe.purs"
+      , "strings/v5.0.0/src/Data/String/Pattern.purs"
+      , "strings/v5.0.0/src/Data/String/Common.purs"
+      , "strings/v5.0.0/src/Data/String/CodeUnits.purs"
+      , "strings/v5.0.0/src/Data/Char.purs"
+      , "strings/v5.0.0/src/Data/Char/Gen.purs"
+      , "strings/v5.0.0/src/Data/String/Gen.purs"
       -- , "strings/v5.0.0/src/Data/String/CodePoints.purs"
       -- , "strings/v5.0.0/src/Data/String.purs"
       -- , "strings/v5.0.0/src/Data/String/NonEmpty/Internal.purs"
@@ -377,7 +383,12 @@ env =
     , Control.Bind.env
     , Control.Extend.env
     , Control.Monad.ST.Internal.env
+    , Data.Array.env
+    , Data.Array.NonEmpty.Internal.env
+    , Data.Array.ST.env
+    , Data.Array.ST.Partial.env
     , Data.Bounded.env
+    , Data.Enum.env
     , Data.Eq.env
     , Data.EuclideanRing.env
     , Data.Foldable.env
@@ -387,6 +398,7 @@ env =
     , Data.HeytingAlgebra.env
     , Data.Int.env
     , Data.Int.Bits.env
+    , Data.Lazy.env
     , Data.Number.env
     , Data.Number.Format.env
     , Data.Ord.env

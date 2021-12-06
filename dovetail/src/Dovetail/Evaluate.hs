@@ -198,7 +198,7 @@ match env vals (CoreFn.CaseAlternative binders expr)
   | length vals == length binders = do
     newEnv <- fold <$> zipWithM matchOne vals binders
     case expr of
-      Left guards -> (newEnv, ) <$> asum (map (uncurry (evalGuard env)) guards)
+      Left guards -> (newEnv, ) <$> asum (map (uncurry (evalGuard (newEnv <> env))) guards)
       Right e -> pure (newEnv, e)
   | otherwise = throwErrorWithContext (InvalidNumberOfArguments (length vals) (length binders))
 

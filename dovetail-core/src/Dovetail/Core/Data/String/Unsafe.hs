@@ -23,12 +23,18 @@ env = do
       _ModuleName = ModuleName "Data.String.Unsafe"
 
   fold
-    [ builtIn @m @(Value m -> EvalT m (Value m))  --  :: Int -> Text -> Char
+    [ -- charAt :: Int -> String -> Char
+      builtIn @m @(Integer -> Text -> EvalT m Char)  
         _ModuleName "charAt" 
-        \_ -> 
-          notImplemented "charAt"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Text -> Char
+        \i str -> 
+          if i >= 0 && fromIntegral i < Text.length str
+            then pure (Text.index str (fromIntegral i))
+            else throwErrorWithContext (OtherError "charAt: index out of range")
+      -- char :: String -> Char
+    , builtIn @m @(Text -> EvalT m Char)
         _ModuleName "char" 
-        \_ -> 
-          notImplemented "char"
+        \str -> 
+          if Text.length str == 1
+            then pure (Text.head str)
+            else throwErrorWithContext (OtherError "char: not a singleton")
     ]

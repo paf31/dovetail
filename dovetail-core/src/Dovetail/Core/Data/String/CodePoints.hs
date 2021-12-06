@@ -10,42 +10,72 @@ module Dovetail.Core.Data.String.CodePoints where
 import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
 import Data.Text (Text)
-import Data.Text qualified as Text
 import Data.Vector (Vector)
-import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
+type CodePoint = Integer
 
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
-
-      _ModuleName = ModuleName "Data.String.CodePoints"
+  let _ModuleName = ModuleName "Data.String.CodePoints"
 
   fold
-    [ builtIn @m @(Integer -> EvalT m Text)
+    [ -- _singleton
+      --   :: (CodePoint -> String)
+      --   -> CodePoint
+      --   -> String
+      builtIn @m @((CodePoint -> EvalT m Text) -> CodePoint -> EvalT m Text)
         _ModuleName "_singleton" 
-        \_cp -> 
-          notImplemented "_singleton"
-    , builtIn @m @(Vector Integer -> EvalT m Text)
+        \fallback -> fallback
+      -- _fromCodePointArray
+      --   :: (CodePoint -> String)
+      --   -> Array CodePoint
+      --   -> String
+    , builtIn @m @((Vector CodePoint -> EvalT m Text) -> Vector CodePoint -> EvalT m Text)
         _ModuleName "_fromCodePointArray" 
-        \_cps -> 
-          notImplemented "_fromCodePointArray"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: 
+        \fallback -> fallback
+      -- _toCodePointArray
+      --   :: (String -> Array CodePoint)
+      --   -> (String -> CodePoint)
+      --   -> String
+      --   -> Array CodePoint
+    , builtIn @m @((Text -> EvalT m (Vector CodePoint)) -> (Text -> EvalT m CodePoint) -> Text -> EvalT m (Vector CodePoint))
         _ModuleName "_toCodePointArray" 
-        \_ -> notImplemented "_toCodePointArray"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: 
+        \fallback _ -> fallback
+      -- _codePointAt
+      --   :: (Int -> String -> Maybe CodePoint)
+      --   -> (forall a. a -> Maybe a)
+      --   -> (forall a. Maybe a)
+      --   -> (String -> CodePoint)
+      --   -> Int
+      --   -> String
+      --   -> Maybe CodePoint
+    , builtIn @m @((Integer -> Text -> EvalT m (Value m)) -> (Value m -> EvalT m (Value m)) -> Value m -> (Text -> EvalT m CodePoint) -> Integer -> Text -> EvalT m (Value m))
         _ModuleName "_codePointAt" 
-        \_ -> notImplemented "_codePointAt"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: 
+        \fallback _ _ _ -> fallback
+      -- _countPrefix
+      --   :: ((CodePoint -> Boolean) -> String -> Int)
+      --   -> (String -> CodePoint)
+      --   -> (CodePoint -> Boolean)
+      --   -> String
+      --   -> Int
+    , builtIn @m @(((CodePoint -> EvalT m Bool) -> Text -> EvalT m Integer) -> (Text -> EvalT m CodePoint) -> (CodePoint -> EvalT m Bool) -> Text -> EvalT m Integer)
         _ModuleName "_countPrefix" 
-        \_ -> notImplemented "_countPrefix"
+        \fallback _ -> fallback
+      -- _take
+      --   :: (Int -> String -> String)
+      --   -> Int 
+      --   -> String 
+      --   -> String
     , builtIn @m @((Integer -> Text -> EvalT m Text) -> Integer -> Text -> EvalT m Text)
         _ModuleName "_take" 
         \fallback -> fallback
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: 
+      -- _unsafeCodePointAt0
+      --   :: (String -> CodePoint)
+      --   -> String
+      --   -> CodePoint
+    , builtIn @m @((Text -> EvalT m CodePoint) -> Text -> EvalT m CodePoint)
         _ModuleName "_unsafeCodePointAt0" 
-        \_ -> notImplemented "_unsafeCodePointAt0"
+        \fallback -> fallback
     ]

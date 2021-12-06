@@ -16,7 +16,6 @@ import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-
 env :: forall m. MonadFix m => Env m
 env = do
   let notImplemented :: Text -> EvalT m a
@@ -57,32 +56,40 @@ env = do
         _ModuleName "countPrefix" 
         \p s ->
           notImplemented "countPrefix"
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Text -> EvalT m (Value m))  --  :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+      -- _lastIndexOf :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Text -> EvalT m (Value m))
         _ModuleName "_lastIndexOf" 
         \_just _nothing c s ->
           notImplemented "_lastIndexOf"
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Integer -> Text -> EvalT m (Value m))  --  :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+      -- _indexOfStartingAt :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Integer -> Text -> EvalT m (Value m))
         _ModuleName "_indexOfStartingAt" 
         \_just _nothing c startAt s ->
           notImplemented "_indexOfStartingAt"
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Text -> EvalT m (Value m))  --  :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+      -- _indexOf :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Text -> EvalT m (Value m))
         _ModuleName "_indexOf" 
         \_just _nothing c s ->
           notImplemented "_indexOf"
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Integer -> Text -> EvalT m (Value m))  --  :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+      -- _lastIndexOfStartingAt :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
+    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Char -> Integer -> Text -> EvalT m (Value m))
         _ModuleName "_lastIndexOfStartingAt" 
         \_just _nothing c startAt s ->
           notImplemented "_lastIndexOfStartingAt"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Int -> Text -> String
+      -- take :: Int -> Text -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "take" 
         \_ -> notImplemented "take"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Int -> Text -> String
+      -- drop :: Int -> Text -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "drop" 
         \_ -> notImplemented "drop"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Int -> Int -> Text -> String
+      -- _slice :: Int -> Int -> Text -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "_slice" 
         \_ -> notImplemented "_slice"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Int -> Text -> { before :: String, after :: String }
+      -- splitAt :: Int -> Text -> { before :: String, after :: String }
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "splitAt" 
         \_ -> notImplemented "splitAt"
     ]

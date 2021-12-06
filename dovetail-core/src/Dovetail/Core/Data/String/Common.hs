@@ -31,25 +31,32 @@ env = do
               LT -> lt
               EQ -> eq
               GT -> gt
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Pattern -> Replacement -> Text -> String
+      -- replace :: Pattern -> Replacement -> String -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "replace" 
         \_ -> notImplemented "replace"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Pattern -> Replacement -> Text -> String
+      -- replaceAll :: Pattern -> Replacement -> String -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "replaceAll" 
         \_ -> notImplemented "replaceAll"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Pattern -> Text -> Vector String
+      -- split :: Pattern -> String -> Vector String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "split" 
         \_ -> notImplemented "split"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Text -> String
+      -- toLower :: String -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "toLower" 
         \_ -> notImplemented "toLower"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Text -> String
+      -- toUpper :: String -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "toUpper" 
         \_ -> notImplemented "toUpper"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Text -> String
+      -- trim :: String -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "trim" 
         \_ -> notImplemented "trim"
-    , builtIn @m @(Value m -> EvalT m (Value m))  --  :: Text -> Vector Text -> String
+      -- joinWith :: String -> Array String -> String
+    , builtIn @m @(Value m -> EvalT m (Value m))
         _ModuleName "joinWith" 
         \_ -> notImplemented "joinWith"
     ]

@@ -8,8 +8,6 @@
 module Dovetail.Core.Data.Functor where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Foldable (fold)
-import Data.Traversable (traverse)
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)

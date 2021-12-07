@@ -12,8 +12,6 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold)
 import Data.Functor (($>))
 import Data.Typeable (Typeable)
-import Data.Vector (Vector)
-import Data.Vector qualified as Vector
 import Data.Vector.Mutable qualified as Mutable
 import Dovetail
 import Dovetail.Core.Control.Monad.ST.Internal (ST)

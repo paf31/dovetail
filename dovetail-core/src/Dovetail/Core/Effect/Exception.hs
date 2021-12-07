@@ -13,7 +13,6 @@ import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Typeable (Typeable)
-import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (ForeignType(..), builtIn)
 

@@ -8,7 +8,6 @@
 module Dovetail.Core.Data.Unfoldable1 where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Foldable (fold)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail

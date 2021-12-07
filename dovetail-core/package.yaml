@@ -19,12 +19,17 @@ library:
   - -Wall
   - -fwarn-unused-imports
   dependencies:
+  - aeson
+  - bytestring
   - dovetail
   - filepath
   - mtl
   - purescript
   - purescript-cst
   - random
+  - serialise
+  - template-haskell
   - text
+  - th-lift-instances
   - unordered-containers
   - vector

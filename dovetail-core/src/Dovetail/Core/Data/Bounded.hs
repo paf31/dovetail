@@ -9,19 +9,12 @@ module Dovetail.Core.Data.Bounded where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
-import Data.Text (Text)
-import Data.Text qualified as Text
-import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-
 env :: forall m. MonadFix m => Env m
 env = do
-  let notImplemented :: Text -> EvalT m a
-      notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
-
-      _ModuleName = ModuleName "Data.Bounded"
+  let _ModuleName = ModuleName "Data.Bounded"
 
   fold
     [ -- topInt :: Int
@@ -49,5 +42,3 @@ env = do
         _ModuleName "bottomNumber"
         (-(recip 0))
     ]
-
-

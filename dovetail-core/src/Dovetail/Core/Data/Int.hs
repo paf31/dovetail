@@ -13,7 +13,6 @@ import Data.Char (chr, ord)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Numeric qualified

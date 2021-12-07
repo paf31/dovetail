@@ -8,8 +8,6 @@
 module Dovetail.Core.Data.FunctorWithIndex where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Text (Text)
-import Data.Text qualified as Text
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail

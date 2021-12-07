@@ -8,9 +8,6 @@
 module Dovetail.Core.Data.Symbol where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Text (Text)
-import Data.Text qualified as Text
-import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 

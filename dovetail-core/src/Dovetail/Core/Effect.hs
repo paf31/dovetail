@@ -36,7 +36,7 @@ env = do
         _ModuleName "untilE"
         \cond body rw -> do
           let loop = do
-                body rw
+                _ <- body rw
                 b <- cond rw
                 when b loop
           loop

@@ -11,11 +11,9 @@ import Control.Monad (when)
 import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold, for_)
-import Data.IORef
 import Data.IORef qualified as IORef
 import Data.Typeable (Typeable)
 import Data.Vector (Vector)
-import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Core.Effect.Ref
 import Dovetail.Evaluate (ForeignType(..), builtIn)
@@ -54,9 +52,9 @@ env = do
         _ModuleName "modifyImpl"
         \f (ForeignType ref) _ -> do
           s <- liftIO (IORef.readIORef ref)
-          ModifyResult state value <- f s
-          liftIO (IORef.writeIORef ref state)
-          pure value
+          ModifyResult newState result <- f s
+          liftIO (IORef.writeIORef ref newState)
+          pure result
       -- map_ :: forall r a b. (a -> b) -> ST r a -> ST r b
     , builtIn @m @((Value m -> EvalT m (Value m)) -> ST m (Value m) -> ST m (Value m))
         _ModuleName "map_"

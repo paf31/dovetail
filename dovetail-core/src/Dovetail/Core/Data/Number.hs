@@ -10,8 +10,6 @@ module Dovetail.Core.Data.Number where
 import Control.Monad.Fix (MonadFix)
 import Data.Foldable (fold)
 import Data.Text (Text)
-import Data.Text qualified as Text
-import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
@@ -41,6 +39,6 @@ env = do
     -- fromStringImpl :: Fn4 String (Number -> Boolean) (forall a. a -> Maybe a) (forall a. Maybe a) (Maybe Number)
     , builtIn @m @(Text -> (Double -> EvalT m Bool) -> (Double -> EvalT m (Value m)) -> Value m -> EvalT m (Value m))
         _ModuleName "fromStringImpl"
-        \s _isFinite _just _nothing ->
+        \_s _isFinite _just _nothing ->
           throwErrorWithContext (OtherError "fromStringImpl is not implemented")
     ]

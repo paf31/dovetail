@@ -46,7 +46,7 @@ env = do
     , builtIn @m @(Double -> EvalT m Double)
         _ModuleName "ceil"
         \a -> 
-          pure (fromIntegral (ceiling a))
+          pure (fromIntegral @Integer (ceiling a))
       -- cos :: Radians -> Number
     , builtIn @m @(Double -> EvalT m Double)
         _ModuleName "cos"
@@ -61,7 +61,7 @@ env = do
     , builtIn @m @(Double -> EvalT m Double)
         _ModuleName "floor"
         \a -> 
-          pure (fromIntegral (floor a))
+          pure (fromIntegral @Integer (floor a))
       -- imul :: Int -> Int -> Int
     , builtIn @m @(Integer -> Integer -> EvalT m Integer)
         _ModuleName "imul"
@@ -91,7 +91,7 @@ env = do
     , builtIn @m @(Double -> EvalT m Double)
         _ModuleName "round"
         \a -> 
-          pure (fromIntegral (round a))
+          pure (fromIntegral @Integer (round a))
       -- sin :: Radians -> Number
     , builtIn @m @(Double -> EvalT m Double)
         _ModuleName "sin"
@@ -111,12 +111,12 @@ env = do
     , builtIn @m @(Double -> EvalT m Double)
         _ModuleName "trunc"
         \a -> 
-          pure (fromIntegral (truncate a))
+          pure (fromIntegral @Integer (truncate a))
       -- remainder :: Number -> Number -> Number
     , builtIn @m @(Double -> Double -> EvalT m Double)
         _ModuleName "remainder"
         \a b -> 
-          pure (a - fromIntegral (truncate (a / b)) * b)
+          pure (a - fromIntegral @Integer (truncate (a / b)) * b)
       -- e :: Number
     , builtIn @m @Double
         _ModuleName "e"

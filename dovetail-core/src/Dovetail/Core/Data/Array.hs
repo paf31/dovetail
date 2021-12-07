@@ -12,7 +12,6 @@ import Data.Foldable (fold)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Text (Text)
-import Data.Text qualified as Text
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Data.Vector.Mutable qualified as Mutable

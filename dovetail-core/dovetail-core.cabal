@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0adc4b1ef077bad7469d76d932844e1d5674a46b211af8ca18aeb19e72976547
+-- hash: f0e652e2d6aeb898bb8590b3ca7bcc7692d70772e7c9ae5cb3b35a65a6bc3f3c
 
 name:           dovetail-core
 version:        0.1.0.0
@@ -85,14 +85,19 @@ library
       src
   ghc-options: -O2 -Wall -fwarn-unused-imports
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bytestring
     , dovetail
     , filepath
     , mtl
     , purescript
     , purescript-cst
     , random
+    , serialise
+    , template-haskell
     , text
+    , th-lift-instances
     , unordered-containers
     , vector
   default-language: Haskell2010

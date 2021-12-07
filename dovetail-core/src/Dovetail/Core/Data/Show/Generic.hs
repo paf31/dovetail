@@ -8,7 +8,6 @@
 module Dovetail.Core.Data.Show.Generic where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)

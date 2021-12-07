@@ -13,14 +13,9 @@ module Dovetail.Core.Effect.Ref where
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Fix (MonadFix(..))
 import Data.Foldable (fold)
-import Data.HashMap.Strict (HashMap)
-import Data.HashMap.Strict qualified as HashMap
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
-import Data.Text (Text)
-import Data.Text qualified as Text
 import Data.Typeable (Typeable)
-import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (ForeignType(..), builtIn)
 import GHC.Generics (Generic)
@@ -73,8 +68,8 @@ env = do
         _ModuleName "modifyImpl"
         \f (ForeignType ref) _ -> do
           s <- liftIO (IORef.readIORef ref)
-          ModifyResult state value <- f s
-          liftIO (IORef.writeIORef ref state)
-          pure value
+          ModifyResult newState result <- f s
+          liftIO (IORef.writeIORef ref newState)
+          pure result
     ]
 

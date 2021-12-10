@@ -7,12 +7,12 @@
 
 module Dovetail.Core.Data.Semiring where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = ModuleName "Data.Semiring"
 

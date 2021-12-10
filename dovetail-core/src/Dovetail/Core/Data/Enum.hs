@@ -7,14 +7,14 @@
 
 module Dovetail.Core.Data.Enum where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Char (chr, ord)
 import Data.Foldable (fold)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Language.PureScript qualified as P
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = P.ModuleName "Data.Enum"
 

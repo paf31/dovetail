@@ -7,7 +7,7 @@
 
 module Dovetail.Core.Data.Array.NonEmpty.Internal where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
@@ -15,7 +15,7 @@ import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Language.PureScript qualified as P
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = P.ModuleName "Data.Array.NonEmpty.Internal"
 

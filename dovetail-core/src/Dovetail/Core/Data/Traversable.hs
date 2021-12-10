@@ -7,14 +7,14 @@
 
 module Dovetail.Core.Data.Traversable where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Language.PureScript qualified as P
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = P.ModuleName "Data.Traversable"
 

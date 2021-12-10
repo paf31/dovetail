@@ -34,7 +34,7 @@
 
 module Main where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans.Class (lift)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
@@ -61,7 +61,7 @@ import System.Exit (die)
 -- synthesizes Haskell types @i@ and @o@ from the input and output types, 
 -- so that they can be used for serialization.
 checkTypeOfMain 
-  :: MonadFix m
+  :: MonadIO m
   => P.SourceType
   -> (forall i o. (JSON.Serializable m i, JSON.Serializable m o) => Proxy i -> Proxy o -> EvalT m r)
   -> EvalT m r

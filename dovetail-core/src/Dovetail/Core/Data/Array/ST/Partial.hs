@@ -7,7 +7,7 @@
 
 module Dovetail.Core.Data.Array.ST.Partial where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold)
 import Data.Functor (($>))
@@ -19,7 +19,7 @@ import Dovetail.Core.Data.Array.ST (STArray)
 import Dovetail.Evaluate (ForeignType(..), builtIn)
 import Language.PureScript qualified as P
 
-env :: forall m. (MonadFix m, MonadIO m, Typeable m) => Env m
+env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
 env = do
   let _ModuleName = P.ModuleName "Data.Array.ST.Partial"
 

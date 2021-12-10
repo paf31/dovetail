@@ -7,7 +7,7 @@
 
 module Dovetail.Core.Data.String.CodePoints where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Vector (Vector)
@@ -16,7 +16,7 @@ import Dovetail.Evaluate (builtIn)
 
 type CodePoint = Integer
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = ModuleName "Data.String.CodePoints"
 

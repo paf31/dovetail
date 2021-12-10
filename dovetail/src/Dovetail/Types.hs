@@ -18,10 +18,10 @@ module Dovetail.Types (
   -- ** Evaluation monad
   , Env
   , lookupEnv
+  , envNames
   , envToMap
   , envFromMap
   , bindEnv
-  , bindEnv'
   
   , EvalT(..)
   , runEvalT
@@ -52,7 +52,7 @@ module Dovetail.Types (
 import Control.Monad.Error.Class (MonadError(..))
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader.Class (MonadReader(..))
-import Control.Monad.Fix (MonadFix(..))
+import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT)
@@ -173,27 +173,23 @@ renderValue RenderValueOptions{ colorOutput, maximumDepth } = fst . go 0 where
 -- An environment for a single built-in function can be constructed
 -- using the 'builtIn' function, and environments can be combined
 -- easily using the 'Monoid' instance for 'Map'.
-newtype Env m = Env { _getEnv :: [(Set (Qualified Ident), Map (Qualified Ident) (Value m))] }
+newtype Env m = Env { _getEnv :: Map (Qualified Ident) (Value m) }
   deriving newtype (Semigroup, Monoid)
 
 lookupEnv :: Qualified Ident -> Env m -> Maybe (Value m)
-lookupEnv q (Env envs) = go envs where
-  go [] = Nothing
-  go ((s, e) : es)
-    | q `Set.member` s = Map.lookup q e
-    | otherwise = go es
+lookupEnv q (Env env) = Map.lookup q env
 
-envToMap :: Env m -> Map (Qualified Ident) (Value m)
-envToMap (Env es) = foldMap snd es
+envNames :: Env m -> Set (Qualified Ident)
+envNames (Env es) = Map.keysSet es
 
 envFromMap :: Map (Qualified Ident) (Value m) -> Env m
-envFromMap m = Env [(Map.keysSet m, m)]
+envFromMap m = Env m
+
+envToMap :: Env m -> Map (Qualified Ident) (Value m)
+envToMap (Env e) = e
 
 bindEnv :: [(Qualified Ident, Value m)] -> Env m -> Env m
-bindEnv xs = bindEnv' (Set.fromList (fmap fst xs)) xs
-
-bindEnv' :: Set (Qualified Ident) -> [(Qualified Ident, Value m)] -> Env m -> Env m
-bindEnv' s xs (Env es) = Env ((s, Map.fromList xs) : es)
+bindEnv xs (Env e) = Env (Map.fromList xs <> e)
 
 -- | An evaluation context currently consists of an evaluation stack, which
 -- is only used for debugging purposes.
@@ -255,7 +251,6 @@ newtype EvalT m a = EvalT { unEvalT :: ReaderT (EvaluationContext m) (ExceptT (E
     , Monad
     , MonadError (EvaluationError m)
     , MonadReader (EvaluationContext m)
-    , MonadFix
     , MonadIO
     )
 

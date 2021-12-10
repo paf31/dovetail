@@ -12,7 +12,7 @@
 
 module Dovetail.Core.Data.Function.Uncurried where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Dovetail
@@ -23,7 +23,7 @@ type family Fn (n :: Nat) (m :: * -> *) where
   Fn 1 m = Value m -> EvalT m (Value m)
   Fn n m = Value m -> Fn (n - 1) m
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = ModuleName "Data.Function.Uncurried"
 

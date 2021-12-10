@@ -11,7 +11,7 @@
 module Dovetail.Core.Effect.Ref where
 
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.Fix (MonadFix(..))
+import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold)
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
@@ -27,9 +27,9 @@ data ModifyResult m = ModifyResult
   , value :: Value m 
   } deriving Generic
   
-instance MonadFix m => ToValue m (ModifyResult m) 
+instance MonadIO m => ToValue m (ModifyResult m) 
 
-env :: forall m. (MonadFix m, MonadIO m, Typeable m) => Env m
+env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
 env = do
   let _ModuleName = ModuleName "Effect.Ref"
 
@@ -43,9 +43,7 @@ env = do
     , builtIn @m @((Ref m -> EvalT m (Value m)) -> Value m -> EvalT m (Ref m))
         _ModuleName "newWithSelf"
         \f _ -> 
-          mfix \ref -> do
-            s <- f ref
-            ForeignType <$> liftIO (IORef.newIORef s)
+          error "bad"
       -- read :: forall s. Ref s -> Effect s
     , builtIn @m @(Ref m -> Value m -> EvalT m (Value m))
         _ModuleName "read"

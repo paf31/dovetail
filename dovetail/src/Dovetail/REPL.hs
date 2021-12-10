@@ -9,10 +9,9 @@
 module Dovetail.REPL (defaultMain) where
 
 import Control.Monad.Catch (MonadMask)
-import Control.Monad.Fix (MonadFix)
-import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans.Class (lift)
-import Data.Map qualified as Map
+import Data.Set qualified as Set
 import Data.Text qualified as Text
 import Dovetail.Build qualified as Build
 import Dovetail.Evaluate qualified as Evaluate
@@ -35,7 +34,7 @@ renderOptions = RenderValueOptions
 -- start a REPL session from within an 'Dovetail.InterpretT' block.
 defaultMain 
   :: forall m
-   . (MonadFix m, MonadIO m, MonadMask m)
+   . (MonadIO m, MonadIO m, MonadMask m)
   => Maybe P.ModuleName
   -- ^ The default module, whose members will be available unqualified in scope.
   -> [P.ExternsFile]
@@ -96,4 +95,4 @@ defaultMain defaultModule externs additionalIdentsInScope env = runInputT settin
       , Text.isPrefixOf (Text.pack s) ident
       ]
     
-  allCompletions = map (P.showQualified P.showIdent) (Map.keys (envToMap env))
+  allCompletions = map (P.showQualified P.showIdent) (Set.toList (envNames env))

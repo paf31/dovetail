@@ -8,7 +8,7 @@
 module Dovetail.Core.Control.Monad.ST.Internal where
 
 import Control.Monad (when)
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold, for_)
 import Data.IORef qualified as IORef
@@ -20,7 +20,7 @@ import Dovetail.Evaluate (ForeignType(..), builtIn)
     
 type ST m a = Value m -> EvalT m a
 
-env :: forall m. (MonadFix m, MonadIO m, Typeable m) => Env m
+env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
 env = do
   let _ModuleName = ModuleName "Control.Monad.ST.Internal"
 

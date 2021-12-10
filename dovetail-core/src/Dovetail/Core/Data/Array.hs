@@ -7,7 +7,7 @@
 
 module Dovetail.Core.Data.Array where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
@@ -19,7 +19,7 @@ import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Language.PureScript qualified as P
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = P.ModuleName "Data.Array"
 

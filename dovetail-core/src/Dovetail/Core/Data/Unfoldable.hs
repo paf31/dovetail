@@ -7,7 +7,7 @@
 
 module Dovetail.Core.Data.Unfoldable where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail
@@ -23,7 +23,7 @@ import Dovetail.Evaluate (builtIn)
 --   -> b
 --   -> Array a
 unfoldrArrayImpl 
-  :: MonadFix m 
+  :: MonadIO m 
   => (Value m -> EvalT m Bool)
   -> (Value m -> EvalT m (Value m))
   -> (Value m -> EvalT m (Value m))
@@ -39,7 +39,7 @@ unfoldrArrayImpl _isNothing _fromJust _fst _snd _f _x = do
     m <- toMaybe x
     traverse toTuple m) _x
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = ModuleName "Data.Unfoldable"
 

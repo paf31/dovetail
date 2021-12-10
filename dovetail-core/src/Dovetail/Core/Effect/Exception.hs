@@ -8,7 +8,7 @@
 module Dovetail.Core.Effect.Exception where
 
 import Control.Monad.Error.Class (catchError)
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -24,7 +24,7 @@ renderValueOptions = RenderValueOptions
   , maximumDepth = Nothing
   }
 
-env :: forall m. (MonadFix m, Typeable m) => Env m
+env :: forall m. (MonadIO m, Typeable m) => Env m
 env = do
   let _ModuleName = ModuleName "Effect.Exception"
 

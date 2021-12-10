@@ -31,7 +31,7 @@
 
 module Main where
 
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState, state)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State (evalStateT)
@@ -60,7 +60,7 @@ main = do
   -- The interpretation of our PureScript module is a JSON value, whose
   -- computation may involve side-effects in the 'M' monad.
   let buildResult 
-        :: (MonadState Random.StdGen m, MonadFix m)
+        :: (MonadState Random.StdGen m, MonadIO m)
         => m (Either (InterpretError m) Aeson.Value)
       buildResult = runInterpretT do
         traverse_ ffi stdlib

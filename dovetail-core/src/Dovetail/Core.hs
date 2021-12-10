@@ -11,7 +11,7 @@ module Dovetail.Core where
 
 import Control.Monad (foldM, unless)  
 import Control.Monad.Error.Class (catchError)
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold, traverse_)
 import Data.Text (Text)
@@ -112,7 +112,7 @@ import Data.Maybe (fromJust)
 --    in buildAheadOfTime "../examples/repl/.spago"
 --         [ ])
   
-core :: forall m. (MonadFix m, MonadIO m, Typeable m) => FilePath -> InterpretT m ()
+core :: forall m. (MonadIO m, MonadIO m, Typeable m) => FilePath -> InterpretT m ()
 core sourceFiles = do
     loadEnv env
     traverse_ buildOne modules
@@ -416,7 +416,7 @@ core sourceFiles = do
       , "Data.Validation.Semiring"
       ]
 
-env :: forall m. (MonadFix m, MonadIO m, Typeable m) => Env m
+env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
 env = 
   fold
     [ Control.Apply.env

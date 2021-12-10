@@ -8,12 +8,12 @@
 module Dovetail.Core.Effect.Random where
 
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 import System.Random (randomRIO)
 
-env :: forall m. (MonadFix m, MonadIO m) => Env m
+env :: forall m. (MonadIO m, MonadIO m) => Env m
 env = do
   let _ModuleName = ModuleName "Effect.Random"
 

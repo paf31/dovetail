@@ -48,14 +48,14 @@ module Dovetail
 
 import Control.Monad.Catch (MonadMask)
 import Control.Monad.Error.Class (MonadError(..))
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Control.Monad.Trans.State (StateT, evalStateT, get, put, modify, runStateT)
 import Data.Bifunctor (first)
 import Data.Functor.Identity (Identity(..))
-import Data.Map qualified as Map
+import Data.Set qualified as Set
 import Data.Text (Text)
 import Dovetail.Build (BuildError(..), renderBuildError)
 import Dovetail.Build qualified as Build
@@ -115,7 +115,7 @@ runInterpretT = flip evalStateT ([], mempty) . runExceptT . unInterpretT
 -- | Like 'runInterpretT', but starts an interactive debugging session in the
 -- event of a debugging error.
 runInterpretTWithDebugger 
-  :: (MonadIO m, MonadFix m, MonadMask m)
+  :: (MonadIO m, MonadIO m, MonadMask m)
   => InterpretT m a
   -> m ()
 runInterpretTWithDebugger x = do
@@ -133,7 +133,7 @@ runInterpretTWithDebugger x = do
                   _ -> env
               additionalNames = 
                 [ P.disqualify ident
-                | ident <- Map.keys (envToMap withEnvAtError Map.\\ envToMap env)
+                | ident <- Set.toList (envNames withEnvAtError Set.\\ envNames env)
                 , not (P.isQualified ident)
                 ]
           REPL.defaultMain Nothing externs additionalNames withEnvAtError
@@ -188,7 +188,7 @@ liftWith f ma = InterpretT . ExceptT . lift $ fmap (first f) ma
 
 -- | Build a PureScript module from source, and make its exported functions available
 -- during subsequent evaluations.
-build :: MonadFix m => Text -> InterpretT m (CoreFn.Module CoreFn.Ann)
+build :: MonadIO m => Text -> InterpretT m (CoreFn.Module CoreFn.Ann)
 build moduleText = do
   (externs, _) <- InterpretT (lift get)
   (m, newExterns) <- liftWith ErrorDuringBuild $ pure $ Build.buildSingleModule externs moduleText
@@ -199,7 +199,7 @@ build moduleText = do
 --
 -- The corefn module may be preprepared, for example by compiling from source text using the
 -- functions in the "Dovetail.Build" module.
-buildCoreFn :: MonadFix m => P.ExternsFile -> CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
+buildCoreFn :: MonadIO m => P.ExternsFile -> CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
 buildCoreFn newExterns m = do
   (externs, env) <- InterpretT (lift get)
   newEnv <- liftWith ErrorDuringEvaluation (Evaluate.runEvalT (Evaluate.buildCoreFn env m))
@@ -208,7 +208,7 @@ buildCoreFn newExterns m = do
 
 -- | Evaluate a PureScript expression from source
 eval
-  :: (MonadFix m, ToValueRHS m a)
+  :: (MonadIO m, ToValueRHS m a)
   => Maybe P.ModuleName
   -- ^ The name of the "default module" whose exports will be made available unqualified
   -- to the evaluated expression.
@@ -222,18 +222,18 @@ eval defaultModule exprText = do
 -- | Evaluate a PureScript corefn expression and return the result.
 -- Note: The expression is not type-checked by the PureScript typechecker. 
 -- See the documentation for 'ToValueRHS' for valid result types.
-evalCoreFn :: (MonadFix m, ToValueRHS m a) => CoreFn.Expr CoreFn.Ann -> InterpretT m a
+evalCoreFn :: (MonadIO m, ToValueRHS m a) => CoreFn.Expr CoreFn.Ann -> InterpretT m a
 evalCoreFn expr = do
   (_externs, env) <- InterpretT (lift get)
   pure . Evaluate.fromValueRHS $ Evaluate.eval env expr
 
 -- | Evaluate @main@ in the specified module and return the result.
-evalMain :: (MonadFix m, ToValueRHS m a) => P.ModuleName -> InterpretT m a
+evalMain :: (MonadIO m, ToValueRHS m a) => P.ModuleName -> InterpretT m a
 evalMain moduleName = evalCoreFn (CoreFn.Var (CoreFn.ssAnn P.nullSourceSpan) (P.Qualified (Just moduleName) (P.Ident "main")))
 
 -- | Start an interactive debugger (REPL) session.
 repl 
-  :: (MonadFix m, MonadIO m, MonadMask m) 
+  :: (MonadIO m, MonadIO m, MonadMask m) 
   => Maybe P.ModuleName 
   -- ^ The default module, whose members will be available unqualified in scope
   -> InterpretT m ()

@@ -37,7 +37,7 @@ module Dovetail.FFI.Builder
   , ForAll
   ) where
   
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Writer.Class (MonadWriter(..))
 import Control.Monad.Writer.Strict (Writer, runWriter)
 import Data.Text (Text)
@@ -75,12 +75,12 @@ data MonoType m a where
 --
 -- @
 -- foreignImport (Ident "identity") \a -> a ~> a
---   :: MonadFix m 
+--   :: MonadIO m 
 --   => (Value m -> EvalT m (Value m)) 
 --   -> FFIBuilder m ()
 --
 -- foreignImport (Ident "flip") \a b c -> (a ~> b ~> c) ~> b ~> a ~> c
---   :: MonadFix m 
+--   :: MonadIO m 
 --   => ((Value m -> Value m -> EvalT m (Value m))
 --   ->   Value m -> Value m -> EvalT m (Value m))
 --   -> FFIBuilder m ()
@@ -196,7 +196,7 @@ runFFIBuilder mn = fmap convert . runWriter . unFFIBuilder where
 -- The type checker will ensure that the PureScript and Haskell types are
 -- compatible.
 foreignImport 
-  :: (MonadFix m, Evaluate.ToValue m a, ForAll m a ty)
+  :: (MonadIO m, Evaluate.ToValue m a, ForAll m a ty)
   => P.Ident
   -> ty
   -> a
@@ -212,11 +212,11 @@ foreignImport =
         ]
     }
     
-typeSchemeToSourceType :: MonadFix m => TypeScheme m a -> P.SourceType
+typeSchemeToSourceType :: MonadIO m => TypeScheme m a -> P.SourceType
 typeSchemeToSourceType (Cons f) = Internal.forAll \a -> typeSchemeToSourceType (f (MonoType (Var a)))
 typeSchemeToSourceType (Nil t) = functionTypeToSourceType t
 
-functionTypeToSourceType :: MonadFix m => FunctionType m l r -> P.SourceType
+functionTypeToSourceType :: MonadIO m => FunctionType m l r -> P.SourceType
 functionTypeToSourceType (Function ty1 ty2) = 
   Internal.function 
     (functionTypeToSourceType ty1)
@@ -226,7 +226,7 @@ functionTypeToSourceType (Array ty) =
     (functionTypeToSourceType ty)
 functionTypeToSourceType (MonoType t) = monoTypeToSourceType t
 
-monoTypeToSourceType :: MonadFix m => MonoType m a -> P.SourceType
+monoTypeToSourceType :: MonadIO m => MonoType m a -> P.SourceType
 monoTypeToSourceType String = P.tyString
 monoTypeToSourceType Char = P.tyChar
 monoTypeToSourceType Boolean = P.tyBoolean

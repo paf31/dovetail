@@ -9,14 +9,14 @@ module Dovetail.Core.Test.Assert where
 
 import Control.Monad (unless)
 import Control.Monad.Error.Class (catchError)
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Dovetail
 import Dovetail.Core.Effect (Effect)
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = ModuleName "Test.Assert"
 

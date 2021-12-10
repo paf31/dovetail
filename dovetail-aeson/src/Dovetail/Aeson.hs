@@ -71,7 +71,7 @@ module Dovetail.Aeson
   , UnknownJSON(..)
   ) where
 
-import Control.Monad.Fix (MonadFix)  
+import Control.Monad.IO.Class (MonadIO)  
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
 import Data.Dynamic qualified as Dynamic
@@ -95,7 +95,7 @@ import Language.PureScript.Label qualified as Label
 -- This function is a convenient counterpart to 'eval' which can be useful 
 -- for applications whose output format is JSON.
 evalJSON 
-  :: MonadFix m
+  :: MonadIO m
   => Maybe ModuleName 
   -> Text
   -> InterpretT m Aeson.Value
@@ -129,7 +129,7 @@ type Serializable m a =
 -- then we can reify the PureScript type of the domain of a PureScript function.
 reify 
   :: forall m r
-   . MonadFix m
+   . MonadIO m
   => P.SourceType 
   -- ^ The PureScript type we wish to reify, for example, from the return value of 'eval'.
   -> (forall a. Serializable m a => Proxy a -> EvalT m r)
@@ -193,7 +193,7 @@ instance FromJSONObject xs => Aeson.FromJSON (OpenRecord xs) where
 instance ToJSONObject xs => Aeson.ToJSON (OpenRecord xs) where
   toJSON (OpenRecord xs o) = Aeson.Object (toJSONObject xs <> fmap getUnknownJSON o)
 
-instance (MonadFix m, ToObject m xs) => ToValue m (OpenRecord xs) where
+instance (MonadIO m, ToObject m xs) => ToValue m (OpenRecord xs) where
   toValue (OpenRecord xs o) = Evaluate.Object (toObject xs <> fmap toValue o)
   
   fromValue (Evaluate.Object o) = 
@@ -212,7 +212,7 @@ instance FromJSONObject xs => Aeson.FromJSON (Record xs) where
 instance ToJSONObject xs => Aeson.ToJSON (Record xs) where
   toJSON (Record xs) = Aeson.Object (toJSONObject xs)
 
-instance (MonadFix m, ToObject m xs) => ToValue m (Record xs) where
+instance (MonadIO m, ToObject m xs) => ToValue m (Record xs) where
   toValue = Evaluate.Object . toObject . getRecord
   
   fromValue (Evaluate.Object o) = 
@@ -296,7 +296,7 @@ instance ToValue m a => ToValue m (Nullable a) where
 newtype UnknownJSON = UnknownJSON { getUnknownJSON :: Aeson.Value }
   deriving (Aeson.ToJSON, Aeson.FromJSON) via Aeson.Value
   
-instance MonadFix m => ToValue m UnknownJSON where
+instance MonadIO m => ToValue m UnknownJSON where
   toValue = toValue . Evaluate.ForeignType . getUnknownJSON
   fromValue = fmap (UnknownJSON . Evaluate.getForeignType) . fromValue
   
@@ -307,7 +307,7 @@ instance MonadFix m => ToValue m UnknownJSON where
 --
 -- Any PureScript code which needs to support type-directed serialization for
 -- values which may involve @null@ should import this module.
-stdlib :: MonadFix m => InterpretT m (Module Ann)
+stdlib :: MonadIO m => InterpretT m (Module Ann)
 stdlib = build . Text.unlines $
   [ "module JSON where"
   , ""

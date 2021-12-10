@@ -8,7 +8,7 @@
 module Dovetail.Core.Effect where
 
 import Control.Monad (when)
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold, for_)
 import Data.Vector (Vector)
 import Dovetail
@@ -16,7 +16,7 @@ import Dovetail.Evaluate (builtIn)
 
 type Effect m a = Value m -> EvalT m a
 
-env :: forall m. MonadFix m => Env m
+env :: forall m. MonadIO m => Env m
 env = do
   let _ModuleName = ModuleName "Effect"
 

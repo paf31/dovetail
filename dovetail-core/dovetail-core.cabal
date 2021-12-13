@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ff077e39f33b678dbd24d93a3fe82b439e140d3fd9140f91aeeffa449b420595
+-- hash: 9997d92e55fb3e9b951c32fe470683640f9fa07b363ac7792b1c34500ed4f1f8
 
 name:           dovetail-core
 version:        0.1.0.0
@@ -631,4 +631,20 @@ library
     , th-lift-instances
     , unordered-containers
     , vector
+  default-language: Haskell2010
+
+test-suite dovetail-core-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_dovetail_core
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -fwarn-unused-imports
+  build-depends:
+      base >=4.7 && <5
+    , dovetail
+    , dovetail-core
+    , hspec
+    , purescript
   default-language: Haskell2010

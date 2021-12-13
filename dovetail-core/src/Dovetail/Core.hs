@@ -85,7 +85,7 @@ core = do
     traverse_ buildOne modules
   where
     buildOne moduleName = do
-      liftIO . putStr $ moduleName
+      liftIO . putStrLn $ moduleName
       let externsFile = BL.fromStrict . fromJust $ lookup (moduleName </> "externs.cbor") pursFiles
           coreFnFile  = fromJust . decodeStrict . fromJust $ lookup (moduleName </> "corefn.json") pursFiles
           readCoreFn = either error snd . parseEither FromJSON.moduleFromJSON

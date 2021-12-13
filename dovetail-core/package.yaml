@@ -12,6 +12,9 @@ synopsis:            Dovetail support for the PureScript core library set
 dependencies:
 - base >= 4.7 && < 5
 
+extra-source-files:
+  purs/**/*
+
 library:
   source-dirs: src
   ghc-options:

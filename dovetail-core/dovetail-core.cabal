@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f0e652e2d6aeb898bb8590b3ca7bcc7692d70772e7c9ae5cb3b35a65a6bc3f3c
+-- hash: d5c231ec48c4644f6742d9b834d59623136dc7fed7b8e2a134fa99695d91da3b
 
 name:           dovetail-core
 version:        0.1.0.0
@@ -89,6 +89,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , dovetail
+    , file-embed
     , filepath
     , mtl
     , purescript

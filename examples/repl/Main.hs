@@ -11,6 +11,6 @@ main :: IO ()
 main = do
   either (die . renderInterpretError defaultTerminalRenderValueOptions) pure =<< 
     runInterpret () do
-      core ".spago"
+      core
       repl (Just (ModuleName "Prelude"))
       

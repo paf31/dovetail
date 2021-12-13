@@ -1,6 +1,7 @@
 {-# LANGUAGE BlockArguments      #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE ViewPatterns        #-}
@@ -9,9 +10,11 @@ module Dovetail.Core where
 
 import Codec.Serialise qualified as Codec
 import Control.Monad.IO.Class (MonadIO(..))
-import Data.Aeson (decodeFileStrict)
+import Data.Aeson (decodeStrict)
 import Data.Aeson.Types (parseEither)
+import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BL
+import Data.FileEmbed
 import Data.Foldable (fold, traverse_)
 import Data.Maybe (fromJust)
 import Data.Typeable (Typeable)
@@ -73,19 +76,20 @@ import Dovetail.Core.Record.Unsafe.Union qualified as Record.Unsafe.Union
 import Dovetail.Core.Test.Assert qualified as Test.Assert
 import Dovetail.Core.Unsafe.Coerce qualified as Unsafe.Coerce
   
-core :: forall ctx. Typeable ctx => FilePath -> Interpret ctx ()
-core sourceFiles = do
+pursFiles :: [(FilePath, BS.ByteString)]
+pursFiles = $(makeRelativeToProject "purs/output" >>= embedDir)
+  
+core :: forall ctx. Typeable ctx => Interpret ctx ()
+core = do
     loadEnv env
     traverse_ buildOne modules
   where
-    buildOne fileName = do
-      liftIO . putStrLn $ fileName
-      externsFile <- liftIO . BL.readFile $ toPath (".." </> "output" </> fileName </> "externs.cbor")
-      coreFnFile <- fmap fromJust . liftIO . decodeFileStrict $ toPath (".." </> "output" </> fileName </> "corefn.json")
-      let readCoreFn = either error snd . parseEither FromJSON.moduleFromJSON
+    buildOne moduleName = do
+      liftIO . putStr $ moduleName
+      let externsFile = BL.fromStrict . fromJust $ lookup (moduleName </> "externs.cbor") pursFiles
+          coreFnFile  = fromJust . decodeStrict . fromJust $ lookup (moduleName </> "corefn.json") pursFiles
+          readCoreFn = either error snd . parseEither FromJSON.moduleFromJSON
       buildCoreFn (Codec.deserialise externsFile) (readCoreFn coreFnFile)
-    
-    toPath fileName = sourceFiles </> fileName
     
     modules =
       [ "Type.Proxy"

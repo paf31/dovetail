@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments      #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings   #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications    #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns        #-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Core.Effect</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">for_</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Vector</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">builtIn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">type</span><span> </span><span id="Effect"><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-var">Effect</span></a></span></span><span> </span><span id="local-6989586621679306143"><span class="annot"><a href="#local-6989586621679306143"><span class="hs-identifier hs-type">ctx</span></a></span></span><span> </span><span id="local-6989586621679306142"><span class="annot"><a href="#local-6989586621679306142"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306143"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679306143"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306142"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="annot"><a href="Dovetail.Core.Effect.html#env"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679306140"><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-19"></span><span id="env"><span class="annot"><span class="annottext">env :: Env ctx
+</span><a href="Dovetail.Core.Effect.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679306139"><span class="annot"><span class="annottext">_ModuleName :: ModuleName
+</span><a href="#local-6989586621679306139"><span class="hs-identifier hs-var hs-var">_ModuleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Effect&quot;</span></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span>  </span><span class="annot"><span class="annottext">[Env ctx] -&gt; Env ctx
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="hs-comment">-- pureE :: forall a. a -&gt; Effect a</span><span>
+</span><span id="line-24"></span><span>      </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Value ctx -&gt; Effect ctx (Value ctx)) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679306139"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;pureE&quot;</span></span><span> </span><span>
+</span><span id="line-26"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679306137"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306137"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306137"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-27"></span><span>      </span><span class="hs-comment">-- bindE :: forall a b. Effect a -&gt; (a -&gt; Effect b) -&gt; Effect b</span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Effect ctx (Value ctx)
+    -&gt; (Value ctx -&gt; Effect ctx (Value ctx)) -&gt; Effect ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679306139"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;bindE&quot;</span></span><span> </span><span>
+</span><span id="line-30"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679306136"><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306136"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span id="local-6989586621679306135"><span class="annot"><span class="annottext">Value ctx -&gt; Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306135"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679306134"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306134"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-31"></span><span>          </span><span id="local-6989586621679306133"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306133"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306136"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306134"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-32"></span><span>          </span><span class="annot"><span class="annottext">Value ctx -&gt; Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306135"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306133"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306134"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-33"></span><span>      </span><span class="hs-comment">-- untilE :: Effect Boolean -&gt; Effect Unit</span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Effect ctx Bool
+    -&gt; Effect ctx (Value ctx) -&gt; Effect ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679306139"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;untilE&quot;</span></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679306132"><span class="annot"><span class="annottext">Effect ctx Bool
+</span><a href="#local-6989586621679306132"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span id="local-6989586621679306131"><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306131"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span id="local-6989586621679306130"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306130"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-37"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679306129"><span class="annot"><span class="annottext">loop :: Eval ctx ()
+</span><a href="#local-6989586621679306129"><span class="hs-identifier hs-var hs-var">loop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-38"></span><span>                </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306131"><span class="hs-identifier hs-var">body</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306130"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-39"></span><span>                </span><span id="local-6989586621679306128"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679306128"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Effect ctx Bool
+</span><a href="#local-6989586621679306132"><span class="hs-identifier hs-var">cond</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306130"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-40"></span><span>                </span><span class="annot"><span class="annottext">Bool -&gt; Eval ctx () -&gt; Eval ctx ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679306128"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Eval ctx ()
+</span><a href="#local-6989586621679306129"><span class="hs-identifier hs-var">loop</span></a></span><span>
+</span><span id="line-41"></span><span>          </span><span class="annot"><span class="annottext">Eval ctx ()
+</span><a href="#local-6989586621679306129"><span class="hs-identifier hs-var">loop</span></a></span><span>
+</span><span id="line-42"></span><span>          </span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>      </span><span class="hs-comment">-- whileE :: forall a. Effect Boolean -&gt; Effect a -&gt; Effect Unit</span><span>
+</span><span id="line-44"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Effect ctx Bool
+    -&gt; Effect ctx (Value ctx) -&gt; Effect ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679306139"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;whileE&quot;</span></span><span>
+</span><span id="line-46"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679306126"><span class="annot"><span class="annottext">Effect ctx Bool
+</span><a href="#local-6989586621679306126"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span id="local-6989586621679306125"><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306125"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span id="local-6989586621679306124"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306124"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-47"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679306123"><span class="annot"><span class="annottext">loop :: Eval ctx ()
+</span><a href="#local-6989586621679306123"><span class="hs-identifier hs-var hs-var">loop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-48"></span><span>                </span><span id="local-6989586621679306122"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679306122"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Effect ctx Bool
+</span><a href="#local-6989586621679306126"><span class="hs-identifier hs-var">cond</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306124"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-49"></span><span>                </span><span class="annot"><span class="annottext">Bool -&gt; Eval ctx () -&gt; Eval ctx ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679306122"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306125"><span class="hs-identifier hs-var">body</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306124"><span class="hs-identifier hs-var">rw</span></a></span><span> </span><span class="annot"><span class="annottext">Eval ctx (Value ctx) -&gt; Eval ctx () -&gt; Eval ctx ()
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Eval ctx ()
+</span><a href="#local-6989586621679306123"><span class="hs-identifier hs-var">loop</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>          </span><span class="annot"><span class="annottext">Eval ctx ()
+</span><a href="#local-6989586621679306123"><span class="hs-identifier hs-var">loop</span></a></span><span>
+</span><span id="line-51"></span><span>          </span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>      </span><span class="hs-comment">-- for :: forall r a. Int -&gt; Int -&gt; (Int -&gt;  a) -&gt;  Unit</span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Integer
+    -&gt; Integer
+    -&gt; (Integer -&gt; Effect ctx (Value ctx))
+    -&gt; Effect ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679306139"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;for&quot;</span></span><span>
+</span><span id="line-55"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679306121"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679306121"><span class="hs-identifier hs-var">from</span></a></span></span><span> </span><span id="local-6989586621679306120"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679306120"><span class="hs-identifier hs-var">to</span></a></span></span><span> </span><span id="local-6989586621679306119"><span class="annot"><span class="annottext">Integer -&gt; Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306119"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span id="local-6989586621679306118"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306118"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-56"></span><span>          </span><span class="annot"><span class="annottext">[Integer] -&gt; (Integer -&gt; Eval ctx (Value ctx)) -&gt; Eval ctx ()
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Foldable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f ()
+</span><span class="hs-identifier hs-var">for_</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679306121"><span class="hs-identifier hs-var">from</span></a></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679306120"><span class="hs-identifier hs-var">to</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679306117"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679306117"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-57"></span><span>            </span><span class="annot"><span class="annottext">Integer -&gt; Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306119"><span class="hs-identifier hs-var">body</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679306117"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306118"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-58"></span><span>          </span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>      </span><span class="hs-comment">-- foreach :: forall r a. Array a -&gt; (a -&gt;  Unit) -&gt;  Unit</span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Vector (Value ctx)
+    -&gt; (Value ctx -&gt; Effect ctx (Value ctx)) -&gt; Effect ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306140"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679306139"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;foreach&quot;</span></span><span>
+</span><span id="line-62"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679306116"><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679306116"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679306115"><span class="annot"><span class="annottext">Value ctx -&gt; Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306115"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679306114"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306114"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-63"></span><span>          </span><span class="annot"><span class="annottext">Vector (Value ctx) -&gt; Effect ctx (Value ctx) -&gt; Eval ctx ()
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Foldable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f ()
+</span><span class="hs-identifier hs-var">for_</span></span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679306116"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679306113"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306113"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-64"></span><span>            </span><span class="annot"><span class="annottext">Value ctx -&gt; Effect ctx (Value ctx)
+</span><a href="#local-6989586621679306115"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306113"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679306114"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-65"></span><span>          </span><span class="annot"><span class="annottext">Effect ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-67"></span></pre></body></html>

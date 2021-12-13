@@ -40,6 +40,16 @@ buildSingleExpressionFromAST :: Maybe ModuleName -> [ExternsFile] -> Expr -> Eit
 buildCoreFnOnly :: [ExternsFile] -> Module -> Either MultipleErrors ((Module Ann, ExternsFile), MultipleErrors)
 instance GHC.Show.Show Dovetail.Build.BuildError
 
+module Dovetail.Evaluate.Internal
+data Promise a
+emptyPromise :: IO (Promise a)
+require :: Promise a -> IO a
+fulfill :: Promise a -> a -> IO ()
+data EmptyPromise
+EmptyPromise :: EmptyPromise
+instance GHC.Show.Show Dovetail.Evaluate.Internal.EmptyPromise
+instance GHC.Exception.Type.Exception Dovetail.Evaluate.Internal.EmptyPromise
+
 module Dovetail.FFI.Internal
 forAll :: (SourceType -> SourceType) -> SourceType
 array :: SourceType -> SourceType
@@ -53,32 +63,37 @@ module Dovetail.Types
 --   
 --   Any additional side effects which might occur in FFI calls to Haskell
 --   code are tracked by a monad in the type argument.
-data Value m
+data Value ctx
 
 -- | Records are represented as hashmaps from their field names to values
-Object :: HashMap Text (Value m) -> Value m
-Array :: Vector (Value m) -> Value m
-String :: Text -> Value m
-Char :: Char -> Value m
-Number :: Double -> Value m
-Int :: Integer -> Value m
-Bool :: Bool -> Value m
+Object :: HashMap Text (Value ctx) -> Value ctx
+Array :: Vector (Value ctx) -> Value ctx
+String :: Text -> Value ctx
+Char :: Char -> Value ctx
+Number :: Double -> Value ctx
+Int :: Integer -> Value ctx
+Bool :: Bool -> Value ctx
 
 -- | Closures, represented in higher-order abstract syntax style.
-Closure :: (Value m -> EvalT m (Value m)) -> Value m
+Closure :: (Value ctx -> Eval ctx (Value ctx)) -> Value ctx
 
 -- | Fully-applied data constructors
-Constructor :: ProperName 'ConstructorName -> [Value m] -> Value m
+Constructor :: ProperName 'ConstructorName -> [Value ctx] -> Value ctx
 
 -- | Foreign data types
-Foreign :: Dynamic -> Value m
+Foreign :: Dynamic -> Value ctx
 
 -- | An environment, i.e. a mapping from names to evaluated values.
 --   
 --   An environment for a single built-in function can be constructed using
 --   the <tt>builtIn</tt> function, and environments can be combined easily
 --   using the <a>Monoid</a> instance for <a>Map</a>.
-type Env m = Map (Qualified Ident) (Value m)
+data Env ctx
+lookupEnv :: Qualified Ident -> Env ctx -> Maybe (Value ctx)
+envNames :: Env ctx -> Set (Qualified Ident)
+envToMap :: Env ctx -> Map (Qualified Ident) (Value ctx)
+envFromMap :: Map (Qualified Ident) (Value ctx) -> Env ctx
+bindEnv :: [(Qualified Ident, Value ctx)] -> Env ctx -> Env ctx
 
 -- | The monad used by the interpreter, which supports error reporting for
 --   errors which can occur during evaluation.
@@ -86,26 +101,21 @@ type Env m = Map (Qualified Ident) (Value m)
 --   The transformed monad is used to track any benign side effects that
 --   might be exposed via the foreign function interface to PureScript
 --   code.
-newtype EvalT m a
-EvalT :: ReaderT (EvaluationContext m) (ExceptT (EvaluationError m) m) a -> EvalT m a
-[unEvalT] :: EvalT m a -> ReaderT (EvaluationContext m) (ExceptT (EvaluationError m) m) a
-runEvalT :: EvalT m a -> m (Either (EvaluationError m) a)
-
--- | Non-transformer version of <a>EvalT</a>, useful in any settings where
---   the FFI does not use any side effects during evaluation.
-type Eval = EvalT Identity
-runEval :: Eval a -> Either (EvaluationError Identity) a
+newtype Eval ctx a
+Eval :: ReaderT (EvaluationContext ctx) (ExceptT (EvaluationError ctx) IO) a -> Eval ctx a
+[unEval] :: Eval ctx a -> ReaderT (EvaluationContext ctx) (ExceptT (EvaluationError ctx) IO) a
+runEval :: ctx -> Eval ctx a -> IO (Either (EvaluationError ctx) a)
 
 -- | An evaluation error containing the evaluation context at the point the
 --   error was raised.
-data EvaluationError m
-EvaluationError :: EvaluationErrorType m -> EvaluationContext m -> EvaluationError m
+data EvaluationError ctx
+EvaluationError :: EvaluationErrorType ctx -> EvaluationContext ctx -> EvaluationError ctx
 
 -- | The type of error which was raised
-[errorType] :: EvaluationError m -> EvaluationErrorType m
+[errorType] :: EvaluationError ctx -> EvaluationErrorType ctx
 
 -- | The evaluation context at the point the error was raised.
-[errorContext] :: EvaluationError m -> EvaluationContext m
+[errorContext] :: EvaluationError ctx -> EvaluationContext ctx
 
 -- | Errors which can occur during evaluation of PureScript code.
 --   
@@ -114,77 +124,81 @@ EvaluationError :: EvaluationErrorType m -> EvaluationContext m -> EvaluationErr
 --   outside PureScript code, so it is possible that runtime errors can
 --   occur if we are not careful. This is similar to how PureScript code
 --   can fail at runtime due to errors in the FFI.
-data EvaluationErrorType m
+data EvaluationErrorType ctx
 
 -- | A name was not found in the environment
-UnknownIdent :: Qualified Ident -> EvaluationErrorType m
+UnknownIdent :: Qualified Ident -> EvaluationErrorType ctx
 
 -- | The runtime representation of a value did not match the expected
 --   representation
-TypeMismatch :: Text -> Value m -> EvaluationErrorType m
+TypeMismatch :: Text -> Value ctx -> EvaluationErrorType ctx
 
 -- | A record field did not exist in an <a>Object</a> value.
-FieldNotFound :: Text -> Value m -> EvaluationErrorType m
+FieldNotFound :: Text -> Value ctx -> EvaluationErrorType ctx
 
 -- | A pattern match failed to match its argument
-InexhaustivePatternMatch :: [Value m] -> EvaluationErrorType m
+InexhaustivePatternMatch :: [Value ctx] -> EvaluationErrorType ctx
 
 -- | A pattern match received the wrong number of arguments
-InvalidNumberOfArguments :: Int -> Int -> EvaluationErrorType m
+InvalidNumberOfArguments :: Int -> Int -> EvaluationErrorType ctx
 
 -- | A pattern match occurred against a partially-applied data constructor
-UnsaturatedConstructorApplication :: EvaluationErrorType m
+UnsaturatedConstructorApplication :: EvaluationErrorType ctx
 
 -- | A PureScript string which contains lone surrogates which could not be
 --   decoded. See <a>PSString</a>.
-InvalidFieldName :: PSString -> EvaluationErrorType m
+InvalidFieldName :: PSString -> EvaluationErrorType ctx
 
 -- | An error occurred in a foreign function which is not tracked by any of
 --   the other error types.
-OtherError :: Text -> EvaluationErrorType m
+OtherError :: Text -> EvaluationErrorType ctx
 
 -- | Render an <a>EvaluationError</a> as a human-readable string.
-renderEvaluationError :: RenderValueOptions -> EvaluationError m -> String
+renderEvaluationError :: RenderValueOptions -> EvaluationError ctx -> String
+renderEvaluationErrorType :: RenderValueOptions -> EvaluationErrorType ctx -> String
 
 -- | An evaluation context currently consists of an evaluation stack, which
---   is only used for debugging purposes.
+--   is only used for debugging purposes, plus any other domain-specific
+--   context of type <tt>ctx</tt>.
 --   
 --   The context type is parameterized by a monad <tt>m</tt>, because stack
 --   frames can contain environments, which can in turn contain
 --   <a>Value</a>s, which may contain monadic closures. This can be useful
 --   for inspecting values or resuming execution in the event of an error.
-newtype EvaluationContext m
-EvaluationContext :: [EvaluationStackFrame m] -> EvaluationContext m
-[getEvaluationContext] :: EvaluationContext m -> [EvaluationStackFrame m]
+data EvaluationContext ctx
+EvaluationContext :: [EvaluationStackFrame ctx] -> ctx -> EvaluationContext ctx
+[callStack] :: EvaluationContext ctx -> [EvaluationStackFrame ctx]
+[additionalContext] :: EvaluationContext ctx -> ctx
 
 -- | A single evaluation stack frame TODO: support frames for foreign
 --   function calls
-data EvaluationStackFrame m
-EvaluationStackFrame :: Env m -> SourceSpan -> Expr Ann -> EvaluationStackFrame m
+data EvaluationStackFrame ctx
+EvaluationStackFrame :: Env ctx -> SourceSpan -> Expr Ann -> EvaluationStackFrame ctx
 
 -- | The current environment in this stack frame
-[frameEnv] :: EvaluationStackFrame m -> Env m
+[frameEnv] :: EvaluationStackFrame ctx -> Env ctx
 
 -- | The source span of the expression whose evaluation created this stack
 --   frame.
-[frameSource] :: EvaluationStackFrame m -> SourceSpan
+[frameSource] :: EvaluationStackFrame ctx -> SourceSpan
 
 -- | The expression whose evaluation created this stack frame.
-[frameExpr] :: EvaluationStackFrame m -> Expr Ann
+[frameExpr] :: EvaluationStackFrame ctx -> Expr Ann
 
 -- | Create a stack frame for the evaluation of an expression, and push it
 --   onto the stack.
-pushStackFrame :: Monad m => Env m -> Expr Ann -> EvalT m a -> EvalT m a
+pushStackFrame :: Env ctx -> Expr Ann -> Eval ctx a -> Eval ctx a
 
 -- | Throw an error which captures the current execution context.
 throwErrorWithContext :: (MonadError (EvaluationError x) m, MonadReader (EvaluationContext x) m) => EvaluationErrorType x -> m a
+renderEvaluationStack :: [EvaluationStackFrame ctx] -> Text
 
 -- | Render a <a>Value</a> as human-readable text.
 --   
 --   As a general rule, apart from any closures, the rendered text should
 --   evaluate to the value you started with (when <a>maximumDepth</a> is
 --   not set).
-renderValue :: RenderValueOptions -> Value m -> Text
+renderValue :: RenderValueOptions -> Value ctx -> Text
 
 -- | Options when rendering values as strings using <a>renderValue</a>.
 data RenderValueOptions
@@ -200,13 +214,15 @@ RenderValueOptions :: Bool -> Maybe Int -> RenderValueOptions
 -- | Some sensible default rendering options for use on a terminal which
 --   supports color.
 defaultTerminalRenderValueOptions :: RenderValueOptions
-instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Dovetail.Types.EvalT m)
-instance GHC.Base.Monad m => Control.Monad.Reader.Class.MonadReader (Dovetail.Types.EvaluationContext m) (Dovetail.Types.EvalT m)
-instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError (Dovetail.Types.EvaluationError m) (Dovetail.Types.EvalT m)
-instance GHC.Base.Monad m => GHC.Base.Monad (Dovetail.Types.EvalT m)
-instance GHC.Base.Monad m => GHC.Base.Applicative (Dovetail.Types.EvalT m)
-instance GHC.Base.Functor m => GHC.Base.Functor (Dovetail.Types.EvalT m)
-instance Control.Monad.Trans.Class.MonadTrans Dovetail.Types.EvalT
+instance GHC.Base.Monoid (Dovetail.Types.Env ctx)
+instance GHC.Base.Semigroup (Dovetail.Types.Env ctx)
+instance Control.Monad.Fix.MonadFix (Dovetail.Types.Eval ctx)
+instance Control.Monad.IO.Class.MonadIO (Dovetail.Types.Eval ctx)
+instance Control.Monad.Reader.Class.MonadReader (Dovetail.Types.EvaluationContext ctx) (Dovetail.Types.Eval ctx)
+instance Control.Monad.Error.Class.MonadError (Dovetail.Types.EvaluationError ctx) (Dovetail.Types.Eval ctx)
+instance GHC.Base.Monad (Dovetail.Types.Eval ctx)
+instance GHC.Base.Applicative (Dovetail.Types.Eval ctx)
+instance GHC.Base.Functor (Dovetail.Types.Eval ctx)
 
 module Dovetail.FFI
 
@@ -224,47 +240,47 @@ module Dovetail.FFI
 --   APIs or the low-level functions in <a>Dovetail.Evaluate</a> and
 --   <a>Dovetail.Build</a>, directly, but it is more likely that you will
 --   use values of this type with the higher-level <a>ffi</a> function.
-data FFI m
-FFI :: ModuleName -> [ForeignImport m] -> FFI m
+data FFI ctx
+FFI :: ModuleName -> [ForeignImport ctx] -> FFI ctx
 
 -- | The module name for the module being implemented in Haskell.
-[ffi_moduleName] :: FFI m -> ModuleName
+[ffi_moduleName] :: FFI ctx -> ModuleName
 
 -- | A list of values implemented in Haskell in this module.
-[ffi_values] :: FFI m -> [ForeignImport m]
+[ffi_values] :: FFI ctx -> [ForeignImport ctx]
 
 -- | A single value implemented in a foreign Haskell module.
-data ForeignImport m
-ForeignImport :: Ident -> SourceType -> Value m -> ForeignImport m
+data ForeignImport ctx
+ForeignImport :: Ident -> SourceType -> Value ctx -> ForeignImport ctx
 
 -- | The name of this value in PureScript code
-[fv_name] :: ForeignImport m -> Ident
+[fv_name] :: ForeignImport ctx -> Ident
 
 -- | The PureScript type of this value
-[fv_type] :: ForeignImport m -> SourceType
+[fv_type] :: ForeignImport ctx -> SourceType
 
 -- | The value itself
-[fv_value] :: ForeignImport m -> Value m
+[fv_value] :: ForeignImport ctx -> Value ctx
 
 -- | Convert a foreign module into an evaluation environment.
 --   
 --   For advanced use cases, the result may be used with the functions in
 --   the <a>Dovetail.Evaluate</a> module.
-toEnv :: FFI m -> Env m
+toEnv :: FFI ctx -> Env ctx
 
 -- | Convert a foreign module into a PureScript externs file, for use
 --   during separate compilation.
 --   
 --   For advanced use cases, the result may be used with the functions in
 --   the <a>Dovetail.Build</a> module.
-toExterns :: FFI m -> ExternsFile
+toExterns :: FFI ctx -> ExternsFile
 
 module Dovetail.Evaluate
 
 -- | Evaluate each of the bindings in a compiled PureScript module, and
 --   store the evaluated values in the environment, without evaluating any
 --   main expression.
-buildCoreFn :: MonadFix m => Env m -> Module Ann -> EvalT m (Env m)
+buildCoreFn :: Env ctx -> Module Ann -> Eval ctx (Env ctx)
 
 -- | Create an environment from a Haskell value.
 --   
@@ -278,12 +294,12 @@ buildCoreFn :: MonadFix m => Env m -> Module Ann -> EvalT m (Env m)
 --   builtIn (ModuleName <a>Main</a>) "somePrimes" ([2, 3, 5, 7, 11] :: Vector Integer)
 --   </pre>
 --   
---   Functions can be provided as built-ins, but the <a>EvalT</a> monad
+--   Functions can be provided as built-ins, but the <tt>EvalT</tt> monad
 --   needs to be used to wrap any outputs (or values in positive position):
 --   
 --   <pre>
---   builtIn (ModuleName <a>Main</a>) "strip" ((pure . Text.strip) :: Text -&gt; EvalT m Text)
---   builtIn (ModuleName <a>Main</a>) "map" (traverse :: (Value -&gt; EvalT m Value) -&gt; Vector Value -&gt; EvalT m (Vector Value))
+--   builtIn (ModuleName <a>Main</a>) "strip" ((pure . Text.strip) :: Text -&gt; Eval ctx Text)
+--   builtIn (ModuleName <a>Main</a>) "map" (traverse :: (Value -&gt; Eval ctx Value) -&gt; Vector Value -&gt; Eval ctx (Vector Value))
 --   </pre>
 --   
 --   Polymorphic functions can also be provided as built-ins, but values
@@ -291,17 +307,17 @@ buildCoreFn :: MonadFix m => Env m -> Module Ann -> EvalT m (Env m)
 --   with monomorphic types. The type <a>Value</a> can always be used to
 --   represent values of unknown or polymorphic type, as in the
 --   <tt>map</tt> example above.
-builtIn :: ToValue m a => ModuleName -> Text -> a -> Env m
+builtIn :: ToValue ctx a => ModuleName -> Text -> a -> Env ctx
 
 -- | Evaluate a PureScript CoreFn expression in the given environment.
 --   
 --   Note: it should not be necessary to call this function directly in
 --   most circumstances. It is provided as a helper function, for some more
 --   advanced use cases, such as setting up a custom environment.
-eval :: forall m. MonadFix m => Env m -> Expr Ann -> EvalT m (Value m)
+eval :: forall ctx. Env ctx -> Expr Ann -> Eval ctx (Value ctx)
 
 -- | Apply a value which represents an unevaluated closure to an argument.
-apply :: MonadFix m => Value m -> Value m -> EvalT m (Value m)
+apply :: Value ctx -> Value ctx -> Eval ctx (Value ctx)
 
 -- | Values which can be communicated across the FFI boundary from Haskell
 --   to PureScript.
@@ -316,50 +332,50 @@ apply :: MonadFix m => Value m -> Value m -> EvalT m (Value m)
 --   <pre>
 --   fromValue . toValue = pure
 --   </pre>
-class MonadFix m => ToValue m a
+class ToValue ctx a
 
 -- | The default implementation uses generic deriving to identify a Haskell
 --   record type with a single data constructor with a PureScript record
 --   with the same field names.
-toValue :: ToValue m a => a -> Value m
+toValue :: ToValue ctx a => a -> Value ctx
 
 -- | The default implementation uses generic deriving to identify a Haskell
 --   record type with a single data constructor with a PureScript record
 --   with the same field names.
-toValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => a -> Value m
-fromValue :: ToValue m a => Value m -> EvalT m a
-fromValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => Value m -> EvalT m a
+toValue :: (ToValue ctx a, Generic a, ToObject ctx (Rep a)) => a -> Value ctx
+fromValue :: ToValue ctx a => Value ctx -> Eval ctx a
+fromValue :: (ToValue ctx a, Generic a, ToObject ctx (Rep a)) => Value ctx -> Eval ctx a
 
 -- | <a>ToValue</a> should support functions with types such as
 --   
 --   <pre>
---   a -&gt; EvalT m b
---   a -&gt; b -&gt; EvalT m c
---   a -&gt; b -&gt; c -&gt; EvalT m d
---   (a -&gt; EvalT m b) -&gt; EvalT m c
---   (a -&gt; b -&gt; EvalT m c) -&gt; EvalT m d
+--   a -&gt; Eval ctx b
+--   a -&gt; b -&gt; Eval ctx c
+--   a -&gt; b -&gt; c -&gt; Eval ctx d
+--   (a -&gt; Eval ctx b) -&gt; Eval ctx c
+--   (a -&gt; b -&gt; Eval ctx c) -&gt; Eval ctx d
 --   </pre>
 --   
 --   Note that every type in a return position is wrapped in the
---   <a>EvalT</a> monad transformer. This is because evaluation in general
---   may result in errors. However, a naive translation would result in too
---   many applications of <a>EvalT</a>.
+--   <tt>EvalT</tt> monad transformer. This is because evaluation in
+--   general may result in errors. However, a naive translation would
+--   result in too many applications of <tt>EvalT</tt>.
 --   
 --   Specifically, we do not want to require types such as these, in which
---   <a>EvalT</a> appears on the right hand side of every function arrow:
+--   <tt>EvalT</tt> appears on the right hand side of every function arrow:
 --   
 --   <pre>
---   a -&gt; EvalT m b (b -&gt; EvalT m c)
---   a -&gt; EvalT m b (b -&gt; EvalT m (c -&gt; EvalT m d))
+--   a -&gt; Eval ctx b (b -&gt; Eval ctx c)
+--   a -&gt; Eval ctx b (b -&gt; Eval ctx (c -&gt; Eval ctx d))
 --   </pre>
 --   
 --   For this reason, the <a>ToValue</a> instance for functions delegates
 --   to this type class for the type on the right hand side of the
---   function. It skips the application of <a>EvalT</a> for nested function
+--   function. It skips the application of <a>Eval</a> for nested function
 --   types.
-class ToValueRHS m a
-toValueRHS :: ToValueRHS m a => a -> EvalT m (Value m)
-fromValueRHS :: ToValueRHS m a => EvalT m (Value m) -> a
+class ToValueRHS ctx a
+toValueRHS :: ToValueRHS ctx a => a -> Eval ctx (Value ctx)
+fromValueRHS :: ToValueRHS ctx a => Eval ctx (Value ctx) -> a
 
 -- | This type can be used to make custom Haskell types accessible to
 --   PureScript code via the FFI's <tt>foreign import data</tt> feature.
@@ -383,36 +399,37 @@ defaultObjectOptions :: ObjectOptions
 
 -- | Derived <a>toValue</a> function for Haskell record types which should
 --   map to corresponding PureScript record types.
-genericToValue :: (MonadFix m, Generic a, ToObject m (Rep a)) => ObjectOptions -> a -> Value m
+genericToValue :: (Generic a, ToObject ctx (Rep a)) => ObjectOptions -> a -> Value ctx
 
 -- | Derived <a>fromValue</a> function for Haskell record types which
 --   should map to corresponding PureScript record types.
-genericFromValue :: (MonadFix m, Generic a, ToObject m (Rep a)) => ObjectOptions -> Value m -> EvalT m a
+genericFromValue :: (Generic a, ToObject ctx (Rep a)) => ObjectOptions -> Value ctx -> Eval ctx a
 
 -- | This class is used in the default instance for <a>ToValue</a>, via
 --   generic deriving, in order to identify a Haskell record type (with a
 --   single data constructor and named fields) with values in the semantic
 --   domain corresponding to a PureScript record type with the same field
 --   names.
-class ToObject m f
-toObject :: ToObject m f => ObjectOptions -> f x -> HashMap Text (Value m)
-fromObject :: ToObject m f => ObjectOptions -> HashMap Text (Value m) -> EvalT m (f x)
-evalPSString :: MonadFix m => PSString -> EvalT m Text
-instance (Control.Monad.Fix.MonadFix m, m GHC.Types.~ m') => Dovetail.Evaluate.ToValue m (Dovetail.Types.Value m')
-instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Integer.Type.Integer
-instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Types.Double
-instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m Data.Text.Internal.Text
-instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Types.Char
-instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m GHC.Types.Bool
-instance (Control.Monad.Fix.MonadFix m, Dovetail.Evaluate.ToValue m a, Dovetail.Evaluate.ToValueRHS m b) => Dovetail.Evaluate.ToValue m (a -> b)
-instance Dovetail.Evaluate.ToValue m a => Dovetail.Evaluate.ToValue m (Data.Vector.Vector a)
-instance (Control.Monad.Fix.MonadFix m, Data.Typeable.Internal.Typeable a) => Dovetail.Evaluate.ToValue m (Dovetail.Evaluate.ForeignType a)
-instance (Control.Monad.Fix.MonadFix m, Dovetail.Evaluate.ToValue m a, Dovetail.Evaluate.ToValueRHS m b) => Dovetail.Evaluate.ToValueRHS m (a -> b)
-instance (Dovetail.Evaluate.ToValue m a, n GHC.Types.~ m) => Dovetail.Evaluate.ToValueRHS m (Dovetail.Types.EvalT n a)
-instance (GHC.TypeLits.KnownSymbol field, Dovetail.Evaluate.ToValue m a) => Dovetail.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Dovetail.Evaluate.ToObject m f) => Dovetail.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.D t f)
-instance forall k (m :: * -> *) (f :: k -> *) (t :: GHC.Generics.Meta). (GHC.Base.Functor m, Dovetail.Evaluate.ToObject m f) => Dovetail.Evaluate.ToObject m (GHC.Generics.M1 GHC.Generics.C t f)
-instance forall k (m :: * -> *) (f :: k -> *) (g :: k -> *). (Control.Monad.Fix.MonadFix m, Dovetail.Evaluate.ToObject m f, Dovetail.Evaluate.ToObject m g) => Dovetail.Evaluate.ToObject m (f GHC.Generics.:*: g)
+class ToObject ctx f
+toObject :: ToObject ctx f => ObjectOptions -> f x -> HashMap Text (Value ctx)
+fromObject :: ToObject ctx f => ObjectOptions -> HashMap Text (Value ctx) -> Eval ctx (f x)
+evalPSString :: PSString -> Eval ctx Text
+instance (ctx GHC.Types.~ ctx') => Dovetail.Evaluate.ToValue ctx (Dovetail.Types.Value ctx')
+instance Dovetail.Evaluate.ToValue ctx GHC.Integer.Type.Integer
+instance Dovetail.Evaluate.ToValue ctx GHC.Types.Double
+instance Dovetail.Evaluate.ToValue ctx Data.Text.Internal.Text
+instance Dovetail.Evaluate.ToValue ctx GHC.Types.Char
+instance Dovetail.Evaluate.ToValue ctx GHC.Types.Bool
+instance (Dovetail.Evaluate.ToValue ctx a, Dovetail.Evaluate.ToValueRHS ctx b) => Dovetail.Evaluate.ToValue ctx (a -> b)
+instance Dovetail.Evaluate.ToValue ctx a => Dovetail.Evaluate.ToValue ctx (Data.Vector.Vector a)
+instance (k GHC.Types.~ Data.Text.Internal.Text, Dovetail.Evaluate.ToValue ctx a) => Dovetail.Evaluate.ToValue ctx (Data.HashMap.Internal.HashMap k a)
+instance Data.Typeable.Internal.Typeable a => Dovetail.Evaluate.ToValue ctx (Dovetail.Evaluate.ForeignType a)
+instance (Dovetail.Evaluate.ToValue ctx a, Dovetail.Evaluate.ToValueRHS ctx b) => Dovetail.Evaluate.ToValueRHS ctx (a -> b)
+instance (Dovetail.Evaluate.ToValue ctx a, ctx GHC.Types.~ ctx') => Dovetail.Evaluate.ToValueRHS ctx (Dovetail.Types.Eval ctx' a)
+instance (GHC.TypeLits.KnownSymbol field, Dovetail.Evaluate.ToValue ctx a) => Dovetail.Evaluate.ToObject ctx (GHC.Generics.M1 GHC.Generics.S ('GHC.Generics.MetaSel ('GHC.Maybe.Just field) u s l) (GHC.Generics.K1 r a))
+instance forall k ctx (f :: k -> *) (t :: GHC.Generics.Meta). Dovetail.Evaluate.ToObject ctx f => Dovetail.Evaluate.ToObject ctx (GHC.Generics.M1 GHC.Generics.D t f)
+instance forall k ctx (f :: k -> *) (t :: GHC.Generics.Meta). Dovetail.Evaluate.ToObject ctx f => Dovetail.Evaluate.ToObject ctx (GHC.Generics.M1 GHC.Generics.C t f)
+instance forall k ctx (f :: k -> *) (g :: k -> *). (Dovetail.Evaluate.ToObject ctx f, Dovetail.Evaluate.ToObject ctx g) => Dovetail.Evaluate.ToObject ctx (f GHC.Generics.:*: g)
 
 module Dovetail.REPL
 
@@ -420,7 +437,7 @@ module Dovetail.REPL
 --   
 --   It is more likely that you will want to use the <a>repl</a> function
 --   to start a REPL session from within an <a>InterpretT</a> block.
-defaultMain :: forall m. (MonadFix m, MonadIO m, MonadMask m) => Maybe ModuleName -> [ExternsFile] -> [Ident] -> Env m -> m ()
+defaultMain :: forall ctx. Maybe ModuleName -> [ExternsFile] -> [Ident] -> Env ctx -> ctx -> IO ()
 
 
 -- | This module provides a higher-level API on top of the
@@ -441,15 +458,15 @@ module Dovetail.FFI.Builder
 --       (a -&gt; a ~&gt; a)
 --       pure
 --   </pre>
-data FFIBuilder m a
+data FFIBuilder ctx a
 
 -- | Run a computation in the <a>FFIBuilder</a> monad, returning the result
 --   of the computation alongside the constructed <a>FFI</a>.
-runFFIBuilder :: ModuleName -> FFIBuilder m a -> (a, FFI m)
+runFFIBuilder :: ModuleName -> FFIBuilder ctx a -> (a, FFI ctx)
 
 -- | Run a computation in the <a>FFIBuilder</a> monad, returning only the
 --   constructed <a>FFI</a>.
-evalFFIBuilder :: ModuleName -> FFIBuilder m a -> FFI m
+evalFFIBuilder :: ModuleName -> FFIBuilder ctx a -> FFI ctx
 
 -- | Define a value which will be implemented in Haskell.
 --   
@@ -462,29 +479,29 @@ evalFFIBuilder :: ModuleName -> FFIBuilder m a -> FFI m
 --   
 --   The type checker will ensure that the PureScript and Haskell types are
 --   compatible.
-foreignImport :: (MonadFix m, ToValue m a, ForAll m a ty) => Ident -> ty -> a -> FFIBuilder m ()
-data FunctionType m l r
+foreignImport :: (ToValue ctx a, ForAll ctx a ty) => Ident -> ty -> a -> FFIBuilder ctx ()
+data FunctionType ctx l r
 
 -- | The PureScript string type
-string :: FunctionType m Text (EvalT m Text)
+string :: FunctionType ctx Text (Eval ctx Text)
 
 -- | The PureScript char type
-char :: FunctionType m Char (EvalT m Char)
+char :: FunctionType ctx Char (Eval ctx Char)
 
 -- | The PureScript boolean type
-boolean :: FunctionType m Bool (EvalT m Bool)
+boolean :: FunctionType ctx Bool (Eval ctx Bool)
 
 -- | The PureScript number type
-number :: FunctionType m Double (EvalT m Double)
+number :: FunctionType ctx Double (Eval ctx Double)
 
 -- | The PureScript integer type
-int :: FunctionType m Integer (EvalT m Integer)
+int :: FunctionType ctx Integer (Eval ctx Integer)
 
 -- | Construct a PureScript array type
-array :: FunctionType m l r -> FunctionType m (Vector l) (EvalT m (Vector l))
+array :: FunctionType ctx l r -> FunctionType ctx (Vector l) (Eval ctx (Vector l))
 
 -- | Construct a PureScript function type
-(~>) :: FunctionType m al ar -> FunctionType m bl br -> FunctionType m (al -> br) (al -> br)
+(~>) :: FunctionType ctx al ar -> FunctionType ctx bl br -> FunctionType ctx (al -> br) (al -> br)
 infixr 0 ~>
 
 -- | This type class exists to facilitate the concise description of
@@ -493,15 +510,13 @@ infixr 0 ~>
 --   
 --   <pre>
 --   foreignImport (Ident "identity") a -&gt; a ~&gt; a
---     :: MonadFix m 
---     =&gt; (Value m -&gt; EvalT m (Value m)) 
---     -&gt; FFIBuilder m ()
+--     :: (Value ctx -&gt; Eval ctx (Value ctx)) 
+--     -&gt; FFIBuilder ctx ()
 --   
 --   foreignImport (Ident "flip") a b c -&gt; (a ~&gt; b ~&gt; c) ~&gt; b ~&gt; a ~&gt; c
---     :: MonadFix m 
---     =&gt; ((Value m -&gt; Value m -&gt; EvalT m (Value m))
---     -&gt;   Value m -&gt; Value m -&gt; EvalT m (Value m))
---     -&gt; FFIBuilder m ()
+--     :: ((Value ctx -&gt; Value ctx -&gt; Eval ctx (Value ctx))
+--     -&gt;   Value ctx -&gt; Value ctx -&gt; Eval ctx (Value ctx))
+--     -&gt; FFIBuilder ctx ()
 --   </pre>
 --   
 --   These Haskell functions applications describe the PureScript type
@@ -517,32 +532,32 @@ infixr 0 ~>
 --   about as simple as things can get - we cannot simply specify the
 --   Haskell implementation and infer the PureScript type, because there is
 --   not a single best PureScript type for every given Haskell type.
-class ForAll m r a | a -> m r
-instance Control.Monad.Writer.Class.MonadWriter (Dovetail.FFI.Builder.ForeignImports m) (Dovetail.FFI.Builder.FFIBuilder m)
-instance GHC.Base.Monad (Dovetail.FFI.Builder.FFIBuilder m)
-instance GHC.Base.Applicative (Dovetail.FFI.Builder.FFIBuilder m)
-instance GHC.Base.Functor (Dovetail.FFI.Builder.FFIBuilder m)
-instance GHC.Base.Semigroup (Dovetail.FFI.Builder.ForeignImports m)
-instance GHC.Base.Monoid (Dovetail.FFI.Builder.ForeignImports m)
-instance Dovetail.FFI.Builder.ForAll m a (Dovetail.FFI.Builder.FunctionType m a r_)
-instance (Dovetail.FFI.Builder.ForAll m r o, a GHC.Types.~ Dovetail.FFI.Builder.FunctionType m (Dovetail.Types.Value m) (Dovetail.Types.EvalT m (Dovetail.Types.Value m))) => Dovetail.FFI.Builder.ForAll m r (a -> o)
+class ForAll ctx r a | a -> ctx r
+instance Control.Monad.Writer.Class.MonadWriter (Dovetail.FFI.Builder.ForeignImports ctx) (Dovetail.FFI.Builder.FFIBuilder ctx)
+instance GHC.Base.Monad (Dovetail.FFI.Builder.FFIBuilder ctx)
+instance GHC.Base.Applicative (Dovetail.FFI.Builder.FFIBuilder ctx)
+instance GHC.Base.Functor (Dovetail.FFI.Builder.FFIBuilder ctx)
+instance GHC.Base.Semigroup (Dovetail.FFI.Builder.ForeignImports ctx)
+instance GHC.Base.Monoid (Dovetail.FFI.Builder.ForeignImports ctx)
+instance Dovetail.FFI.Builder.ForAll ctx a (Dovetail.FFI.Builder.FunctionType ctx a r_)
+instance (Dovetail.FFI.Builder.ForAll ctx r o, a GHC.Types.~ Dovetail.FFI.Builder.FunctionType ctx (Dovetail.Types.Value ctx) (Dovetail.Types.Eval ctx (Dovetail.Types.Value ctx))) => Dovetail.FFI.Builder.ForAll ctx r (a -> o)
 
 
 -- | A tiny standard library.
 module Dovetail.Prelude
-stdlib :: MonadFix m => [FFI m]
-prelude :: MonadFix m => FFI m
-preludeArray :: MonadFix m => FFI m
-preludeString :: MonadFix m => FFI m
-preludeChar :: MonadFix m => FFI m
-preludeNumber :: MonadFix m => FFI m
-preludeInt :: MonadFix m => FFI m
-preludeBoolean :: MonadFix m => FFI m
-preludeDebug :: MonadFix m => FFI m
-preludePartial :: forall m. MonadFix m => FFI m
-eqOps :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
-numOps :: (ToValue m a, ToValueRHS m (EvalT m a), Num a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
-ordOps :: (ToValue m a, ToValueRHS m (EvalT m a), Ord a) => FunctionType m a (EvalT m a) -> FFIBuilder m ()
+stdlib :: [FFI ctx]
+prelude :: FFI ctx
+preludeArray :: FFI ctx
+preludeString :: FFI ctx
+preludeChar :: FFI ctx
+preludeNumber :: FFI ctx
+preludeInt :: FFI ctx
+preludeBoolean :: FFI ctx
+preludeDebug :: FFI ctx
+preludePartial :: forall ctx. FFI ctx
+eqOps :: (ToValue ctx a, ToValueRHS ctx (Eval ctx a), Eq a) => FunctionType ctx a (Eval ctx a) -> FFIBuilder ctx ()
+numOps :: (ToValue ctx a, ToValueRHS ctx (Eval ctx a), Num a) => FunctionType ctx a (Eval ctx a) -> FFIBuilder ctx ()
+ordOps :: (ToValue ctx a, ToValueRHS ctx (Eval ctx a), Ord a) => FunctionType ctx a (Eval ctx a) -> FFIBuilder ctx ()
 
 module Dovetail
 
@@ -551,16 +566,16 @@ module Dovetail
 --   modules, any foreign imports from Haskell code, and run PureScript
 --   code.
 --   
---   Note: do not confuse this monad transformer with <a>EvalT</a>, which
+--   Note: do not confuse this monad transformer with <tt>EvalT</tt>, which
 --   is only responsible for powering evaluation of PureScript expressions.
 --   
 --   The transformed monad is used to track any benign side effects that
 --   might be exposed via the foreign function interface to PureScript
---   code, in the same sense as <a>EvalT</a>.
-data InterpretT m a
+--   code, in the same sense as <tt>EvalT</tt>.
+data Interpret ctx a
 
--- | Run a computation in the <a>InterpretT</a> monad, possibly returning
---   an error. Note: errors can occur during module building or evaluation
+-- | Run a computation in the <a>Interpret</a> monad, possibly returning an
+--   error. Note: errors can occur during module building or evaluation
 --   (i.e. module loading).
 --   
 --   The <a>runInterpret</a> function is a simpler alternative in the case
@@ -569,40 +584,39 @@ data InterpretT m a
 --   For example:
 --   
 --   <pre>
---   runInterpret <tt>Module do
+--   runInterpret <tt>Module () do
 --     -- Load the prelude
 --     <a>ffi</a> <tt>prelude</tt>
 --     -- Build a module from source
 --     <a>build</a> "module Main where main = \"example\"" --
 --   
---   runInterpret </tt>(Eval Text) do
+--   runInterpret </tt>(Eval Text) () do
 --     <a>ffi</a> <tt>prelude</tt>
 --     _ &lt;- <a>build</a> "module Main where main = \"example\""
 --     -- Evaluate the main function
 --     <a>evalMain</a> (<a>ModuleName</a> "Main")
 --   </pre>
-runInterpretT :: Monad m => InterpretT m a -> m (Either (InterpretError m) a)
-runInterpret :: Interpret a -> Either (InterpretError Identity) a
+runInterpret :: ctx -> Interpret ctx a -> IO (Either (InterpretError ctx) a)
 
--- | A convenience function for running <a>EvalT</a> computations in
---   <a>InterpretT</a>, reporting errors via <a>InterpretError</a>.
-liftEvalT :: Monad m => EvalT m a -> InterpretT m a
+-- | A convenience function for running <tt>EvalT</tt> computations in
+--   <a>Interpret</a>, reporting errors via <a>InterpretError</a>.
+liftEval :: Eval ctx a -> Interpret ctx a
 
--- | Like <a>runInterpretT</a>, but starts an interactive debugging session
+-- | Like <a>runInterpret</a>, but starts an interactive debugging session
 --   in the event of a debugging error.
-runInterpretTWithDebugger :: (MonadIO m, MonadFix m, MonadMask m) => InterpretT m a -> m ()
+runInterpretWithDebugger :: ctx -> Interpret ctx a -> IO ()
 
--- | The type of errors that can occur in the <a>InterpretT</a> monad.
-data InterpretError m
+-- | The type of errors that can occur in the <a>Interpret</a> monad.
+data InterpretError ctx
 
 -- | Evaluation errors can occur during the initial evaluation of the
 --   module when it is loaded into the environment.
-ErrorDuringEvaluation :: EvaluationError m -> InterpretError m
+ErrorDuringEvaluation :: EvaluationError ctx -> InterpretError ctx
 
 -- | Build errors can occur if we are building modules from source or
 --   corefn.
-ErrorDuringBuild :: BuildError -> InterpretError m
-renderInterpretError :: RenderValueOptions -> InterpretError m -> String
+ErrorDuringBuild :: BuildError -> InterpretError ctx
+renderInterpretError :: RenderValueOptions -> InterpretError ctx -> String
 
 -- | Make an <a>FFI</a> module available for use to subsequent operations.
 --   
@@ -611,18 +625,19 @@ renderInterpretError :: RenderValueOptions -> InterpretError m -> String
 --   <pre>
 --   ffi <a>prelude</a>
 --   </pre>
-ffi :: Monad m => FFI m -> InterpretT m ()
+ffi :: FFI ctx -> Interpret ctx ()
+loadEnv :: Env ctx -> Interpret ctx ()
 
 -- | Build a PureScript module from source, and make its exported functions
 --   available during subsequent evaluations.
-build :: MonadFix m => Text -> InterpretT m (Module Ann)
+build :: Text -> Interpret ctx (Module Ann)
 
 -- | Build a PureScript module from corefn, and make its exported functions
 --   available during subsequent evaluations.
 --   
 --   The corefn module may be preprepared, for example by compiling from
 --   source text using the functions in the <a>Dovetail.Build</a> module.
-buildCoreFn :: MonadFix m => ExternsFile -> Module Ann -> InterpretT m (Module Ann)
+buildCoreFn :: ExternsFile -> Module Ann -> Interpret ctx (Module Ann)
 data BuildError
 UnableToParse :: NonEmpty ParserError -> BuildError
 UnableToCompile :: MultipleErrors -> BuildError
@@ -630,19 +645,15 @@ InternalError :: BuildError
 renderBuildError :: BuildError -> String
 
 -- | Evaluate a PureScript expression from source
-eval :: (MonadFix m, ToValueRHS m a) => Maybe ModuleName -> Text -> InterpretT m (a, SourceType)
+eval :: ToValueRHS ctx a => Maybe ModuleName -> Text -> Interpret ctx (a, SourceType)
 
 -- | Evaluate a PureScript corefn expression and return the result. Note:
 --   The expression is not type-checked by the PureScript typechecker. See
 --   the documentation for <a>ToValueRHS</a> for valid result types.
-evalCoreFn :: (MonadFix m, ToValueRHS m a) => Expr Ann -> InterpretT m a
+evalCoreFn :: ToValueRHS ctx a => Expr Ann -> Interpret ctx a
 
 -- | Evaluate <tt>main</tt> in the specified module and return the result.
-evalMain :: (MonadFix m, ToValueRHS m a) => ModuleName -> InterpretT m a
-
--- | Non-transformer version of <a>EvalT</a>, useful in any settings where
---   the FFI does not use any side effects during evaluation.
-type Eval = EvalT Identity
+evalMain :: ToValueRHS ctx a => ModuleName -> Interpret ctx a
 
 -- | The monad used by the interpreter, which supports error reporting for
 --   errors which can occur during evaluation.
@@ -650,49 +661,48 @@ type Eval = EvalT Identity
 --   The transformed monad is used to track any benign side effects that
 --   might be exposed via the foreign function interface to PureScript
 --   code.
-newtype EvalT m a
-EvalT :: ReaderT (EvaluationContext m) (ExceptT (EvaluationError m) m) a -> EvalT m a
-[unEvalT] :: EvalT m a -> ReaderT (EvaluationContext m) (ExceptT (EvaluationError m) m) a
+newtype Eval ctx a
+Eval :: ReaderT (EvaluationContext ctx) (ExceptT (EvaluationError ctx) IO) a -> Eval ctx a
+[unEval] :: Eval ctx a -> ReaderT (EvaluationContext ctx) (ExceptT (EvaluationError ctx) IO) a
 
 -- | An environment, i.e. a mapping from names to evaluated values.
 --   
 --   An environment for a single built-in function can be constructed using
 --   the <tt>builtIn</tt> function, and environments can be combined easily
 --   using the <a>Monoid</a> instance for <a>Map</a>.
-type Env m = Map (Qualified Ident) (Value m)
-runEvalT :: EvalT m a -> m (Either (EvaluationError m) a)
-runEval :: Eval a -> Either (EvaluationError Identity) a
+data Env ctx
+runEval :: ctx -> Eval ctx a -> IO (Either (EvaluationError ctx) a)
 
 -- | <a>ToValue</a> should support functions with types such as
 --   
 --   <pre>
---   a -&gt; EvalT m b
---   a -&gt; b -&gt; EvalT m c
---   a -&gt; b -&gt; c -&gt; EvalT m d
---   (a -&gt; EvalT m b) -&gt; EvalT m c
---   (a -&gt; b -&gt; EvalT m c) -&gt; EvalT m d
+--   a -&gt; Eval ctx b
+--   a -&gt; b -&gt; Eval ctx c
+--   a -&gt; b -&gt; c -&gt; Eval ctx d
+--   (a -&gt; Eval ctx b) -&gt; Eval ctx c
+--   (a -&gt; b -&gt; Eval ctx c) -&gt; Eval ctx d
 --   </pre>
 --   
 --   Note that every type in a return position is wrapped in the
---   <a>EvalT</a> monad transformer. This is because evaluation in general
---   may result in errors. However, a naive translation would result in too
---   many applications of <a>EvalT</a>.
+--   <tt>EvalT</tt> monad transformer. This is because evaluation in
+--   general may result in errors. However, a naive translation would
+--   result in too many applications of <tt>EvalT</tt>.
 --   
 --   Specifically, we do not want to require types such as these, in which
---   <a>EvalT</a> appears on the right hand side of every function arrow:
+--   <tt>EvalT</tt> appears on the right hand side of every function arrow:
 --   
 --   <pre>
---   a -&gt; EvalT m b (b -&gt; EvalT m c)
---   a -&gt; EvalT m b (b -&gt; EvalT m (c -&gt; EvalT m d))
+--   a -&gt; Eval ctx b (b -&gt; Eval ctx c)
+--   a -&gt; Eval ctx b (b -&gt; Eval ctx (c -&gt; Eval ctx d))
 --   </pre>
 --   
 --   For this reason, the <a>ToValue</a> instance for functions delegates
 --   to this type class for the type on the right hand side of the
---   function. It skips the application of <a>EvalT</a> for nested function
+--   function. It skips the application of <a>Eval</a> for nested function
 --   types.
-class ToValueRHS m a
-toValueRHS :: ToValueRHS m a => a -> EvalT m (Value m)
-fromValueRHS :: ToValueRHS m a => EvalT m (Value m) -> a
+class ToValueRHS ctx a
+toValueRHS :: ToValueRHS ctx a => a -> Eval ctx (Value ctx)
+fromValueRHS :: ToValueRHS ctx a => Eval ctx (Value ctx) -> a
 
 -- | Values which can be communicated across the FFI boundary from Haskell
 --   to PureScript.
@@ -707,27 +717,28 @@ fromValueRHS :: ToValueRHS m a => EvalT m (Value m) -> a
 --   <pre>
 --   fromValue . toValue = pure
 --   </pre>
-class MonadFix m => ToValue m a
+class ToValue ctx a
 
 -- | The default implementation uses generic deriving to identify a Haskell
 --   record type with a single data constructor with a PureScript record
 --   with the same field names.
-toValue :: ToValue m a => a -> Value m
+toValue :: ToValue ctx a => a -> Value ctx
 
 -- | The default implementation uses generic deriving to identify a Haskell
 --   record type with a single data constructor with a PureScript record
 --   with the same field names.
-toValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => a -> Value m
-fromValue :: ToValue m a => Value m -> EvalT m a
-fromValue :: (ToValue m a, Generic a, ToObject m (Rep a)) => Value m -> EvalT m a
+toValue :: (ToValue ctx a, Generic a, ToObject ctx (Rep a)) => a -> Value ctx
+fromValue :: ToValue ctx a => Value ctx -> Eval ctx a
+fromValue :: (ToValue ctx a, Generic a, ToObject ctx (Rep a)) => Value ctx -> Eval ctx a
 
 -- | Start an interactive debugger (REPL) session.
-repl :: (MonadFix m, MonadIO m, MonadMask m) => Maybe ModuleName -> InterpretT m ()
+repl :: Maybe ModuleName -> Interpret ctx ()
 type Ann = (SourceSpan, [Comment], Maybe SourceType, Maybe Meta)
 data Expr a
 data Module a
-instance GHC.Base.Monad m => Control.Monad.Error.Class.MonadError (Dovetail.InterpretError m) (Dovetail.InterpretT m)
-instance GHC.Base.Monad m => GHC.Base.Monad (Dovetail.InterpretT m)
-instance GHC.Base.Monad m => GHC.Base.Applicative (Dovetail.InterpretT m)
-instance GHC.Base.Functor m => GHC.Base.Functor (Dovetail.InterpretT m)
-instance Control.Monad.Trans.Class.MonadTrans Dovetail.InterpretT
+instance Control.Monad.IO.Class.MonadIO (Dovetail.Interpret ctx)
+instance Control.Monad.Reader.Class.MonadReader ctx (Dovetail.Interpret ctx)
+instance Control.Monad.Error.Class.MonadError (Dovetail.InterpretError ctx) (Dovetail.Interpret ctx)
+instance GHC.Base.Monad (Dovetail.Interpret ctx)
+instance GHC.Base.Applicative (Dovetail.Interpret ctx)
+instance GHC.Base.Functor (Dovetail.Interpret ctx)

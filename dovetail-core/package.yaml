@@ -23,6 +23,7 @@ library:
   - bytestring
   - dovetail
   - filepath
+  - file-embed
   - mtl
   - purescript
   - purescript-cst

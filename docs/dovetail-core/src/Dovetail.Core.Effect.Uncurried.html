@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE AllowAmbiguousTypes  #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE BlockArguments       #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE DataKinds            #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE FlexibleContexts     #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost  #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings    #-}</span><span>
+</span><span id="line-7"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables  #-}</span><span>
+</span><span id="line-8"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications     #-}</span><span>
+</span><span id="line-9"></span><span class="hs-pragma">{-# LANGUAGE TypeFamilies         #-}</span><span>
+</span><span id="line-10"></span><span class="hs-pragma">{-# LANGUAGE TypeOperators        #-}</span><span>
+</span><span id="line-11"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Core.Effect.Uncurried</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html"><span class="hs-identifier">Dovetail.Core.Effect</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier">Effect</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">builtIn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.TypeLits</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Nat</span></span><span class="hs-special">,</span><span> </span><span class="hs-keyword">type</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">type</span><span> </span><span class="hs-keyword">family</span><span> </span><span id="Fn"><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-var">Fn</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679306680"><span class="annot"><a href="#local-6989586621679306680"><span class="hs-identifier hs-type">n</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Nat</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679306679"><span class="annot"><a href="#local-6989586621679306679"><span class="hs-identifier hs-type">ctx</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-operator">*</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>  </span><span id="Fn"><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-var">Fn</span></a></span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span> </span><span id="local-6989586621679306678"><span class="annot"><a href="#local-6989586621679306678"><span class="hs-identifier hs-type hs-type">ctx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306678"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.html#Effect"><span class="hs-identifier hs-type">Effect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306678"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306678"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>  </span><span id="Fn"><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-var">Fn</span></a></span></span><span> </span><span id="local-6989586621679306676"><span class="annot"><a href="#local-6989586621679306676"><span class="hs-identifier hs-type hs-type">n</span></a></span></span><span> </span><span id="local-6989586621679306675"><span class="annot"><a href="#local-6989586621679306675"><span class="hs-identifier hs-type hs-type">ctx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679306675"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-type">Fn</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679306676"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">-</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679306675"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#env"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679306673"><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-27"></span><span id="env"><span class="annot"><span class="annottext">env :: Env ctx
+</span><a href="Dovetail.Core.Effect.Uncurried.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679306672"><span class="annot"><span class="annottext">_ModuleName :: ModuleName
+</span><a href="#local-6989586621679306672"><span class="hs-identifier hs-var hs-var">_ModuleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Effect.Uncurried&quot;</span></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span>      </span><span class="annot"><a href="#local-6989586621679306670"><span class="hs-identifier hs-type">effectFn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679306685"><span class="annot"><a href="#local-6989586621679306685"><span class="hs-identifier hs-type">n</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Nat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>                </span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ToValue</span></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-type">Fn</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306685"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ToValueRHS</span></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-type">Fn</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306685"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>               </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-33"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-34"></span><span>      </span><span id="local-6989586621679306670"><span class="annot"><span class="annottext">effectFn :: Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var hs-var">effectFn</span></a></span></span><span> </span><span id="local-6989586621679306669"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679306669"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Fn n ctx -&gt; Fn n ctx) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-type">Fn</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306685"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.Uncurried.html#Fn"><span class="hs-identifier hs-type">Fn</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306685"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679306673"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679306672"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679306669"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Fn n ctx -&gt; Fn n ctx
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>  </span><span class="annot"><span class="annottext">[Env ctx] -&gt; Env ctx
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn1&quot;</span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn2&quot;</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">3</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn3&quot;</span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">4</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn4&quot;</span></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">5</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn5&quot;</span></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">6</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn6&quot;</span></span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">7</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn7&quot;</span></span><span>
+</span><span id="line-44"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">8</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn8&quot;</span></span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">9</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn9&quot;</span></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">10</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;runEffectFn10&quot;</span></span><span>
+</span><span id="line-47"></span><span>    </span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn1&quot;</span></span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn2&quot;</span></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">3</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn3&quot;</span></span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">4</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn4&quot;</span></span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">5</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn5&quot;</span></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">6</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn6&quot;</span></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">7</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn7&quot;</span></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">8</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn8&quot;</span></span><span>
+</span><span id="line-56"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">9</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn9&quot;</span></span><span>
+</span><span id="line-57"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Env ctx
+forall (n :: Nat).
+(ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx)) =&gt;
+Text -&gt; Env ctx
+</span><a href="#local-6989586621679306670"><span class="hs-identifier hs-var">effectFn</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-number">10</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mkEffectFn10&quot;</span></span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-special">]</span></pre></body></html>

@@ -60,7 +60,7 @@ module Dovetail.Aeson
 --   
 --   This function is a convenient counterpart to <a>eval</a> which can be
 --   useful for applications whose output format is JSON.
-evalJSON :: MonadFix m => Maybe ModuleName -> Text -> InterpretT m Value
+evalJSON :: Maybe ModuleName -> Text -> Interpret ctx Value
 
 -- | A constraint synonym for the constraint our reified types will
 --   satisfy: serialization via <a>ToJSON</a>, deserialization via
@@ -68,7 +68,7 @@ evalJSON :: MonadFix m => Maybe ModuleName -> Text -> InterpretT m Value
 --   
 --   This synonym is provided just for the convenience of tidying up the
 --   type signatures.
-type Serializable m a = (FromJSON a, ToJSON a, ToValue m a)
+type Serializable ctx a = (FromJSON a, ToJSON a, ToValue ctx a)
 
 -- | Reify a PureScript <a>SourceType</a> as a Haskell type which supports
 --   transport via the FFI using <a>ToValue</a>, and JSON serialization
@@ -83,7 +83,7 @@ type Serializable m a = (FromJSON a, ToJSON a, ToValue m a)
 --   won't suffice. For example, if we want to take data as input from a
 --   JSON structure, then we can reify the PureScript type of the domain of
 --   a PureScript function.
-reify :: forall m r. MonadFix m => SourceType -> (forall a. Serializable m a => Proxy a -> EvalT m r) -> EvalT m r
+reify :: forall ctx r. SourceType -> (forall a. Serializable ctx a => Proxy a -> Eval ctx r) -> Eval ctx r
 
 -- | This action makes a module named <tt>JSON</tt> available to your
 --   PureScript code.
@@ -94,7 +94,7 @@ reify :: forall m r. MonadFix m => SourceType -> (forall a. Serializable m a => 
 --   
 --   Any PureScript code which needs to support type-directed serialization
 --   for values which may involve <tt>null</tt> should import this module.
-stdlib :: MonadFix m => InterpretT m (Module Ann)
+stdlib :: Interpret ctx (Module Ann)
 
 -- | A representation of nullable values for use in derived serializers.
 --   
@@ -119,15 +119,15 @@ instance Data.Aeson.Types.FromJSON.FromJSON Dovetail.Aeson.UnknownJSON
 instance Data.Aeson.Types.ToJSON.ToJSON Dovetail.Aeson.UnknownJSON
 instance Dovetail.Aeson.FromJSONObject xs => Data.Aeson.Types.FromJSON.FromJSON (Dovetail.Aeson.OpenRecord xs)
 instance Dovetail.Aeson.ToJSONObject xs => Data.Aeson.Types.ToJSON.ToJSON (Dovetail.Aeson.OpenRecord xs)
-instance (Control.Monad.Fix.MonadFix m, Dovetail.Aeson.ToObject m xs) => Dovetail.Evaluate.ToValue m (Dovetail.Aeson.OpenRecord xs)
-instance Control.Monad.Fix.MonadFix m => Dovetail.Evaluate.ToValue m Dovetail.Aeson.UnknownJSON
-instance Dovetail.Evaluate.ToValue m a => Dovetail.Evaluate.ToValue m (Dovetail.Aeson.Nullable a)
+instance Dovetail.Aeson.ToObject ctx xs => Dovetail.Evaluate.ToValue ctx (Dovetail.Aeson.OpenRecord xs)
+instance Dovetail.Evaluate.ToValue ctx Dovetail.Aeson.UnknownJSON
+instance Dovetail.Evaluate.ToValue ctx a => Dovetail.Evaluate.ToValue ctx (Dovetail.Aeson.Nullable a)
 instance (GHC.TypeLits.KnownSymbol k, Data.Aeson.Types.FromJSON.FromJSON x, Dovetail.Aeson.FromJSONObject xs) => Dovetail.Aeson.FromJSONObject (Dovetail.Aeson.Cons k x xs)
 instance (GHC.TypeLits.KnownSymbol k, Data.Aeson.Types.ToJSON.ToJSON x, Dovetail.Aeson.ToJSONObject xs) => Dovetail.Aeson.ToJSONObject (Dovetail.Aeson.Cons k x xs)
-instance (GHC.TypeLits.KnownSymbol k, Dovetail.Evaluate.ToValue m x, Dovetail.Aeson.ToObject m xs) => Dovetail.Aeson.ToObject m (Dovetail.Aeson.Cons k x xs)
+instance (GHC.TypeLits.KnownSymbol k, Dovetail.Evaluate.ToValue ctx x, Dovetail.Aeson.ToObject ctx xs) => Dovetail.Aeson.ToObject ctx (Dovetail.Aeson.Cons k x xs)
 instance Dovetail.Aeson.FromJSONObject Dovetail.Aeson.Nil
 instance Dovetail.Aeson.ToJSONObject Dovetail.Aeson.Nil
-instance GHC.Base.Monad m => Dovetail.Aeson.ToObject m Dovetail.Aeson.Nil
-instance (Control.Monad.Fix.MonadFix m, Dovetail.Aeson.ToObject m xs) => Dovetail.Evaluate.ToValue m (Dovetail.Aeson.Record xs)
+instance Dovetail.Aeson.ToObject ctx Dovetail.Aeson.Nil
+instance Dovetail.Aeson.ToObject ctx xs => Dovetail.Evaluate.ToValue ctx (Dovetail.Aeson.Record xs)
 instance Dovetail.Aeson.ToJSONObject xs => Data.Aeson.Types.ToJSON.ToJSON (Dovetail.Aeson.Record xs)
 instance Dovetail.Aeson.FromJSONObject xs => Data.Aeson.Types.FromJSON.FromJSON (Dovetail.Aeson.Record xs)

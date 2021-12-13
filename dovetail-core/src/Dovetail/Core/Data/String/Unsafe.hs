@@ -7,27 +7,26 @@
 
 module Dovetail.Core.Data.String.Unsafe where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.String.Unsafe"
 
   fold
     [ -- charAt :: Int -> String -> Char
-      builtIn @m @(Integer -> Text -> EvalT m Char)  
+      builtIn @ctx @(Integer -> Text -> Eval ctx Char)  
         _ModuleName "charAt" 
         \i str -> 
           if i >= 0 && fromIntegral i < Text.length str
             then pure (Text.index str (fromIntegral i))
             else throwErrorWithContext (OtherError "charAt: index out of range")
       -- char :: String -> Char
-    , builtIn @m @(Text -> EvalT m Char)
+    , builtIn @ctx @(Text -> Eval ctx Char)
         _ModuleName "char" 
         \str -> 
           if Text.length str == 1

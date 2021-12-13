@@ -2,29 +2,22 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE QuasiQuotes    #-}
-{-# LANGUAGE TemplateHaskell    #-}
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE ViewPatterns        #-}
 
 module Dovetail.Core where
 
-import Control.Monad (foldM, unless)  
-import Control.Monad.Error.Class (catchError)
-import Control.Monad.IO.Class (MonadIO)
+import Codec.Serialise qualified as Codec
 import Control.Monad.IO.Class (MonadIO(..))
-import Data.Foldable (fold, traverse_)
-import Data.Text (Text)
-import Data.Text qualified as Text
-import Data.Text.IO qualified as Text
-import Data.Typeable (Typeable)
-import Data.Vector (Vector)
-import Data.Vector qualified as Vector
-import Dovetail
-import Dovetail.Build (buildSingleModule)
-import Dovetail.Evaluate (ForeignType(..), builtIn)
-import System.FilePath ((</>))
+import Data.Aeson (decodeFileStrict)
+import Data.Aeson.Types (parseEither)
 import Data.ByteString.Lazy qualified as BL
+import Data.Foldable (fold, traverse_)
+import Data.Maybe (fromJust)
+import Data.Typeable (Typeable)
+import Dovetail
+import Language.PureScript.CoreFn.FromJSON qualified as FromJSON
+import System.FilePath ((</>))
 
 import Dovetail.Core.Control.Apply qualified as Control.Apply
 import Dovetail.Core.Control.Bind qualified as Control.Bind
@@ -79,40 +72,8 @@ import Dovetail.Core.Record.Unsafe qualified as Record.Unsafe
 import Dovetail.Core.Record.Unsafe.Union qualified as Record.Unsafe.Union
 import Dovetail.Core.Test.Assert qualified as Test.Assert
 import Dovetail.Core.Unsafe.Coerce qualified as Unsafe.Coerce
-import Language.Haskell.TH
-import Language.Haskell.TH.Syntax (lift, reportWarning)
-import Language.PureScript.CoreFn.ToJSON qualified as ToJSON
-import Language.PureScript.CoreFn.FromJSON qualified as FromJSON
-import Codec.Serialise qualified as Codec
-import Data.Version (makeVersion)
-import Instances.TH.Lift ()
-import Data.Aeson (decodeFileStrict)
-import Data.Aeson.Types (parseEither)
-import Data.Maybe (fromJust)
-
--- (externs, corefns) = $(
---   let buildAheadOfTime :: FilePath -> [FilePath] -> Q Exp
---       buildAheadOfTime sourceFiles = (>>= reify) . foldM go ([], [])  where
--- 
---         toPath fileName = sourceFiles </> fileName
--- 
---         go (externs, corefns) path = do
---           reportWarning path
---           moduleText <- liftIO . Text.readFile $ toPath path
---           case buildSingleModule externs moduleText of
---             Left err -> error (renderBuildError err)
---             Right (corefn, extern) ->
---               pure (externs <> [extern], corefns <> [corefn])
--- 
---         reify (externs, corefns) = do
---           let externsSerialized = map Codec.serialise externs
---               corefnsSerialized = map (ToJSON.moduleToJSON (makeVersion [0, 14, 2])) corefns
---           [| (map Codec.deserialise $(lift externsSerialized), map (either error snd . parseEither FromJSON.moduleFromJSON) $(lift corefnsSerialized)) |]
--- 
---    in buildAheadOfTime "../examples/repl/.spago"
---         [ ])
   
-core :: forall m. (MonadIO m, MonadIO m, Typeable m) => FilePath -> InterpretT m ()
+core :: forall ctx. Typeable ctx => FilePath -> Interpret ctx ()
 core sourceFiles = do
     loadEnv env
     traverse_ buildOne modules
@@ -121,7 +82,6 @@ core sourceFiles = do
       liftIO . putStrLn $ fileName
       externsFile <- liftIO . BL.readFile $ toPath (".." </> "output" </> fileName </> "externs.cbor")
       coreFnFile <- fmap fromJust . liftIO . decodeFileStrict $ toPath (".." </> "output" </> fileName </> "corefn.json")
-      -- moduleText <- liftIO . Text.readFile $ toPath fileName
       let readCoreFn = either error snd . parseEither FromJSON.moduleFromJSON
       buildCoreFn (Codec.deserialise externsFile) (readCoreFn coreFnFile)
     
@@ -416,7 +376,7 @@ core sourceFiles = do
       , "Data.Validation.Semiring"
       ]
 
-env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
+env :: forall ctx. Typeable ctx => Env ctx
 env = 
   fold
     [ Control.Apply.env

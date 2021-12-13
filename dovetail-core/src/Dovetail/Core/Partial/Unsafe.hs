@@ -7,15 +7,14 @@
 
 module Dovetail.Core.Partial.Unsafe where
 
-import Control.Monad.IO.Class (MonadIO)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Partial.Unsafe"
 
   -- _unsafePartial :: forall a b. a -> b
-  builtIn @m @((Value m -> EvalT m (Value m)) -> EvalT m (Value m))
+  builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Eval ctx (Value ctx))
     _ModuleName "_unsafePartial"
     \f -> f (Object mempty)

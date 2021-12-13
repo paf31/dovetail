@@ -23,9 +23,7 @@ module Dovetail.Types (
   , envFromMap
   , bindEnv
   
-  , EvalT(..)
-  , runEvalT
-  , Eval
+  , Eval(..)
   , runEval
   
   -- ** Evaluation errors
@@ -50,15 +48,13 @@ module Dovetail.Types (
   ) where
   
 import Control.Monad.Error.Class (MonadError(..))
+import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader.Class (MonadReader(..))
-import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT)
 import Data.Dynamic (Dynamic)
 import Data.Foldable (fold)
-import Data.Functor.Identity (Identity(..))
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.List (sortBy)
@@ -67,7 +63,6 @@ import Data.Map qualified as Map
 import Data.Maybe (listToMaybe)
 import Data.Ord (comparing)
 import Data.Set (Set)
-import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Vector (Vector)
@@ -85,18 +80,18 @@ import System.Console.ANSI.Types qualified as Color
 --
 -- Any additional side effects which might occur in FFI calls to Haskell code
 -- are tracked by a monad in the type argument.
-data Value m
-  = Object (HashMap Text (Value m))
+data Value ctx
+  = Object (HashMap Text (Value ctx))
   -- ^ Records are represented as hashmaps from their field names to values
-  | Array (Vector (Value m))
+  | Array (Vector (Value ctx))
   | String Text
   | Char Char
   | Number Double
   | Int Integer
   | Bool Bool
-  | Closure (Value m -> EvalT m (Value m))
+  | Closure (Value ctx -> Eval ctx (Value ctx))
   -- ^ Closures, represented in higher-order abstract syntax style.
-  | Constructor (Names.ProperName 'Names.ConstructorName) [Value m]
+  | Constructor (Names.ProperName 'Names.ConstructorName) [Value ctx]
   -- ^ Fully-applied data constructors
   | Foreign Dynamic
   -- ^ Foreign data types
@@ -122,9 +117,9 @@ defaultTerminalRenderValueOptions = RenderValueOptions
 --
 -- As a general rule, apart from any closures, the rendered text should evaluate
 -- to the value you started with (when 'maximumDepth' is not set).
-renderValue :: RenderValueOptions -> Value m -> Text
+renderValue :: RenderValueOptions -> Value ctx -> Text
 renderValue RenderValueOptions{ colorOutput, maximumDepth } = fst . go 0 where
-  go :: Int -> Value m -> (Text, Bool)
+  go :: Int -> Value ctx -> (Text, Bool)
   go n _ | maybe False (n >=) maximumDepth = ("⋯", True)
   go _ (String s) = (Text.pack (yellow (show @Text s)), True)
   go _ (Char c) = (Text.pack (yellow (show @Char c)), True)
@@ -148,7 +143,7 @@ renderValue RenderValueOptions{ colorOutput, maximumDepth } = fst . go 0 where
   go n (Constructor ctor args) = (Text.unwords (P.runProperName ctor : map (goParens (n + 1)) args), null args)
   go _ (Foreign{}) = (Text.pack (blue "<foreign>"), True)
 
-  goParens :: Int -> Value m -> Text
+  goParens :: Int -> Value ctx -> Text
   goParens n x = 
     case go n x of
       (result, True) -> result
@@ -173,38 +168,41 @@ renderValue RenderValueOptions{ colorOutput, maximumDepth } = fst . go 0 where
 -- An environment for a single built-in function can be constructed
 -- using the 'builtIn' function, and environments can be combined
 -- easily using the 'Monoid' instance for 'Map'.
-newtype Env m = Env { _getEnv :: Map (Qualified Ident) (Value m) }
+newtype Env ctx = Env { _getEnv :: Map (Qualified Ident) (Value ctx) }
   deriving newtype (Semigroup, Monoid)
 
-lookupEnv :: Qualified Ident -> Env m -> Maybe (Value m)
+lookupEnv :: Qualified Ident -> Env ctx -> Maybe (Value ctx)
 lookupEnv q (Env env) = Map.lookup q env
 
-envNames :: Env m -> Set (Qualified Ident)
+envNames :: Env ctx -> Set (Qualified Ident)
 envNames (Env es) = Map.keysSet es
 
-envFromMap :: Map (Qualified Ident) (Value m) -> Env m
+envFromMap :: Map (Qualified Ident) (Value ctx) -> Env ctx
 envFromMap m = Env m
 
-envToMap :: Env m -> Map (Qualified Ident) (Value m)
+envToMap :: Env ctx -> Map (Qualified Ident) (Value ctx)
 envToMap (Env e) = e
 
-bindEnv :: [(Qualified Ident, Value m)] -> Env m -> Env m
+bindEnv :: [(Qualified Ident, Value ctx)] -> Env ctx -> Env ctx
 bindEnv xs (Env e) = Env (Map.fromList xs <> e)
 
 -- | An evaluation context currently consists of an evaluation stack, which
--- is only used for debugging purposes.
+-- is only used for debugging purposes, plus any other domain-specific context
+-- of type 'ctx'.
 --
 -- The context type is parameterized by a monad @m@, because stack frames can
 -- contain environments, which can in turn contain 'Value's, which may contain
 -- monadic closures. This can be useful for inspecting values or resuming execution
 -- in the event of an error.
-newtype EvaluationContext m = EvaluationContext 
-  { getEvaluationContext :: [EvaluationStackFrame m] }
+data EvaluationContext ctx = EvaluationContext 
+  { callStack :: [EvaluationStackFrame ctx] 
+  , additionalContext :: ctx
+  }
   
 -- | A single evaluation stack frame
 -- TODO: support frames for foreign function calls
-data EvaluationStackFrame m = EvaluationStackFrame
-  { frameEnv :: Env m
+data EvaluationStackFrame ctx = EvaluationStackFrame
+  { frameEnv :: Env ctx
   -- ^ The current environment in this stack frame 
   , frameSource :: P.SourceSpan
   -- ^ The source span of the expression whose evaluation created this stack frame.
@@ -214,10 +212,10 @@ data EvaluationStackFrame m = EvaluationStackFrame
   
 -- | Create a stack frame for the evaluation of an expression, and push it onto
 -- the stack.
-pushStackFrame :: Monad m => Env m -> CoreFn.Expr CoreFn.Ann -> EvalT m a -> EvalT m a
+pushStackFrame :: Env ctx -> CoreFn.Expr CoreFn.Ann -> Eval ctx a -> Eval ctx a
 pushStackFrame env expr = 
-    local \(EvaluationContext frames) ->
-      EvaluationContext (frame : frames)
+    local \(EvaluationContext frames ctx) ->
+      EvaluationContext (frame : frames) ctx
   where
     frame = EvaluationStackFrame 
       { frameEnv = env
@@ -244,35 +242,26 @@ throwErrorWithContext errorType = do
 --
 -- The transformed monad is used to track any benign side effects that might be
 -- exposed via the foreign function interface to PureScript code.
-newtype EvalT m a = EvalT { unEvalT :: ReaderT (EvaluationContext m) (ExceptT (EvaluationError m) m) a }
+newtype Eval ctx a = Eval { unEval :: ReaderT (EvaluationContext ctx) (ExceptT (EvaluationError ctx) IO) a }
   deriving newtype 
     ( Functor
     , Applicative
     , Monad
-    , MonadError (EvaluationError m)
-    , MonadReader (EvaluationContext m)
+    , MonadError (EvaluationError ctx)
+    , MonadReader (EvaluationContext ctx)
     , MonadIO
+    , MonadFix
     )
 
-instance MonadTrans EvalT where
-  lift = EvalT . lift . lift
-
-runEvalT :: EvalT m a -> m (Either (EvaluationError m) a)
-runEvalT = runExceptT . flip runReaderT (EvaluationContext []) . unEvalT
-
--- | Non-transformer version of `EvalT`, useful in any settings where the FFI
--- does not use any side effects during evaluation.
-type Eval = EvalT Identity
-
-runEval :: Eval a -> Either (EvaluationError Identity) a
-runEval = runIdentity . runEvalT
+runEval :: ctx -> Eval ctx a -> IO (Either (EvaluationError ctx) a)
+runEval ctx = runExceptT . flip runReaderT (EvaluationContext [] ctx) . unEval
 
 -- | An evaluation error containing the evaluation context at the point the
 -- error was raised.
-data EvaluationError m = EvaluationError
-  { errorType :: EvaluationErrorType m
+data EvaluationError ctx = EvaluationError
+  { errorType :: EvaluationErrorType ctx
   -- ^ The type of error which was raised
-  , errorContext :: EvaluationContext m
+  , errorContext :: EvaluationContext ctx
   -- ^ The evaluation context at the point the error was raised.
   } 
 
@@ -283,15 +272,15 @@ data EvaluationError m = EvaluationError
 -- PureScript code, so it is possible that runtime errors can occur if we are
 -- not careful. This is similar to how PureScript code can fail at runtime
 -- due to errors in the FFI.
-data EvaluationErrorType m
+data EvaluationErrorType ctx
   = UnknownIdent (Qualified Ident)
   -- ^ A name was not found in the environment
-  | TypeMismatch Text (Value m)
+  | TypeMismatch Text (Value ctx)
   -- ^ The runtime representation of a value did not match the expected
   -- representation
-  | FieldNotFound Text (Value m)
+  | FieldNotFound Text (Value ctx)
   -- ^ A record field did not exist in an 'Object' value.
-  | InexhaustivePatternMatch [Value m]
+  | InexhaustivePatternMatch [Value ctx]
   -- ^ A pattern match failed to match its argument
   | InvalidNumberOfArguments Int Int
   -- ^ A pattern match received the wrong number of arguments
@@ -305,12 +294,12 @@ data EvaluationErrorType m
   -- any of the other error types.
 
 -- | Render an 'EvaluationError' as a human-readable string.
-renderEvaluationError :: RenderValueOptions -> EvaluationError m -> String
+renderEvaluationError :: RenderValueOptions -> EvaluationError ctx -> String
 renderEvaluationError opts (EvaluationError{ errorType, errorContext }) =
   unlines $
     [ maybe "Error"
         (("Error " <>) . Text.unpack . renderEvaluationStackFrame)
-        (listToMaybe (getEvaluationContext errorContext))
+        (listToMaybe (callStack errorContext))
     ] <>
     [ ""
     , "  " <> renderEvaluationErrorType opts errorType
@@ -321,22 +310,22 @@ renderEvaluationError opts (EvaluationError{ errorType, errorContext }) =
       , "  = " <> Text.unpack (renderValue opts value)
       , ""
       ]
-    | headFrame <- take 1 (getEvaluationContext errorContext)
+    | headFrame <- take 1 (callStack errorContext)
     , (ident, value) <- Map.toList (envToMap (frameEnv headFrame))
     , P.isUnqualified ident
     ] <> 
     [ Text.unpack 
-        (renderEvaluationStack (drop 1 (getEvaluationContext errorContext)))
+        (renderEvaluationStack (drop 1 (callStack errorContext)))
     ]
   
-renderEvaluationStack :: [EvaluationStackFrame m] -> Text
+renderEvaluationStack :: [EvaluationStackFrame ctx] -> Text
 renderEvaluationStack frames =
   Text.unlines
     [ renderEvaluationStackFrame frame
     | frame <- frames 
     ]
 
-renderEvaluationStackFrame :: EvaluationStackFrame m -> Text
+renderEvaluationStackFrame :: EvaluationStackFrame ctx -> Text
 renderEvaluationStackFrame frame =
   "at " <> fold
     [ P.displaySourcePos (P.spanStart (frameSource frame)) 
@@ -344,7 +333,7 @@ renderEvaluationStackFrame frame =
     , P.displaySourcePos (P.spanEnd (frameSource frame))
     ]
   
-renderEvaluationErrorType :: RenderValueOptions -> EvaluationErrorType m -> String
+renderEvaluationErrorType :: RenderValueOptions -> EvaluationErrorType ctx -> String
 renderEvaluationErrorType _ (UnknownIdent x) =
   "Identifier not in scope: " <> Text.unpack (Names.showQualified Names.showIdent x)
 renderEvaluationErrorType opts (TypeMismatch x val) =

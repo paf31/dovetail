@@ -7,15 +7,14 @@
 
 module Dovetail.Core.Data.Unit where
 
-import Control.Monad.IO.Class (MonadIO)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.Unit"
 
   -- unit :: Unit
-  builtIn @m @(Value m)
+  builtIn @ctx @(Value ctx)
     _ModuleName "unit"
     (Object mempty)

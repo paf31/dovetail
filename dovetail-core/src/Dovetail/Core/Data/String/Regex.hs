@@ -7,23 +7,22 @@
 
 module Dovetail.Core.Data.String.Regex where
   
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Vector (Vector)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
-  let notImplemented :: Text -> EvalT m a
+  let notImplemented :: Text -> Eval ctx a
       notImplemented name = throwErrorWithContext (OtherError (name <> " is not implemented"))
   
       _ModuleName = ModuleName "Data.String.Regex"
   
   fold
     [ -- showRegexImpl :: Regex -> String
-      builtIn @m @(Value m -> EvalT m Text)
+      builtIn @ctx @(Value ctx -> Eval ctx Text)
         _ModuleName "showRegexImpl" 
         \_r -> 
           notImplemented "showRegexImpl"
@@ -33,22 +32,22 @@ env = do
       --   -> String
       --   -> String
       --   -> Either String Regex
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Text -> Value m -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Text -> Value ctx -> Text -> Eval ctx (Value ctx))
         _ModuleName "regexImpl" 
         \_just _nothing _str _flags ->
           notImplemented "regexImpl"
       -- source :: Regex -> String
-    , builtIn @m @(Value m -> EvalT m Text)
+    , builtIn @ctx @(Value ctx -> Eval ctx Text)
         _ModuleName "source" 
         \_r -> 
           notImplemented "source"
       -- flagsImpl :: Regex -> RegexFlagsRec
-    , builtIn @m @(Value m -> EvalT m (Value m))
+    , builtIn @ctx @(Value ctx -> Eval ctx (Value ctx))
         _ModuleName "flagsImpl" 
         \_r -> 
           notImplemented "flagsImpl"
       -- test :: Regex -> String -> Boolean
-    , builtIn @m @(Value m -> EvalT m (Value m))
+    , builtIn @ctx @(Value ctx -> Eval ctx (Value ctx))
         _ModuleName "test"
         \_r -> 
           notImplemented "test"
@@ -58,12 +57,12 @@ env = do
       --   -> Regex
       --   -> String
       --   -> Maybe (NonEmptyArray (Maybe String))
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Value m -> Value m -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Value ctx -> Text -> Eval ctx (Value ctx))
         _ModuleName "_match" 
         \_just _nothing _r _str -> 
           notImplemented "_match"
       -- replace :: Regex -> String -> String -> String
-    , builtIn @m @(Value m -> Text -> Text -> EvalT m Text)
+    , builtIn @ctx @(Value ctx -> Text -> Text -> Eval ctx Text)
         _ModuleName "replace" 
         \_r _repl _str ->
           notImplemented "replace"
@@ -74,7 +73,7 @@ env = do
       --   -> (String -> Array (Maybe String) -> String)
       --   -> String
       --   -> String
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Value m -> Value m -> (Text -> Vector (Value m) -> EvalT m Text) -> Text -> EvalT m Text)
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Value ctx -> (Text -> Vector (Value ctx) -> Eval ctx Text) -> Text -> Eval ctx Text)
         _ModuleName "_replaceBy" 
         \_just _nothing _r _f _str ->
           notImplemented "_replaceBy"
@@ -84,12 +83,12 @@ env = do
       --   -> Regex
       --   -> String
       --   -> Maybe Int
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Value m -> Value m -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Value ctx -> Text -> Eval ctx (Value ctx))
         _ModuleName "_search" 
         \_just _nothing _r _str ->
           notImplemented "_search"
       -- split :: Regex -> String -> Array String
-    , builtIn @m @(Value m -> Text -> EvalT m (Vector Text))
+    , builtIn @ctx @(Value ctx -> Text -> Eval ctx (Vector Text))
         _ModuleName "split" 
         \_r _str -> 
           notImplemented "split"

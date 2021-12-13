@@ -7,7 +7,6 @@
 
 module Dovetail.Core.Data.String.CodePoints where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Vector (Vector)
@@ -16,7 +15,7 @@ import Dovetail.Evaluate (builtIn)
 
 type CodePoint = Integer
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.String.CodePoints"
 
@@ -25,14 +24,14 @@ env = do
       --   :: (CodePoint -> String)
       --   -> CodePoint
       --   -> String
-      builtIn @m @((CodePoint -> EvalT m Text) -> CodePoint -> EvalT m Text)
+      builtIn @ctx @((CodePoint -> Eval ctx Text) -> CodePoint -> Eval ctx Text)
         _ModuleName "_singleton" 
         \fallback -> fallback
       -- _fromCodePointArray
       --   :: (CodePoint -> String)
       --   -> Array CodePoint
       --   -> String
-    , builtIn @m @((Vector CodePoint -> EvalT m Text) -> Vector CodePoint -> EvalT m Text)
+    , builtIn @ctx @((Vector CodePoint -> Eval ctx Text) -> Vector CodePoint -> Eval ctx Text)
         _ModuleName "_fromCodePointArray" 
         \fallback -> fallback
       -- _toCodePointArray
@@ -40,7 +39,7 @@ env = do
       --   -> (String -> CodePoint)
       --   -> String
       --   -> Array CodePoint
-    , builtIn @m @((Text -> EvalT m (Vector CodePoint)) -> (Text -> EvalT m CodePoint) -> Text -> EvalT m (Vector CodePoint))
+    , builtIn @ctx @((Text -> Eval ctx (Vector CodePoint)) -> (Text -> Eval ctx CodePoint) -> Text -> Eval ctx (Vector CodePoint))
         _ModuleName "_toCodePointArray" 
         \fallback _ -> fallback
       -- _codePointAt
@@ -51,7 +50,7 @@ env = do
       --   -> Int
       --   -> String
       --   -> Maybe CodePoint
-    , builtIn @m @((Integer -> Text -> EvalT m (Value m)) -> (Value m -> EvalT m (Value m)) -> Value m -> (Text -> EvalT m CodePoint) -> Integer -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Integer -> Text -> Eval ctx (Value ctx)) -> (Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> (Text -> Eval ctx CodePoint) -> Integer -> Text -> Eval ctx (Value ctx))
         _ModuleName "_codePointAt" 
         \fallback _ _ _ -> fallback
       -- _countPrefix
@@ -60,7 +59,7 @@ env = do
       --   -> (CodePoint -> Boolean)
       --   -> String
       --   -> Int
-    , builtIn @m @(((CodePoint -> EvalT m Bool) -> Text -> EvalT m Integer) -> (Text -> EvalT m CodePoint) -> (CodePoint -> EvalT m Bool) -> Text -> EvalT m Integer)
+    , builtIn @ctx @(((CodePoint -> Eval ctx Bool) -> Text -> Eval ctx Integer) -> (Text -> Eval ctx CodePoint) -> (CodePoint -> Eval ctx Bool) -> Text -> Eval ctx Integer)
         _ModuleName "_countPrefix" 
         \fallback _ -> fallback
       -- _take
@@ -68,14 +67,14 @@ env = do
       --   -> Int 
       --   -> String 
       --   -> String
-    , builtIn @m @((Integer -> Text -> EvalT m Text) -> Integer -> Text -> EvalT m Text)
+    , builtIn @ctx @((Integer -> Text -> Eval ctx Text) -> Integer -> Text -> Eval ctx Text)
         _ModuleName "_take" 
         \fallback -> fallback
       -- _unsafeCodePointAt0
       --   :: (String -> CodePoint)
       --   -> String
       --   -> CodePoint
-    , builtIn @m @((Text -> EvalT m CodePoint) -> Text -> EvalT m CodePoint)
+    , builtIn @ctx @((Text -> Eval ctx CodePoint) -> Text -> Eval ctx CodePoint)
         _ModuleName "_unsafeCodePointAt0" 
         \fallback -> fallback
     ]

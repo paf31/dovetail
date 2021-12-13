@@ -7,24 +7,23 @@
 
 module Dovetail.Core.Data.Foldable where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.Foldable"
 
   fold
     [ -- foldrArray :: forall a b. (a -> b -> b) -> b -> Array a -> b
-      builtIn @m @((Value m -> Value m -> EvalT m (Value m)) -> Value m -> Vector (Value m) -> EvalT m (Value m))
+      builtIn @ctx @((Value ctx -> Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Vector (Value ctx) -> Eval ctx (Value ctx))
         _ModuleName "foldrArray"
         \f b -> Vector.foldM (flip f) b . Vector.reverse
       -- foldlArray :: forall a b. (b -> a -> b) -> b -> Array a -> b
-    , builtIn @m @((Value m -> Value m -> EvalT m (Value m)) -> Value m -> Vector (Value m) -> EvalT m (Value m))
+    , builtIn @ctx @((Value ctx -> Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Vector (Value ctx) -> Eval ctx (Value ctx))
         _ModuleName "foldlArray"
         Vector.foldM 
     ]

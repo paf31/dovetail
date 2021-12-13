@@ -9,26 +9,25 @@ module Dovetail.Core.Test.Assert where
 
 import Control.Monad (unless)
 import Control.Monad.Error.Class (catchError)
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Dovetail
 import Dovetail.Core.Effect (Effect)
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Test.Assert"
 
   fold
     [ -- assertImpl :: String -> Boolean -> Effect Unit
-      builtIn @m @(Text -> Bool -> Effect m (Value m))
+      builtIn @ctx @(Text -> Bool -> Effect ctx (Value ctx))
         _ModuleName "assertImpl" 
         \message b _ -> do
           unless b (throwErrorWithContext (OtherError message))
           pure (Object mempty)
       -- checkThrows :: forall a. (Unit -> a) -> Effect Boolean
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Effect m Bool)
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Effect ctx Bool)
         _ModuleName "checkThrows"
         \f _ ->
           catchError 

@@ -10,7 +10,7 @@
 
 module Dovetail.Core.Effect.Ref where
 
-import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.Fix (mfix)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold)
 import Data.IORef (IORef)
@@ -20,37 +20,39 @@ import Dovetail
 import Dovetail.Evaluate (ForeignType(..), builtIn)
 import GHC.Generics (Generic)
 
-type Ref m = ForeignType (IORef (Value m))
+type Ref ctx = ForeignType (IORef (Value ctx))
 
-data ModifyResult m = ModifyResult
-  { state :: Value m
-  , value :: Value m 
+data ModifyResult ctx = ModifyResult
+  { state :: Value ctx
+  , value :: Value ctx 
   } deriving Generic
   
-instance MonadIO m => ToValue m (ModifyResult m) 
+instance ToValue ctx (ModifyResult ctx) 
 
-env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
+env :: forall ctx. Typeable ctx => Env ctx
 env = do
   let _ModuleName = ModuleName "Effect.Ref"
 
   fold
     [ -- new :: forall s. s -> Effect (Ref s)
-      builtIn @m @(Value m -> Value m -> EvalT m (Ref m))
+      builtIn @ctx @(Value ctx -> Value ctx -> Eval ctx (Ref ctx))
         _ModuleName "new"
         \s _ -> 
           ForeignType <$> liftIO (IORef.newIORef s)
       -- newWithSelf :: forall s. (Ref s -> s) -> Effect (Ref s)
-    , builtIn @m @((Ref m -> EvalT m (Value m)) -> Value m -> EvalT m (Ref m))
+    , builtIn @ctx @((Ref ctx -> Eval ctx (Value ctx)) -> Value ctx -> Eval ctx (Ref ctx))
         _ModuleName "newWithSelf"
         \f _ -> 
-          error "bad"
+          mfix \r -> do
+            s <- f r
+            ForeignType <$> liftIO (IORef.newIORef s)
       -- read :: forall s. Ref s -> Effect s
-    , builtIn @m @(Ref m -> Value m -> EvalT m (Value m))
+    , builtIn @ctx @(Ref ctx -> Value ctx -> Eval ctx (Value ctx))
         _ModuleName "read"
         \(ForeignType ref) _ ->
           liftIO (IORef.readIORef ref)
       -- write :: forall s. s -> Ref s -> Effect Unit
-    , builtIn @m @(Value m -> Ref m -> Value m -> EvalT m (Value m))
+    , builtIn @ctx @(Value ctx -> Ref ctx -> Value ctx -> Eval ctx (Value ctx))
         _ModuleName "write"
         \s (ForeignType ref) _ -> do
           liftIO (IORef.writeIORef ref s)
@@ -62,7 +64,7 @@ env = do
       --       }               
       --   )                   
       --   -> Ref s -> Effect b
-    , builtIn @m @((Value m -> EvalT m (ModifyResult m)) -> Ref m -> Value m -> EvalT m (Value m))
+    , builtIn @ctx @((Value ctx -> Eval ctx (ModifyResult ctx)) -> Ref ctx -> Value ctx -> Eval ctx (Value ctx))
         _ModuleName "modifyImpl"
         \f (ForeignType ref) _ -> do
           s <- liftIO (IORef.readIORef ref)

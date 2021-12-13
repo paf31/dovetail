@@ -7,25 +7,24 @@
 
 module Dovetail.Core.Data.Enum where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Char (chr, ord)
 import Data.Foldable (fold)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Language.PureScript qualified as P
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = P.ModuleName "Data.Enum"
 
   fold
     [ -- toCharCode :: Char -> Int
-      builtIn @m @(Char -> EvalT m Integer)
+      builtIn @ctx @(Char -> Eval ctx Integer)
         _ModuleName "toCharCode"
         \c ->
           pure (fromIntegral (ord c))
       -- fromCharCode :: Int -> Char
-    , builtIn @m @(Integer -> EvalT m Char)
+    , builtIn @ctx @(Integer -> Eval ctx Char)
         _ModuleName "fromCharCode"
         \i ->
           pure (chr (fromIntegral i))

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9fd50996176509cb603dec378bf3364eb1637ccbf382d164e1e386e97d2e5da8
+-- hash: cbf74a665b167677be429028dc938b327f77d5072a56fb15aa6cd4117a679388
 
 name:           dovetail
 version:        0.1.1.0
@@ -31,6 +31,7 @@ library
       Dovetail
       Dovetail.Build
       Dovetail.Evaluate
+      Dovetail.Evaluate.Internal
       Dovetail.FFI
       Dovetail.FFI.Builder
       Dovetail.FFI.Internal
@@ -41,7 +42,7 @@ library
       Paths_dovetail
   hs-source-dirs:
       src
-  ghc-options: -Wall -fwarn-unused-imports
+  ghc-options: -O2 -Wall -fwarn-unused-imports
   build-depends:
       ansi-terminal
     , base >=4.7 && <5

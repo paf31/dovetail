@@ -7,38 +7,37 @@
 
 module Dovetail.Core.Data.Bounded where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.Bounded"
 
   fold
     [ -- topInt :: Int
-      builtIn @m @Integer
+      builtIn @ctx @Integer
         _ModuleName "topInt"
         2147483647
       -- bottomInt :: Int
-    , builtIn @m @Integer
+    , builtIn @ctx @Integer
         _ModuleName "bottomInt"
         (-2147483648)
       -- topChar :: Char
-    , builtIn @m @Char
+    , builtIn @ctx @Char
         _ModuleName "topChar"
         (maxBound @Char)
       -- bottomChar :: Char
-    , builtIn @m @Char
+    , builtIn @ctx @Char
         _ModuleName "bottomChar"
         (minBound @Char)
       -- topNumber :: Number
-    , builtIn @m @Double
+    , builtIn @ctx @Double
         _ModuleName "topNumber"
         (recip 0)
       -- bottomNumber :: Number
-    , builtIn @m @Double
+    , builtIn @ctx @Double
         _ModuleName "bottomNumber"
         (-(recip 0))
     ]

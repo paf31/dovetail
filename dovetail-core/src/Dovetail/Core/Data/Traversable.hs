@@ -7,14 +7,13 @@
 
 module Dovetail.Core.Data.Traversable where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Language.PureScript qualified as P
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = P.ModuleName "Data.Traversable"
 
@@ -26,18 +25,18 @@ env = do
   --   -> (a -> m b)
   --   -> Array a
   --   -> m (Array b)
-  builtIn @m @(
-       (Value m -> Value m -> EvalT m (Value m))
-    -> ((Vector (Value m) -> Value m -> EvalT m (Vector (Value m))) -> Value m -> EvalT m (Value m))
-    -> (Vector (Value m) -> EvalT m (Value m))
-    -> (Value m -> EvalT m (Value m))
-    -> Vector (Value m)
-    -> EvalT m (Value m)
+  builtIn @ctx @(
+       (Value ctx -> Value ctx -> Eval ctx (Value ctx))
+    -> ((Vector (Value ctx) -> Value ctx -> Eval ctx (Vector (Value ctx))) -> Value ctx -> Eval ctx (Value ctx))
+    -> (Vector (Value ctx) -> Eval ctx (Value ctx))
+    -> (Value ctx -> Eval ctx (Value ctx))
+    -> Vector (Value ctx)
+    -> Eval ctx (Value ctx)
     )
     _ModuleName "traverseArrayImpl"
     \_apply _fmap _pure f xs -> do
       bs0 <- _pure Vector.empty
-      let _cons :: Value m -> Value m -> EvalT m (Value m)
+      let _cons :: Value ctx -> Value ctx -> Eval ctx (Value ctx)
           _cons bs a = do
             b <- f a
             _fmap (\ys y -> pure (Vector.snoc ys y)) bs >>= (`_apply` b)

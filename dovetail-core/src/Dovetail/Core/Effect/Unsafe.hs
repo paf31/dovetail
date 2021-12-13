@@ -7,15 +7,14 @@
 
 module Dovetail.Core.Effect.Unsafe where
 
-import Control.Monad.IO.Class (MonadIO)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Effect.Unsafe"
 
   -- unsafePerformEffect :: forall a. Effect a -> a
-  builtIn @m @((Value m -> EvalT m (Value m)) -> EvalT m (Value m))
+  builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Eval ctx (Value ctx))
     _ModuleName "unsafePerformEffect"
     \f -> f (Object mempty)

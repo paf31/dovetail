@@ -1,18 +1,17 @@
-{-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE DataKinds        #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE TypeOperators     #-}
-{-# LANGUAGE UndecidableInstances     #-}
+{-# LANGUAGE AllowAmbiguousTypes  #-}
+{-# LANGUAGE BlockArguments       #-}
+{-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE FlexibleContexts     #-}
-{-# LANGUAGE AllowAmbiguousTypes     #-}
+{-# LANGUAGE ImportQualifiedPost  #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeApplications     #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Dovetail.Core.Effect.Uncurried where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Dovetail
@@ -20,19 +19,19 @@ import Dovetail.Core.Effect (Effect)
 import Dovetail.Evaluate (builtIn)
 import GHC.TypeLits (Nat, type (-))
 
-type family Fn (n :: Nat) (m :: * -> *) where
-  Fn 1 m = Value m -> Effect m (Value m)
-  Fn n m = Value m -> Fn (n - 1) m
+type family Fn (n :: Nat) (ctx :: *) where
+  Fn 1 ctx = Value ctx -> Effect ctx (Value ctx)
+  Fn n ctx = Value ctx -> Fn (n - 1) ctx
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Effect.Uncurried"
 
       effectFn :: forall (n :: Nat)
-                . (ToValue m (Fn n m), ToValueRHS m (Fn n m))
+                . (ToValue ctx (Fn n ctx), ToValueRHS ctx (Fn n ctx))
                => Text
-               -> Env m
-      effectFn name = builtIn @m @(Fn n m -> Fn n m) _ModuleName name id
+               -> Env ctx
+      effectFn name = builtIn @ctx @(Fn n ctx -> Fn n ctx) _ModuleName name id
 
   fold
     [ effectFn @1 "runEffectFn1"

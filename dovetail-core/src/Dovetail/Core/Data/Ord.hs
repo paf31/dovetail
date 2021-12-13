@@ -7,7 +7,6 @@
 
 module Dovetail.Core.Data.Ord where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Vector (Vector)
@@ -15,7 +14,7 @@ import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.Ord"
       
@@ -27,27 +26,27 @@ env = do
 
   fold
     [ -- ordBooleanImpl :: Ordering -> Ordering -> Ordering -> Boolean -> Boolean -> Ordering
-      builtIn @m @(Value m -> Value m -> Value m -> Bool -> Bool -> EvalT m (Value m))
+      builtIn @ctx @(Value ctx -> Value ctx -> Value ctx -> Bool -> Bool -> Eval ctx (Value ctx))
         _ModuleName "ordBooleanImpl" 
         compareImpl
     , -- ordIntImpl :: Ordering -> Ordering -> Ordering -> Int -> Int -> Ordering
-      builtIn @m @(Value m -> Value m -> Value m -> Integer -> Integer -> EvalT m (Value m))
+      builtIn @ctx @(Value ctx -> Value ctx -> Value ctx -> Integer -> Integer -> Eval ctx (Value ctx))
         _ModuleName "ordIntImpl" 
         compareImpl
     , -- ordNumberImpl :: Ordering -> Ordering -> Ordering -> Double -> Double -> Ordering
-      builtIn @m @(Value m -> Value m -> Value m -> Double -> Double -> EvalT m (Value m))
+      builtIn @ctx @(Value ctx -> Value ctx -> Value ctx -> Double -> Double -> Eval ctx (Value ctx))
         _ModuleName "ordNumberImpl" 
         compareImpl
     , -- ordStringImpl :: Ordering -> Ordering -> Ordering -> Text -> Text -> Ordering
-      builtIn @m @(Value m -> Value m -> Value m -> Text -> Text -> EvalT m (Value m))
+      builtIn @ctx @(Value ctx -> Value ctx -> Value ctx -> Text -> Text -> Eval ctx (Value ctx))
         _ModuleName "ordStringImpl" 
         compareImpl
     , -- ordCharImpl :: Ordering -> Ordering -> Ordering -> Char -> Char -> Ordering
-      builtIn @m @(Value m -> Value m -> Value m -> Char -> Char -> EvalT m (Value m))
+      builtIn @ctx @(Value ctx -> Value ctx -> Value ctx -> Char -> Char -> Eval ctx (Value ctx))
         _ModuleName "ordCharImpl" 
         compareImpl
     , -- ordArrayImpl :: forall a. (a -> a -> Int) -> Array a -> Array a -> Int
-      builtIn @m @((Value m -> Value m -> EvalT m Integer) -> Vector (Value m) -> Vector (Value m) -> EvalT m Integer)
+      builtIn @ctx @((Value ctx -> Value ctx -> Eval ctx Integer) -> Vector (Value ctx) -> Vector (Value ctx) -> Eval ctx Integer)
         _ModuleName "ordArrayImpl"
         \cmp xs ys ->
           Vector.foldr 

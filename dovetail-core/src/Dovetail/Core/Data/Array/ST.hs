@@ -8,7 +8,6 @@
 module Dovetail.Core.Data.Array.ST where
 
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Functor (($>))
 import Data.Typeable (Typeable)
@@ -23,33 +22,33 @@ import Language.PureScript qualified as P
 
 type STArray a = ForeignType (IOVector a)
 
-env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
+env :: forall ctx. Typeable ctx => Env ctx
 env = do
   let _ModuleName = P.ModuleName "Data.Array.ST"
 
   fold
     [ -- unsafeFreeze :: forall h a. STArray h a -> ST h (Array a)
-      builtIn @m @(STArray (Value m) -> ST m (Vector (Value m)))
+      builtIn @ctx @(STArray (Value ctx) -> ST ctx (Vector (Value ctx)))
         _ModuleName "unsafeFreeze"
         \(ForeignType v) _ -> 
           liftIO (Vector.freeze v)
       -- unsafeThaw :: forall h a. Array a -> ST h (STArray h a)
-    , builtIn @m @(Vector (Value m) -> ST m (STArray (Value m)))
+    , builtIn @ctx @(Vector (Value ctx) -> ST ctx (STArray (Value ctx)))
         _ModuleName "unsafeThaw"
         \v _ -> 
           ForeignType <$> liftIO (Vector.thaw v)
       -- new :: forall h a. ST h (STArray h a)
-    , builtIn @m @(ST m (STArray (Value m)))
+    , builtIn @ctx @(ST ctx (STArray (Value ctx)))
         _ModuleName "new"
         \_ -> 
           ForeignType <$> liftIO (Mutable.new 0)
       -- freeze :: forall h a. STArray h a -> ST h (Array a)
-    , builtIn @m @(STArray (Value m) -> ST m (Vector (Value m)))
+    , builtIn @ctx @(STArray (Value ctx) -> ST ctx (Vector (Value ctx)))
         _ModuleName "freeze"
         \(ForeignType v) _ -> 
           liftIO (Vector.freeze v)
       -- thaw :: forall h a. Array a -> ST h (STArray h a)
-    , builtIn @m @(Vector (Value m) -> ST m (STArray (Value m)))
+    , builtIn @ctx @(Vector (Value ctx) -> ST ctx (STArray (Value ctx)))
         _ModuleName "thaw"
         \v _ -> 
           ForeignType <$> liftIO (Vector.thaw v)
@@ -58,7 +57,7 @@ env = do
       --   -> (forall b. Maybe b)
       --   -> STArray h a
       --   -> ST h (Maybe a)
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Value m -> STArray (Value m) -> ST m (Value m))
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> STArray (Value ctx) -> ST ctx (Value ctx))
         _ModuleName "shiftImpl"
         \_just _nothing _xs _ ->
           throwErrorWithContext (OtherError "shiftImpl is not implemented")
@@ -67,7 +66,7 @@ env = do
       --   -> (Ordering -> Int)
       --   -> STArray h a
       --   -> ST h (STArray h a)
-    , builtIn @m @((Value m -> Value m -> EvalT m (Value m)) -> (Value m -> EvalT m Integer) -> STArray (Value m) -> ST m (STArray (Value m)))
+    , builtIn @ctx @((Value ctx -> Value ctx -> Eval ctx (Value ctx)) -> (Value ctx -> Eval ctx Integer) -> STArray (Value ctx) -> ST ctx (STArray (Value ctx)))
         _ModuleName "sortByImpl"
         \_cmp _f _xs _ ->
           throwErrorWithContext (OtherError "sortByImpl is not implemented")
@@ -77,14 +76,14 @@ env = do
       --   -> Int
       --   -> STArray h a
       --   -> ST h r
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Value m -> Integer -> STArray (Value m) -> ST m (Value m))
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Integer -> STArray (Value ctx) -> ST ctx (Value ctx))
         _ModuleName "peekImpl"
         \_just _nothing i (ForeignType xs) _ ->
           if i >= 0 && fromIntegral i <= Mutable.length xs 
             then _just =<< liftIO (Mutable.read xs (fromIntegral i))
             else pure _nothing
       -- poke :: forall h a. Int -> a -> STArray h a -> ST h Boolean
-    , builtIn @m @(Integer -> Value m -> STArray (Value m) -> ST m Bool)
+    , builtIn @ctx @(Integer -> Value ctx -> STArray (Value ctx) -> ST ctx Bool)
         _ModuleName "poke"
         \i x (ForeignType xs) _ ->
           if i >= 0 && fromIntegral i <= Mutable.length xs 
@@ -95,7 +94,7 @@ env = do
       --   -> (forall b. Maybe b)
       --   -> STArray h a
       --   -> ST h (Maybe a)
-    , builtIn @m @((Value m -> EvalT m (Value m)) -> Value m -> STArray (Value m) -> ST m (Value m))
+    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> STArray (Value ctx) -> ST ctx (Value ctx))
         _ModuleName "popImpl"
         \_just _nothing _ _ ->
           throwErrorWithContext (OtherError "popImpl is not implemented")
@@ -103,7 +102,7 @@ env = do
       --    . Array a
       --   -> STArray h a
       --   -> ST h Int
-    , builtIn @m @(Vector (Value m) -> STArray (Value m) -> ST m Integer)
+    , builtIn @ctx @(Vector (Value ctx) -> STArray (Value ctx) -> ST ctx Integer)
         _ModuleName "pushAll"
         \_ _ _ ->
           throwErrorWithContext (OtherError "pushAll is not implemented")
@@ -111,7 +110,7 @@ env = do
       --    . Array a
       --   -> STArray h a
       --   -> ST h Int
-    , builtIn @m @(Vector (Value m) -> STArray (Value m) -> ST m Integer)
+    , builtIn @ctx @(Vector (Value ctx) -> STArray (Value ctx) -> ST ctx Integer)
         _ModuleName "unshiftAll"
         \_ _ _ ->
           throwErrorWithContext (OtherError "unshiftAll is not implemented")
@@ -121,12 +120,12 @@ env = do
       --   -> Array a
       --   -> STArray h a
       --   -> ST h (Array a)
-    , builtIn @m @(Integer -> Integer -> Vector (Value m) -> STArray (Value m) -> ST m (Vector (Value m)))
+    , builtIn @ctx @(Integer -> Integer -> Vector (Value ctx) -> STArray (Value ctx) -> ST ctx (Vector (Value ctx)))
         _ModuleName "splice"
         \_ _ _ _ _ ->
           throwErrorWithContext (OtherError "splice is not implemented")
       -- toAssocArray :: forall h a. STArray h a -> ST h (Array (Assoc a))
-    , builtIn @m @(STArray (Value m) -> ST m (Vector (Value m)))
+    , builtIn @ctx @(STArray (Value ctx) -> ST ctx (Vector (Value ctx)))
         _ModuleName "toAssocArray"
         \_ _ ->
           throwErrorWithContext (OtherError "toAssocArray is not implemented")

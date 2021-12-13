@@ -30,20 +30,20 @@ import Language.PureScript.Externs qualified as Externs
 -- "Dovetail.Evaluate" and "Dovetail.Build", 
 -- directly, but it is more likely that you will use values of this type with the 
 -- higher-level 'Dovetail.ffi' function.
-data FFI m = FFI
+data FFI ctx = FFI
   { ffi_moduleName :: P.ModuleName
   -- ^ The module name for the module being implemented in Haskell.
-  , ffi_values :: [ForeignImport m]
+  , ffi_values :: [ForeignImport ctx]
   -- ^ A list of values implemented in Haskell in this module.
   }
   
 -- | A single value implemented in a foreign Haskell module.
-data ForeignImport m = ForeignImport
+data ForeignImport ctx = ForeignImport
   { fv_name :: P.Ident
   -- ^ The name of this value in PureScript code
   , fv_type :: P.SourceType
   -- ^ The PureScript type of this value
-  , fv_value :: Value m
+  , fv_value :: Value ctx
   -- ^ The value itself
   }
 
@@ -52,7 +52,7 @@ data ForeignImport m = ForeignImport
 --
 -- For advanced use cases, the result may be used with the functions in the 
 -- "Dovetail.Build" module.
-toExterns :: FFI m -> P.ExternsFile
+toExterns :: FFI ctx -> P.ExternsFile
 toExterns (FFI mn vals) =
   Externs.ExternsFile   
     { Externs.efVersion      = "0.14.2"
@@ -71,6 +71,6 @@ toExterns (FFI mn vals) =
 --
 -- For advanced use cases, the result may be used with the functions in the 
 -- "Dovetail.Evaluate" module.
-toEnv :: FFI m -> Env m
+toEnv :: FFI ctx -> Env ctx
 toEnv (FFI mn vals) = 
   envFromMap $ Map.fromList [ (P.mkQualified name mn, val) | ForeignImport name _ val <- vals ]

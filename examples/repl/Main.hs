@@ -10,7 +10,7 @@ import System.Exit (die)
 main :: IO ()
 main = do
   either (die . renderInterpretError defaultTerminalRenderValueOptions) pure =<< 
-    runInterpretT do
+    runInterpret () do
       core ".spago"
       repl (Just (ModuleName "Prelude"))
       

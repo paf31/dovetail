@@ -7,17 +7,15 @@
 
 module Dovetail.Core.Partial where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Text (Text)
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Partial"
 
-  builtIn @m @(Text -> EvalT m (Value m))
+  builtIn @ctx @(Text -> Eval ctx (Value ctx))
     _ModuleName "_crashWith"
     \message -> 
       throwErrorWithContext (OtherError message)

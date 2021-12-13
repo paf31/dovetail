@@ -8,7 +8,6 @@
 module Dovetail.Core.Data.Int where
 
 import Control.Monad (when)
-import Control.Monad.IO.Class (MonadIO)
 import Data.Char (chr, ord)
 import Data.Foldable (fold)
 import Data.Text (Text)
@@ -17,38 +16,38 @@ import Dovetail
 import Dovetail.Evaluate (builtIn)
 import Numeric qualified
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.Int"
 
   fold
     [ -- fromNumberImpl :: (forall a. a -> Maybe a) -> (forall a. Maybe a) -> Number -> Maybe Int
-      builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Double -> EvalT m (Value m))
+      builtIn @ctx @((Integer -> Eval ctx (Value ctx)) -> Value ctx -> Double -> Eval ctx (Value ctx))
         _ModuleName "fromNumberImpl" 
         \_just _nothing (properFraction -> (n, d)) ->
           if d == 0.0 then _just n else pure _nothing
       -- toNumber :: Int -> Number
-    , builtIn @m @(Integer -> EvalT m Double)
+    , builtIn @ctx @(Integer -> Eval ctx Double)
         _ModuleName "toNumber"
         \a -> 
           pure (fromIntegral a)
       -- quot :: Int -> Int -> Int
-    , builtIn @m @(Integer -> Integer -> EvalT m Integer)
+    , builtIn @ctx @(Integer -> Integer -> Eval ctx Integer)
         _ModuleName "quot"
         \a b -> 
           pure (a `quot` b)
       -- rem :: Int -> Int -> Int
-    , builtIn @m @(Integer -> Integer -> EvalT m Integer)
+    , builtIn @ctx @(Integer -> Integer -> Eval ctx Integer)
         _ModuleName "rem"
         \a b -> 
           pure (a `rem` b)
       -- pow :: Int -> Int -> Int
-    , builtIn @m @(Integer -> Integer -> EvalT m Integer)
+    , builtIn @ctx @(Integer -> Integer -> Eval ctx Integer)
         _ModuleName "pow"
         \a b -> 
           pure (a ^ b)
       -- fromStringAsImpl :: (forall a. a -> Maybe a) -> (forall a. Maybe a) -> Radix -> String -> Maybe Int
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Integer -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Integer -> Eval ctx (Value ctx)) -> Value ctx -> Integer -> Text -> Eval ctx (Value ctx))
         _ModuleName "fromStringAsImpl"
         \_just _nothing r s -> do
           when (r < 2 || r > 36) do
@@ -70,7 +69,7 @@ env = do
             [(x, "")] -> _just x
             _ -> pure _nothing
       -- toStringAs :: Radix -> Int -> String
-    , builtIn @m @(Integer -> Integer -> EvalT m Text)
+    , builtIn @ctx @(Integer -> Integer -> Eval ctx Text)
         _ModuleName "toStringAs"
         \r i -> do
           when (r < 2 || r > 36) do

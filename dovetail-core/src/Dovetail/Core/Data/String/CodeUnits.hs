@@ -8,7 +8,6 @@
 
 module Dovetail.Core.Data.String.CodeUnits where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -19,7 +18,7 @@ import Data.Vector qualified as Vector
 import Dovetail
 import Dovetail.Evaluate (builtIn)
 
-env :: forall m. MonadIO m => Env m
+env :: forall ctx. Env ctx
 env = do
   let _ModuleName = ModuleName "Data.String.CodeUnits"
 
@@ -30,35 +29,35 @@ env = do
           (prefix, _) -> Just (Text.length prefix)
 
   fold
-    [ builtIn @m @(Char -> EvalT m Text)
+    [ builtIn @ctx @(Char -> Eval ctx Text)
         _ModuleName "singleton" 
         \c -> 
           pure (Text.singleton c)
-    , builtIn @m @(Vector Char -> EvalT m Text)
+    , builtIn @ctx @(Vector Char -> Eval ctx Text)
         _ModuleName "fromCharArray" 
         \cs ->
           pure (Text.pack (Vector.toList cs))
-    , builtIn @m @(Text -> EvalT m (Vector Char))
+    , builtIn @ctx @(Text -> Eval ctx (Vector Char))
         _ModuleName "toCharArray" 
         \s -> 
           pure (Vector.fromList (Text.unpack s))
-    , builtIn @m @((Char -> EvalT m (Value m)) -> Value m -> Text -> EvalT m (Value m)) 
+    , builtIn @ctx @((Char -> Eval ctx (Value ctx)) -> Value ctx -> Text -> Eval ctx (Value ctx)) 
         _ModuleName "_toChar" 
         \_just _nothing s ->
           case Text.uncons s of
             Just (c, s') | Text.null s' -> _just c
             _ -> pure _nothing
-    , builtIn @m @((Char -> EvalT m (Value m)) -> Value m -> Integer -> Text -> EvalT m (Value m)) 
+    , builtIn @ctx @((Char -> Eval ctx (Value ctx)) -> Value ctx -> Integer -> Text -> Eval ctx (Value ctx)) 
         _ModuleName "_charAt" 
         \_just _nothing i s ->
           if i >= 0 && i < fromIntegral (Text.length s)
             then _just (Text.index s (fromIntegral i))
             else pure _nothing
-    , builtIn @m @(Text -> EvalT m Integer)
+    , builtIn @ctx @(Text -> Eval ctx Integer)
         _ModuleName "length" 
         \s ->
           pure (fromIntegral (Text.length s))
-    , builtIn @m @((Char -> EvalT m Bool) -> Text -> EvalT m Integer)
+    , builtIn @ctx @((Char -> Eval ctx Bool) -> Text -> Eval ctx Integer)
         _ModuleName "countPrefix" 
         \p s ->
           let loop n [] = pure n
@@ -68,48 +67,48 @@ env = do
                      else pure n
            in loop 0 (Text.unpack s)
       -- _lastIndexOf :: (Int -> Maybe Int) -> Maybe Int -> Char -> Int -> Text -> Maybe Int
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Text -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Integer -> Eval ctx (Value ctx)) -> Value ctx -> Text -> Text -> Eval ctx (Value ctx))
         _ModuleName "_lastIndexOf" 
         \_just _nothing p s ->
           let len = Text.length s
            in maybe (pure _nothing) (_just . fromIntegral)
                 (((len - 1) -) <$> indexOf p (Text.reverse s))
       -- _indexOfStartingAt :: (Int -> Maybe Int) -> Maybe Int -> Pattern -> Int -> Text -> Maybe Int
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Text -> Integer -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Integer -> Eval ctx (Value ctx)) -> Value ctx -> Text -> Integer -> Text -> Eval ctx (Value ctx))
         _ModuleName "_indexOfStartingAt" 
         \_just _nothing p (fromIntegral -> startAt) s ->
           maybe (pure _nothing) (_just . fromIntegral)
             ((startAt +) <$> indexOf p (Text.drop startAt s))
       -- _indexOf :: (Int -> Maybe Int) -> Maybe Int -> Pattern -> Int -> Text -> Maybe Int
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Text -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Integer -> Eval ctx (Value ctx)) -> Value ctx -> Text -> Text -> Eval ctx (Value ctx))
         _ModuleName "_indexOf" 
         \_just _nothing p s ->
           maybe (pure _nothing) (_just . fromIntegral)
             (indexOf p s)
       -- _lastIndexOfStartingAt :: (Int -> Maybe Int) -> Maybe Int -> Pattern -> Int -> Text -> Maybe Int
-    , builtIn @m @((Integer -> EvalT m (Value m)) -> Value m -> Text -> Integer -> Text -> EvalT m (Value m))
+    , builtIn @ctx @((Integer -> Eval ctx (Value ctx)) -> Value ctx -> Text -> Integer -> Text -> Eval ctx (Value ctx))
         _ModuleName "_lastIndexOfStartingAt" 
         \_just _nothing p (fromIntegral -> startAt) s ->
           maybe (pure _nothing) (_just . fromIntegral)
             (((startAt + Text.length p - 1) -) <$> 
               indexOf p (Text.reverse (Text.take (startAt + Text.length p) s)))
       -- take :: Int -> String -> String
-    , builtIn @m @(Integer -> Text -> EvalT m Text)
+    , builtIn @ctx @(Integer -> Text -> Eval ctx Text)
         _ModuleName "take" 
         \n s -> 
           pure (Text.take (fromIntegral n) s)
       -- drop :: Int -> String -> String
-    , builtIn @m @(Integer -> Text -> EvalT m Text)
+    , builtIn @ctx @(Integer -> Text -> Eval ctx Text)
         _ModuleName "drop" 
         \n s ->
           pure (Text.drop (fromIntegral n) s)
       -- _slice :: Int -> Int -> String -> String
-    , builtIn @m @(Integer -> Integer -> Text -> EvalT m Text)
+    , builtIn @ctx @(Integer -> Integer -> Text -> Eval ctx Text)
         _ModuleName "_slice" 
         \from to s -> 
           pure (Text.take (fromIntegral to - fromIntegral from) (Text.drop (fromIntegral from) s))
       -- splitAt :: Int -> Text -> { before :: String, after :: String }
-    , builtIn @m @(Integer -> Text -> EvalT m (HashMap Text Text))
+    , builtIn @ctx @(Integer -> Text -> Eval ctx (HashMap Text Text))
         _ModuleName "splitAt" 
         \i s -> 
           case Text.splitAt (fromIntegral i) s of

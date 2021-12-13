@@ -7,7 +7,6 @@
 
 module Dovetail.Core.Data.Lazy where
 
-import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Foldable (fold)
 import Data.IORef qualified as IORef
@@ -16,15 +15,15 @@ import Dovetail
 import Dovetail.Evaluate (ForeignType(..), builtIn)
 import Language.PureScript qualified as P
 
-type Lazy m a = ForeignType (EvalT m a)
+type Lazy ctx a = ForeignType (Eval ctx a)
 
-env :: forall m. (MonadIO m, MonadIO m, Typeable m) => Env m
+env :: forall ctx. Typeable ctx => Env ctx
 env = do
   let _ModuleName = P.ModuleName "Data.Lazy"
 
   fold
     [ -- defer :: forall a. (Unit -> a) -> Lazy a
-      builtIn @m @((Value m -> EvalT m (Value m)) -> EvalT m (Lazy m (Value m)))
+      builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Eval ctx (Lazy ctx (Value ctx)))
         _ModuleName "defer"
         \f -> do
           ref <- liftIO (IORef.newIORef Nothing)
@@ -37,7 +36,7 @@ env = do
                 pure val
               Just a -> pure a
       -- force :: forall a. Lazy a -> a
-    , builtIn @m @(Lazy m (Value m) -> EvalT m (Value m))
+    , builtIn @ctx @(Lazy ctx (Value ctx) -> Eval ctx (Value ctx))
         _ModuleName "force"
         \(ForeignType f) -> f
     ]

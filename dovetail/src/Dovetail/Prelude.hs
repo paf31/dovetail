@@ -12,7 +12,6 @@
 -- | A tiny standard library.
 module Dovetail.Prelude where
   
-import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Error.Class (catchError, throwError)
 import Data.Char (chr, ord)
 import Data.Text qualified as Text
@@ -26,7 +25,7 @@ import Dovetail.Types
 import Language.PureScript qualified as P
 import Language.PureScript.Constants.Prim (pattern Partial)
 
-stdlib :: MonadIO m => [FFI m]
+stdlib :: [FFI ctx]
 stdlib = 
   [ prelude
   , preludeArray
@@ -39,7 +38,7 @@ stdlib =
   , preludePartial
   ]
 
-prelude :: MonadIO m => FFI m
+prelude :: FFI ctx
 prelude = FFI.evalFFIBuilder (P.ModuleName "Prelude") do
   FFI.foreignImport (P.Ident "identity") 
     (\a -> a ~> a)
@@ -48,7 +47,7 @@ prelude = FFI.evalFFIBuilder (P.ModuleName "Prelude") do
     (\a b c -> (a ~> b ~> c) ~> b ~> a ~> c)
     flip
     
-preludeArray :: MonadIO m => FFI m
+preludeArray :: FFI ctx
 preludeArray = FFI.evalFFIBuilder (P.ModuleName "Prelude.Array") do
   FFI.foreignImport (P.Ident "map") 
     (\a b -> (a ~> b) ~> array a ~> array b)
@@ -66,7 +65,7 @@ preludeArray = FFI.evalFFIBuilder (P.ModuleName "Prelude.Array") do
     (\a -> array a ~> array a ~> array a)
     (\xs ys -> pure (xs <> ys))
   
-preludeString :: MonadIO m => FFI m
+preludeString :: FFI ctx
 preludeString = FFI.evalFFIBuilder (P.ModuleName "Prelude.String") do
   eqOps string
   ordOps string
@@ -78,7 +77,7 @@ preludeString = FFI.evalFFIBuilder (P.ModuleName "Prelude.String") do
     (char ~> string)
     (pure . Text.singleton)
     
-preludeChar :: MonadIO m => FFI m
+preludeChar :: FFI ctx
 preludeChar = FFI.evalFFIBuilder (P.ModuleName "Prelude.Char") do
   eqOps char
   ordOps string
@@ -90,7 +89,7 @@ preludeChar = FFI.evalFFIBuilder (P.ModuleName "Prelude.Char") do
     (char ~> int)
     (pure . fromIntegral . ord)
     
-preludeNumber :: MonadIO m => FFI m
+preludeNumber :: FFI ctx
 preludeNumber = FFI.evalFFIBuilder (P.ModuleName "Prelude.Number") do
   numOps number
   ordOps number
@@ -112,7 +111,7 @@ preludeNumber = FFI.evalFFIBuilder (P.ModuleName "Prelude.Number") do
     (number ~> int)
     (pure . truncate)
   
-preludeInt :: MonadIO m => FFI m
+preludeInt :: FFI ctx
 preludeInt = FFI.evalFFIBuilder (P.ModuleName "Prelude.Int") do
   eqOps int
   numOps int
@@ -126,7 +125,7 @@ preludeInt = FFI.evalFFIBuilder (P.ModuleName "Prelude.Int") do
     (int ~> number)
     (pure . fromIntegral)
   
-preludeBoolean :: MonadIO m => FFI m
+preludeBoolean :: FFI ctx
 preludeBoolean = FFI.evalFFIBuilder (P.ModuleName "Prelude.Boolean") do
   eqOps boolean
   ordOps string
@@ -141,7 +140,7 @@ preludeBoolean = FFI.evalFFIBuilder (P.ModuleName "Prelude.Boolean") do
     (boolean ~> boolean)
     (pure . not)
     
-preludeDebug :: MonadIO m => FFI m
+preludeDebug :: FFI ctx
 preludeDebug = 
   FFI.evalFFIBuilder (P.ModuleName "Prelude.Debug") do
     FFI.foreignImport (P.Ident "show")
@@ -151,7 +150,7 @@ preludeDebug =
       (\a -> string ~> a)
       (throwErrorWithContext . OtherError)
       
-preludePartial :: forall m. MonadIO m => FFI m
+preludePartial :: forall ctx. FFI ctx
 preludePartial = 
   let partial ty =
         P.ConstrainedType P.nullSourceAnn 
@@ -165,7 +164,7 @@ preludePartial =
                 , fv_type = 
                     forAll \a -> partial a `function` a
                 , fv_value =
-                    toValue @m @((Value m -> EvalT m (Value m)) -> EvalT m (Value m)) 
+                    toValue @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Eval ctx (Value ctx)) 
                       \f -> f (Object mempty)
                 }
             , ForeignImport
@@ -174,7 +173,7 @@ preludePartial =
                     forAll \a -> 
                       a `function` (partial a `function` a)
                 , fv_value =
-                    toValue @m @(Value m -> (Value m -> EvalT m (Value m)) -> EvalT m (Value m)) 
+                    toValue @ctx @(Value ctx -> (Value ctx -> Eval ctx (Value ctx)) -> Eval ctx (Value ctx)) 
                       \def f -> do
                         catchError (f (Object mempty)) \case
                           EvaluationError { errorType = InexhaustivePatternMatch _ } ->
@@ -186,9 +185,9 @@ preludePartial =
         }
 
 eqOps 
-  :: (ToValue m a, ToValueRHS m (EvalT m a), Eq a)
-  => FFI.FunctionType m a (EvalT m a)
-  -> FFI.FFIBuilder m ()
+  :: (ToValue ctx a, ToValueRHS ctx (Eval ctx a), Eq a)
+  => FFI.FunctionType ctx a (Eval ctx a)
+  -> FFI.FFIBuilder ctx ()
 eqOps ty = do
   FFI.foreignImport (P.Ident "eq")
     (ty ~> ty ~> boolean)
@@ -198,9 +197,9 @@ eqOps ty = do
     (\x y -> pure (x /= y))
 
 numOps 
-  :: (ToValue m a, ToValueRHS m (EvalT m a), Num a)
-  => FFI.FunctionType m a (EvalT m a)
-  -> FFI.FFIBuilder m ()
+  :: (ToValue ctx a, ToValueRHS ctx (Eval ctx a), Num a)
+  => FFI.FunctionType ctx a (Eval ctx a)
+  -> FFI.FFIBuilder ctx ()
 numOps ty = do
   FFI.foreignImport (P.Ident "add")
     (ty ~> ty ~> ty)
@@ -213,9 +212,9 @@ numOps ty = do
     (\x y -> pure (x * y))
     
 ordOps 
-  :: (ToValue m a, ToValueRHS m (EvalT m a), Ord a)
-  => FFI.FunctionType m a (EvalT m a)
-  -> FFI.FFIBuilder m ()
+  :: (ToValue ctx a, ToValueRHS ctx (Eval ctx a), Ord a)
+  => FFI.FunctionType ctx a (Eval ctx a)
+  -> FFI.FFIBuilder ctx ()
 ordOps ty = do
   FFI.foreignImport (P.Ident "min")
     (ty ~> ty ~> ty)

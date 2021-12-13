@@ -10,6 +10,7 @@
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TupleSections       #-}
 
 module Main where
   
@@ -17,7 +18,6 @@ import Control.Monad (guard)
 import Data.Bifunctor (first)
 import Data.Foldable (for_, traverse_)
 import Data.Functor (($>))
-import Data.Functor.Identity
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as IO
@@ -50,12 +50,12 @@ main = hspec do
              . ( Arbitrary a
                , Show a
                , Eq a
-               , ToValue Identity a
+               , ToValue () a
                )
             => Property
-          roundtrip = property \x -> 
-            either (const Nothing) Just 
-              (runEval (fromValue (toValue @_ @a x))) === Just x
+          roundtrip = property \x -> ioProperty do
+            result <- runEval () (fromValue (toValue @_ @a x))
+            pure (either (const Nothing) Just result === Just x)
               
       it "should roundtrip Integer" $ 
         roundtrip @Integer
@@ -72,13 +72,13 @@ main = hspec do
                , Arbitrary a, Arbitrary b
                , Show a, Show b
                , Eq a, Eq b
-               , ToValue Identity a
-               , ToValue Identity b
+               , ToValue () a
+               , ToValue () b
                )
             => Property
-          roundtrip1 = forAllBlind arbitrary \f -> property \a -> 
-            either (const Nothing) Just 
-              (runEval (fromValueRHS (pure (toValue @_ @(a -> Eval b) (pure . f))) a)) === Just (f a)
+          roundtrip1 = forAllBlind arbitrary \f -> property \a -> ioProperty do
+            a' <- runEval () (fromValueRHS (pure (toValue @_ @(a -> Eval () b) (pure . f))) a)
+            pure (either (const Nothing) Just a' === Just (f a))
               
       it "should roundtrip Text -> Text" $ 
         roundtrip1 @Text @Text
@@ -92,103 +92,101 @@ main = hspec do
   describe "Build" do
     describe "InterpretT" do
       let buildSingleModuleWithPrelude 
-            :: forall a
-             . ToValueRHS Identity a
+            :: forall a b
+             . (ToValueRHS () a, ToValue () b)
             => Text
-            -> Either String a
-          buildSingleModuleWithPrelude moduleText =
-            first (renderInterpretError renderOpts) $
-              runInterpret do
+            -> (a -> Eval () b)
+            -> IO (Either String b)
+          buildSingleModuleWithPrelude moduleText f =
+            first (renderInterpretError renderOpts) <$>
+              runInterpret () do
                 ffi prelude
                 m <- build moduleText
-                evalMain (CoreFn.moduleName m)
+                a <- evalMain (CoreFn.moduleName m)
+                liftEval (f a)
                 
-      it "should build single modules from source" $
-        fmap (first (renderEvaluationError renderOpts) . runEval) 
-          (buildSingleModuleWithPrelude @(Eval Integer) 
-            "module Main where main = 42")
-          `shouldBe` Right (Right 42)
+      it "should build single modules from source" do
+        result <- buildSingleModuleWithPrelude @_ @Integer
+          "module Main where main = 42"
+          id
+        result `shouldBe` Right 42
       
-      it "should support imports" $
-        fmap (first (renderEvaluationError renderOpts) . runEval) 
-          (buildSingleModuleWithPrelude @(Eval Integer) 
-            "module Main where\n\
-            \import Prelude\n\
-            \main = identity 42")
-          `shouldBe` Right (Right 42)
+      it "should support imports" do
+        result <- buildSingleModuleWithPrelude @_ @Integer
+          "module Main where\n\
+          \import Prelude\n\
+          \main = identity 42"
+          id
+        result `shouldBe` Right 42
       
-      it "should support returning functions" $
-        fmap (first (renderEvaluationError renderOpts) . runEval . ($ "testing")) 
-          (buildSingleModuleWithPrelude @(Text -> Eval Text) 
-            "module Main where\n\
-            \import Prelude\n\
-            \main x = x")
-          `shouldBe` Right (Right "testing")
+      it "should support returning functions" do
+        result <- buildSingleModuleWithPrelude @(Text -> Eval () Text) @Text
+          "module Main where\n\
+          \import Prelude\n\
+          \main x = x"
+          (\f -> f "testing")
+        result `shouldBe` Right "testing"
       
-      it "should support records" $
-        fmap (first (renderEvaluationError renderOpts) . runEval . ($ "testing")) 
-          (buildSingleModuleWithPrelude @(Text -> Eval ExampleRecord1) 
-            "module Main where\n\
-            \import Prelude\n\
-            \main x = { foo: 42, bar: 1.0, baz: true, quux: x }")
-          `shouldBe` Right (Right (ExampleRecord1 42 1.0 True "testing"))
+      it "should support records" do
+        result <- buildSingleModuleWithPrelude @(Text -> Eval () ExampleRecord1) @ExampleRecord1
+          "module Main where\n\
+          \import Prelude\n\
+          \main x = { foo: 42, bar: 1.0, baz: true, quux: x }"
+          (\f -> f "testing")
+        result `shouldBe` Right (ExampleRecord1 42 1.0 True "testing")
 
       it "should support mixing module and expression evaluation" do
-        let x = runInterpret do
-                  traverse_ ffi stdlib
-                  let moduleText =
-                        "module Main where\n\
-                        \import Prelude.Array\n\
-                        \main = map _.foo"
-                  CoreFn.Module { CoreFn.moduleName = mn } <- build moduleText
-                  runEval . fst <$> eval (Just mn) "main [{ foo: 42 }]"
-        fmap (first (renderEvaluationError renderOpts)) (first (renderInterpretError renderOpts) x)
-          `shouldBe` Right (Right (Vector.fromList [42 :: Integer]))
+        x <- runInterpret () do
+               traverse_ ffi stdlib
+               let moduleText =
+                     "module Main where\n\
+                     \import Prelude.Array\n\
+                     \main = map _.foo"
+               CoreFn.Module { CoreFn.moduleName = mn } <- build moduleText
+               (a, _) <- eval (Just mn) "main [{ foo: 42 }]"
+               liftEval a
+        first (renderInterpretError renderOpts) x
+          `shouldBe` Right (Vector.fromList [42 :: Integer])
           
       let buildSingleExpressionWithPrelude 
             :: forall a
-             . ToValueRHS Identity a
+             . ToValue () a
             => Bool
-            -> [FFI Identity]
+            -> [FFI ()]
             -> Text
-            -> Either String (a, P.SourceType)
+            -> IO (Either String (a, P.SourceType))
           buildSingleExpressionWithPrelude importPreludeUnqualified ffiModules exprText =
-            first (renderInterpretError renderOpts) $
-              runInterpret do
+            first (renderInterpretError renderOpts) <$>
+              runInterpret () do
                 traverse_ ffi ffiModules
                 let defaultModule = guard importPreludeUnqualified $> P.ModuleName "Prelude"
-                eval defaultModule exprText
+                (a, ty) <- eval defaultModule exprText
+                (, ty) <$> liftEval a
                 
-      it "should compile and evaluate literals" $
-        fmap (first (first (renderEvaluationError renderOpts) . runEval)) 
-          (buildSingleExpressionWithPrelude @(Eval Integer) False [prelude] "42")
-          `shouldBe` Right (Right 42, P.tyInt)
+      it "should compile and evaluate literals" do
+        result <- buildSingleExpressionWithPrelude @Integer False [prelude] "42"
+        result `shouldBe` Right (42, P.tyInt)
           
-      it "should compile and evaluate simple expressions" $
-        fmap (first (first (renderEvaluationError renderOpts) . runEval)) 
-          (buildSingleExpressionWithPrelude @(Eval Integer) False [prelude] "Prelude.identity 42")
-          `shouldBe` Right (Right 42, P.tyInt)
+      it "should compile and evaluate simple expressions" do
+        result <- buildSingleExpressionWithPrelude @Integer False [prelude] "Prelude.identity 42"
+        result `shouldBe` Right (42, P.tyInt)
           
-      it "should compile and evaluate simple expressions with unqualified names from the default module" $
-        fmap (first (first (renderEvaluationError renderOpts) . runEval)) 
-          (buildSingleExpressionWithPrelude @(Eval Integer) True [prelude] "identity 42")
-          `shouldBe` Right (Right 42, P.tyInt)
+      it "should compile and evaluate simple expressions with unqualified names from the default module" do
+        result <- buildSingleExpressionWithPrelude @Integer True [prelude] "identity 42"
+        result `shouldBe` Right (42, P.tyInt)
           
       describe "Golden expression tests" do
         testFiles <- map takeFileName <$> runIO (listDirectory "test-files")
         
         for_ testFiles \name -> do
           input <- runIO (IO.readFile ("test-files" </> name </> "input.purs"))
-          let actualOutput = 
-                case buildSingleExpressionWithPrelude @(Eval Text) True stdlib input of
-                  Left err -> 
-                    Text.pack err 
-                  Right (value, _) -> 
-                    case runEval value of
-                      Left err ->
-                        Text.pack (renderEvaluationError renderOpts err)
-                      Right result ->
-                        result
+          outputOrError <- runIO $ buildSingleExpressionWithPrelude @Text True stdlib input
+          actualOutput <-
+            case outputOrError of
+              Left err -> 
+                pure $ Text.pack err 
+              Right (result, _) -> 
+                pure result
           it ("generates the correct output for test case " <> show name) $
             Golden {
               Test.Hspec.Golden.output = actualOutput,

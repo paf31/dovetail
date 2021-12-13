@@ -7,7 +7,7 @@
 
 module Dovetail.Core.Effect where
 
-import Control.Monad (when)
+import Control.Monad (unless, when)
 import Data.Foldable (fold, for_)
 import Data.Vector (Vector)
 import Dovetail
@@ -31,13 +31,12 @@ env = do
           a <- e rw
           f a rw
       -- untilE :: Effect Boolean -> Effect Unit
-    , builtIn @ctx @(Effect ctx Bool -> Effect ctx (Value ctx) -> Effect ctx (Value ctx))
+    , builtIn @ctx @(Effect ctx Bool -> Effect ctx (Value ctx))
         _ModuleName "untilE"
-        \cond body rw -> do
+        \cond rw -> do
           let loop = do
-                _ <- body rw
                 b <- cond rw
-                when b loop
+                unless b loop
           loop
           pure (Object mempty)
       -- whileE :: forall a. Effect Boolean -> Effect a -> Effect Unit

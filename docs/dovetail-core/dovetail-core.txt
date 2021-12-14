@@ -164,6 +164,9 @@ env :: forall ctx. Env ctx
 module Dovetail.Core.Math
 env :: forall ctx. Env ctx
 
+module Dovetail.Core.Modules
+modules :: [Text]
+
 module Dovetail.Core.Partial
 env :: forall ctx. Env ctx
 
@@ -186,6 +189,327 @@ module Dovetail.Core.Unsafe.Coerce
 env :: forall ctx. Env ctx
 
 module Dovetail.Core
-pursFiles :: [(FilePath, ByteString)]
-core :: forall ctx. Typeable ctx => Interpret ctx ()
-env :: forall ctx. Typeable ctx => Env ctx
+_Data_Validation_Semiring :: (Text, (ByteString, ByteString))
+_Data_Validation_Semigroup :: (Text, (ByteString, ByteString))
+_Data_Semiring_Free :: (Text, (ByteString, ByteString))
+_Test_QuickCheck :: (Text, (ByteString, ByteString))
+_Test_QuickCheck_Arbitrary :: (Text, (ByteString, ByteString))
+_Test_QuickCheck_Gen :: (Text, (ByteString, ByteString))
+_Record :: (Text, (ByteString, ByteString))
+_Record_Builder :: (Text, (ByteString, ByteString))
+_Record_Unsafe_Union :: (Text, (ByteString, ByteString))
+_PSCI_Support :: (Text, (ByteString, ByteString))
+_Control_Parallel :: (Text, (ByteString, ByteString))
+_Control_Parallel_Class :: (Text, (ByteString, ByteString))
+_Random_LCG :: (Text, (ByteString, ByteString))
+_Effect_Random :: (Text, (ByteString, ByteString))
+_Data_Graph :: (Text, (ByteString, ByteString))
+_Control_Comonad_Cofree_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_Free_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_Trampoline :: (Text, (ByteString, ByteString))
+_Control_Comonad_Cofree :: (Text, (ByteString, ByteString))
+_Control_Monad_Free :: (Text, (ByteString, ByteString))
+_Data_Coyoneda :: (Text, (ByteString, ByteString))
+_Data_Yoneda :: (Text, (ByteString, ByteString))
+_Type_Row_Homogeneous :: (Text, (ByteString, ByteString))
+_Type_Prelude :: (Text, (ByteString, ByteString))
+_Type_RowList :: (Text, (ByteString, ByteString))
+_Type_Data_Symbol :: (Text, (ByteString, ByteString))
+_Type_Data_Ordering :: (Text, (ByteString, ByteString))
+_Type_Data_Boolean :: (Text, (ByteString, ByteString))
+_Type_Row :: (Text, (ByteString, ByteString))
+_Type_Function :: (Text, (ByteString, ByteString))
+_Control_Monad_List_Trans :: (Text, (ByteString, ByteString))
+_Control_Comonad_Store :: (Text, (ByteString, ByteString))
+_Control_Comonad_Env :: (Text, (ByteString, ByteString))
+_Control_Comonad_Store_Class :: (Text, (ByteString, ByteString))
+_Control_Comonad_Env_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_Identity_Trans :: (Text, (ByteString, ByteString))
+_Control_Comonad_Env_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_RWS :: (Text, (ByteString, ByteString))
+_Control_Monad_State :: (Text, (ByteString, ByteString))
+_Control_Monad_Writer :: (Text, (ByteString, ByteString))
+_Control_Monad_Except :: (Text, (ByteString, ByteString))
+_Control_Monad_Reader :: (Text, (ByteString, ByteString))
+_Control_Monad_State_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_Writer_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_Except_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_Reader_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_RWS_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_Maybe_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_Cont :: (Text, (ByteString, ByteString))
+_Control_Monad_Error_Class :: (Text, (ByteString, ByteString))
+_Control_Comonad_Traced :: (Text, (ByteString, ByteString))
+_Control_Monad_Cont_Trans :: (Text, (ByteString, ByteString))
+_Control_Comonad_Traced_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_Writer_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_State_Class :: (Text, (ByteString, ByteString))
+_Control_Comonad_Store_Trans :: (Text, (ByteString, ByteString))
+_Control_Comonad_Traced_Trans :: (Text, (ByteString, ByteString))
+_Control_Monad_Reader_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_Trans_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_Cont_Class :: (Text, (ByteString, ByteString))
+_Control_Comonad_Trans_Class :: (Text, (ByteString, ByteString))
+_Data_String_NonEmpty_CaseInsensitive :: (Text, (ByteString, ByteString))
+_Data_String_NonEmpty :: (Text, (ByteString, ByteString))
+_Data_String_Regex_Unsafe :: (Text, (ByteString, ByteString))
+_Data_String_NonEmpty_CodePoints :: (Text, (ByteString, ByteString))
+_Data_String_Regex :: (Text, (ByteString, ByteString))
+_Data_String_NonEmpty_CodeUnits :: (Text, (ByteString, ByteString))
+_Data_String_Regex_Flags :: (Text, (ByteString, ByteString))
+_Data_String_CaseInsensitive :: (Text, (ByteString, ByteString))
+_Data_String_NonEmpty_Internal :: (Text, (ByteString, ByteString))
+_Data_String :: (Text, (ByteString, ByteString))
+_Data_String_CodePoints :: (Text, (ByteString, ByteString))
+_Data_String_Gen :: (Text, (ByteString, ByteString))
+_Data_Char_Gen :: (Text, (ByteString, ByteString))
+_Data_Char :: (Text, (ByteString, ByteString))
+_Data_String_CodeUnits :: (Text, (ByteString, ByteString))
+_Data_String_Common :: (Text, (ByteString, ByteString))
+_Data_String_Pattern :: (Text, (ByteString, ByteString))
+_Data_String_Unsafe :: (Text, (ByteString, ByteString))
+_Effect_Exception_Unsafe :: (Text, (ByteString, ByteString))
+_Effect_Exception :: (Text, (ByteString, ByteString))
+_Data_Map_Gen :: (Text, (ByteString, ByteString))
+_Data_Set_NonEmpty :: (Text, (ByteString, ByteString))
+_Data_Map :: (Text, (ByteString, ByteString))
+_Data_Set :: (Text, (ByteString, ByteString))
+_Data_Map_Internal :: (Text, (ByteString, ByteString))
+_Data_Int :: (Text, (ByteString, ByteString))
+_Data_Int_Bits :: (Text, (ByteString, ByteString))
+_Data_Number :: (Text, (ByteString, ByteString))
+_Data_Number_Format :: (Text, (ByteString, ByteString))
+_Data_Number_Approximate :: (Text, (ByteString, ByteString))
+_Math :: (Text, (ByteString, ByteString))
+_Data_Function_Uncurried :: (Text, (ByteString, ByteString))
+_Data_Enum_Gen :: (Text, (ByteString, ByteString))
+_Data_Enum_Generic :: (Text, (ByteString, ByteString))
+_Data_Enum :: (Text, (ByteString, ByteString))
+_Control_Monad_Gen_Common :: (Text, (ByteString, ByteString))
+_Control_Monad_Gen :: (Text, (ByteString, ByteString))
+_Control_Monad_Gen_Class :: (Text, (ByteString, ByteString))
+_Data_CatList :: (Text, (ByteString, ByteString))
+_Data_CatQueue :: (Text, (ByteString, ByteString))
+_Data_List_NonEmpty :: (Text, (ByteString, ByteString))
+_Data_List_Partial :: (Text, (ByteString, ByteString))
+_Data_List_Lazy_NonEmpty :: (Text, (ByteString, ByteString))
+_Data_List_ZipList :: (Text, (ByteString, ByteString))
+_Data_List :: (Text, (ByteString, ByteString))
+_Data_List_Lazy :: (Text, (ByteString, ByteString))
+_Data_List_Internal :: (Text, (ByteString, ByteString))
+_Data_List_Types :: (Text, (ByteString, ByteString))
+_Data_List_Lazy_Types :: (Text, (ByteString, ByteString))
+_Data_Lazy :: (Text, (ByteString, ByteString))
+_Test_Assert :: (Text, (ByteString, ByteString))
+_Effect_Class_Console :: (Text, (ByteString, ByteString))
+_Effect_Console :: (Text, (ByteString, ByteString))
+_Data_Array_NonEmpty :: (Text, (ByteString, ByteString))
+_Data_Array_Partial :: (Text, (ByteString, ByteString))
+_Data_Array :: (Text, (ByteString, ByteString))
+_Data_Array_NonEmpty_Internal :: (Text, (ByteString, ByteString))
+_Data_Array_ST_Iterator :: (Text, (ByteString, ByteString))
+_Data_Array_ST_Partial :: (Text, (ByteString, ByteString))
+_Data_Array_ST :: (Text, (ByteString, ByteString))
+_Control_Monad_ST_Class :: (Text, (ByteString, ByteString))
+_Control_Monad_ST_Ref :: (Text, (ByteString, ByteString))
+_Control_Monad_ST_Global :: (Text, (ByteString, ByteString))
+_Control_Monad_ST :: (Text, (ByteString, ByteString))
+_Control_Monad_ST_Internal :: (Text, (ByteString, ByteString))
+_Control_Monad_Rec_Class :: (Text, (ByteString, ByteString))
+_Effect_Ref :: (Text, (ByteString, ByteString))
+_Effect_Class :: (Text, (ByteString, ByteString))
+_Effect_Uncurried :: (Text, (ByteString, ByteString))
+_Effect_Unsafe :: (Text, (ByteString, ByteString))
+_Effect :: (Text, (ByteString, ByteString))
+_Data_NonEmpty :: (Text, (ByteString, ByteString))
+_Data_Unfoldable :: (Text, (ByteString, ByteString))
+_Data_Unfoldable1 :: (Text, (ByteString, ByteString))
+_Partial_Unsafe :: (Text, (ByteString, ByteString))
+_Partial :: (Text, (ByteString, ByteString))
+_Data_TraversableWithIndex :: (Text, (ByteString, ByteString))
+_Data_Bitraversable :: (Text, (ByteString, ByteString))
+_Data_Semigroup_Traversable :: (Text, (ByteString, ByteString))
+_Data_Semigroup_Foldable :: (Text, (ByteString, ByteString))
+_Data_Traversable :: (Text, (ByteString, ByteString))
+_Data_FoldableWithIndex :: (Text, (ByteString, ByteString))
+_Data_Bifoldable :: (Text, (ByteString, ByteString))
+_Data_Foldable :: (Text, (ByteString, ByteString))
+_Data_FunctorWithIndex :: (Text, (ByteString, ByteString))
+_Data_Traversable_Accum_Internal :: (Text, (ByteString, ByteString))
+_Data_Traversable_Accum :: (Text, (ByteString, ByteString))
+_Data_Ord_Max :: (Text, (ByteString, ByteString))
+_Data_Ord_Min :: (Text, (ByteString, ByteString))
+_Data_Ord_Down :: (Text, (ByteString, ByteString))
+_Data_Functor_Product_Nested :: (Text, (ByteString, ByteString))
+_Data_Functor_Coproduct_Nested :: (Text, (ByteString, ByteString))
+_Data_Functor_Coproduct_Inject :: (Text, (ByteString, ByteString))
+_Data_Functor_Product2 :: (Text, (ByteString, ByteString))
+_Data_Functor_Flip :: (Text, (ByteString, ByteString))
+_Data_Functor_Clown :: (Text, (ByteString, ByteString))
+_Data_Functor_Joker :: (Text, (ByteString, ByteString))
+_Data_Functor_Costar :: (Text, (ByteString, ByteString))
+_Data_Functor_Product :: (Text, (ByteString, ByteString))
+_Data_Functor_Coproduct :: (Text, (ByteString, ByteString))
+_Data_Functor_Compose :: (Text, (ByteString, ByteString))
+_Data_Functor_App :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Star :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Choice :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Cochoice :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Costrong :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Strong :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Split :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Join :: (Text, (ByteString, ByteString))
+_Data_Profunctor_Closed :: (Text, (ByteString, ByteString))
+_Data_Profunctor :: (Text, (ByteString, ByteString))
+_Data_Exists :: (Text, (ByteString, ByteString))
+_Data_Distributive :: (Text, (ByteString, ByteString))
+_Type_Equality :: (Text, (ByteString, ByteString))
+_Data_Identity :: (Text, (ByteString, ByteString))
+_Data_Decidable :: (Text, (ByteString, ByteString))
+_Data_Decide :: (Text, (ByteString, ByteString))
+_Data_Divisible :: (Text, (ByteString, ByteString))
+_Data_Divide :: (Text, (ByteString, ByteString))
+_Data_Equivalence :: (Text, (ByteString, ByteString))
+_Data_Comparison :: (Text, (ByteString, ByteString))
+_Data_Predicate :: (Text, (ByteString, ByteString))
+_Data_Op :: (Text, (ByteString, ByteString))
+_Data_Functor_Contravariant :: (Text, (ByteString, ByteString))
+_Data_Bifunctor_Join :: (Text, (ByteString, ByteString))
+_Control_Biapplicative :: (Text, (ByteString, ByteString))
+_Control_Biapply :: (Text, (ByteString, ByteString))
+_Data_Bifunctor :: (Text, (ByteString, ByteString))
+_Data_Tuple_Nested :: (Text, (ByteString, ByteString))
+_Data_Tuple :: (Text, (ByteString, ByteString))
+_Data_Either_Inject :: (Text, (ByteString, ByteString))
+_Data_Either_Nested :: (Text, (ByteString, ByteString))
+_Data_Either :: (Text, (ByteString, ByteString))
+_Data_Maybe_First :: (Text, (ByteString, ByteString))
+_Data_Maybe_Last :: (Text, (ByteString, ByteString))
+_Data_Maybe :: (Text, (ByteString, ByteString))
+_Data_Const :: (Text, (ByteString, ByteString))
+_Data_Functor_Invariant :: (Text, (ByteString, ByteString))
+_Data_Monoid_Alternate :: (Text, (ByteString, ByteString))
+_Control_MonadPlus :: (Text, (ByteString, ByteString))
+_Control_MonadZero :: (Text, (ByteString, ByteString))
+_Control_Alternative :: (Text, (ByteString, ByteString))
+_Control_Comonad :: (Text, (ByteString, ByteString))
+_Control_Plus :: (Text, (ByteString, ByteString))
+_Control_Alt :: (Text, (ByteString, ByteString))
+_Control_Extend :: (Text, (ByteString, ByteString))
+_Control_Lazy :: (Text, (ByteString, ByteString))
+_Data_Newtype :: (Text, (ByteString, ByteString))
+_Safe_Coerce :: (Text, (ByteString, ByteString))
+_Unsafe_Coerce :: (Text, (ByteString, ByteString))
+_Data_Monoid_Endo :: (Text, (ByteString, ByteString))
+_Data_Monoid_Disj :: (Text, (ByteString, ByteString))
+_Data_Eq_Generic :: (Text, (ByteString, ByteString))
+_Data_Semigroup_Last :: (Text, (ByteString, ByteString))
+_Data_Semigroup_First :: (Text, (ByteString, ByteString))
+_Data_Semigroup_Generic :: (Text, (ByteString, ByteString))
+_Data_Monoid_Conj :: (Text, (ByteString, ByteString))
+_Data_Show_Generic :: (Text, (ByteString, ByteString))
+_Data_Ring_Generic :: (Text, (ByteString, ByteString))
+_Data_HeytingAlgebra_Generic :: (Text, (ByteString, ByteString))
+_Data_Ord_Generic :: (Text, (ByteString, ByteString))
+_Data_Monoid_Multiplicative :: (Text, (ByteString, ByteString))
+_Data_Monoid_Dual :: (Text, (ByteString, ByteString))
+_Data_Monoid_Additive :: (Text, (ByteString, ByteString))
+_Data_Semiring_Generic :: (Text, (ByteString, ByteString))
+_Prelude :: (Text, (ByteString, ByteString))
+_Control_Monad :: (Text, (ByteString, ByteString))
+_Control_Bind :: (Text, (ByteString, ByteString))
+_Control_Applicative :: (Text, (ByteString, ByteString))
+_Data_Bounded_Generic :: (Text, (ByteString, ByteString))
+_Data_Monoid_Generic :: (Text, (ByteString, ByteString))
+_Control_Apply :: (Text, (ByteString, ByteString))
+_Data_Functor :: (Text, (ByteString, ByteString))
+_Data_Bounded :: (Text, (ByteString, ByteString))
+_Data_Function :: (Text, (ByteString, ByteString))
+_Data_Monoid :: (Text, (ByteString, ByteString))
+_Data_Field :: (Text, (ByteString, ByteString))
+_Data_DivisionRing :: (Text, (ByteString, ByteString))
+_Data_Ord :: (Text, (ByteString, ByteString))
+_Data_EuclideanRing :: (Text, (ByteString, ByteString))
+_Data_Ordering :: (Text, (ByteString, ByteString))
+_Data_CommutativeRing :: (Text, (ByteString, ByteString))
+_Data_Eq :: (Text, (ByteString, ByteString))
+_Data_BooleanAlgebra :: (Text, (ByteString, ByteString))
+_Data_Ring :: (Text, (ByteString, ByteString))
+_Data_Generic_Rep :: (Text, (ByteString, ByteString))
+_Data_Semigroup :: (Text, (ByteString, ByteString))
+_Data_Semiring :: (Text, (ByteString, ByteString))
+_Data_HeytingAlgebra :: (Text, (ByteString, ByteString))
+_Data_Void :: (Text, (ByteString, ByteString))
+_Data_Unit :: (Text, (ByteString, ByteString))
+_Data_Show :: (Text, (ByteString, ByteString))
+_Control_Category :: (Text, (ByteString, ByteString))
+_Data_Symbol :: (Text, (ByteString, ByteString))
+_Control_Semigroupoid :: (Text, (ByteString, ByteString))
+_Data_Boolean :: (Text, (ByteString, ByteString))
+_Data_NaturalTransformation :: (Text, (ByteString, ByteString))
+_Record_Unsafe :: (Text, (ByteString, ByteString))
+_Type_Data_Row :: (Text, (ByteString, ByteString))
+_Type_Data_RowList :: (Text, (ByteString, ByteString))
+_Type_Proxy :: (Text, (ByteString, ByteString))
+data CoreBuild ctx
+CoreBuild :: HashMap Text (ByteString, ByteString) -> Env ctx -> CoreBuild ctx
+[buildInputs] :: CoreBuild ctx -> HashMap Text (ByteString, ByteString)
+[env] :: CoreBuild ctx -> Env ctx
+core :: forall ctx. Typeable ctx => CoreBuild ctx -> Interpret ctx ()
+all :: Typeable ctx => CoreBuild ctx
+arrays :: Typeable ctx => CoreBuild ctx
+assert :: Typeable ctx => CoreBuild ctx
+bifunctors :: Typeable ctx => CoreBuild ctx
+catenableLists :: Typeable ctx => CoreBuild ctx
+console :: Typeable ctx => CoreBuild ctx
+_const :: Typeable ctx => CoreBuild ctx
+contravariant :: Typeable ctx => CoreBuild ctx
+control :: Typeable ctx => CoreBuild ctx
+distributive :: Typeable ctx => CoreBuild ctx
+effect :: Typeable ctx => CoreBuild ctx
+_either :: Typeable ctx => CoreBuild ctx
+enums :: Typeable ctx => CoreBuild ctx
+exceptions :: Typeable ctx => CoreBuild ctx
+exists :: Typeable ctx => CoreBuild ctx
+foldableTraversable :: Typeable ctx => CoreBuild ctx
+orders :: Typeable ctx => CoreBuild ctx
+free :: Typeable ctx => CoreBuild ctx
+functions :: Typeable ctx => CoreBuild ctx
+functors :: Typeable ctx => CoreBuild ctx
+gen :: Typeable ctx => CoreBuild ctx
+graphs :: Typeable ctx => CoreBuild ctx
+identity :: Typeable ctx => CoreBuild ctx
+integers :: Typeable ctx => CoreBuild ctx
+invariant :: Typeable ctx => CoreBuild ctx
+lazy :: Typeable ctx => CoreBuild ctx
+lcg :: Typeable ctx => CoreBuild ctx
+lists :: Typeable ctx => CoreBuild ctx
+math :: Typeable ctx => CoreBuild ctx
+_maybe :: Typeable ctx => CoreBuild ctx
+_newtype :: Typeable ctx => CoreBuild ctx
+nonempty :: Typeable ctx => CoreBuild ctx
+numbers :: Typeable ctx => CoreBuild ctx
+orderedCollections :: Typeable ctx => CoreBuild ctx
+typelevelPrelude :: Typeable ctx => CoreBuild ctx
+parallel :: Typeable ctx => CoreBuild ctx
+partial :: Typeable ctx => CoreBuild ctx
+prelude :: Typeable ctx => CoreBuild ctx
+profunctor :: Typeable ctx => CoreBuild ctx
+psciSupport :: Typeable ctx => CoreBuild ctx
+quickcheck :: Typeable ctx => CoreBuild ctx
+random :: Typeable ctx => CoreBuild ctx
+record :: Typeable ctx => CoreBuild ctx
+refs :: Typeable ctx => CoreBuild ctx
+safeCoerce :: Typeable ctx => CoreBuild ctx
+semirings :: Typeable ctx => CoreBuild ctx
+st :: Typeable ctx => CoreBuild ctx
+strings :: Typeable ctx => CoreBuild ctx
+tailrec :: Typeable ctx => CoreBuild ctx
+transformers :: Typeable ctx => CoreBuild ctx
+tuples :: Typeable ctx => CoreBuild ctx
+typeEquality :: Typeable ctx => CoreBuild ctx
+unfoldable :: Typeable ctx => CoreBuild ctx
+unsafeCoerce :: Typeable ctx => CoreBuild ctx
+validation :: Typeable ctx => CoreBuild ctx
+instance GHC.Base.Semigroup (Dovetail.Core.CoreBuild ctx)
+instance GHC.Base.Monoid (Dovetail.Core.CoreBuild ctx)

@@ -9,16 +9,22 @@
 module Dovetail.Core where
 
 import Codec.Serialise qualified as Codec
-import Control.Monad.IO.Class (MonadIO(..))
 import Data.Aeson (decodeStrict)
 import Data.Aeson.Types (parseEither)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BL
 import Data.FileEmbed
 import Data.Foldable (fold, traverse_)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, maybeToList)
+import Data.HashMap.Strict (HashMap)
+import Data.HashMap.Strict qualified as HashMap
+import Data.Text (Text)
+import Data.Text qualified as Text
+import Data.Traversable (for)
 import Data.Typeable (Typeable)
 import Dovetail
+import Dovetail.Core.Modules (modules)
+import Language.Haskell.TH.Syntax qualified as TH
 import Language.PureScript.CoreFn.FromJSON qualified as FromJSON
 import System.FilePath ((</>))
 
@@ -76,364 +82,791 @@ import Dovetail.Core.Record.Unsafe.Union qualified as Record.Unsafe.Union
 import Dovetail.Core.Test.Assert qualified as Test.Assert
 import Dovetail.Core.Unsafe.Coerce qualified as Unsafe.Coerce
   
-pursFiles :: [(FilePath, BS.ByteString)]
-pursFiles = $(makeRelativeToProject "purs/output" >>= embedDir)
+$(concat <$> for modules \moduleName -> do
+    externsFile <- makeRelativeToProject ("purs/output/" </> Text.unpack moduleName </> "externs.cbor")
+    coreFnFile  <- makeRelativeToProject ("purs/output/" </> Text.unpack moduleName </> "corefn.json")
+    let declName = TH.mkName . Text.unpack $ "_" <> Text.replace "." "_" moduleName
+    declType <- [t| (Text, (BS.ByteString, BS.ByteString)) |]
+    declExpr <- [e| (moduleName, ($(embedFile externsFile), $(embedFile coreFnFile))) |]
+    pure [ TH.SigD declName declType 
+         , TH.ValD (TH.VarP declName) (TH.NormalB declExpr) []
+         ]
+ )
+ 
+data CoreBuild ctx = CoreBuild
+  { buildInputs :: HashMap Text (BS.ByteString, BS.ByteString)
+  , env :: Env ctx
+  }
   
-core :: forall ctx. Typeable ctx => Interpret ctx ()
-core = do
-    loadEnv env
-    traverse_ buildOne modules
-  where
-    buildOne moduleName = do
-      liftIO . putStrLn $ moduleName
-      let externsFile = BL.fromStrict . fromJust $ lookup (moduleName </> "externs.cbor") pursFiles
-          coreFnFile  = fromJust . decodeStrict . fromJust $ lookup (moduleName </> "corefn.json") pursFiles
-          readCoreFn = either error snd . parseEither FromJSON.moduleFromJSON
-      buildCoreFn (Codec.deserialise externsFile) (readCoreFn coreFnFile)
-    
-    modules =
-      [ "Type.Proxy"
-      , "Type.Data.RowList"
-      , "Type.Data.Row"
-      , "Record.Unsafe"
-      , "Data.NaturalTransformation"
-      , "Data.Boolean"
-      , "Control.Semigroupoid"
-      , "Data.Symbol"
-      , "Control.Category"
-      , "Data.Show"
-      , "Data.Unit"
-      , "Data.Void"
-      , "Data.HeytingAlgebra"
-      , "Data.Semiring"
-      , "Data.Semigroup"
-      , "Data.Generic.Rep"
-      , "Data.Ring"
-      , "Data.BooleanAlgebra"
-      , "Data.Eq"
-      , "Data.CommutativeRing"
-      , "Data.Ordering"
-      , "Data.EuclideanRing"
-      , "Data.Ord"
-      , "Data.DivisionRing"
-      , "Data.Field"
-      , "Data.Monoid"
-      , "Data.Function"
-      , "Data.Bounded"
-      , "Data.Functor"
-      , "Control.Apply"
-      , "Data.Monoid.Generic"
-      , "Data.Bounded.Generic"
-      , "Control.Applicative"
-      , "Control.Bind"
-      , "Control.Monad"
-      , "Prelude"
-      , "Data.Semiring.Generic"
-      , "Data.Monoid.Additive"
-      , "Data.Monoid.Dual"
-      , "Data.Monoid.Multiplicative"
-      , "Data.Ord.Generic"
-      , "Data.HeytingAlgebra.Generic"
-      , "Data.Ring.Generic"
-      , "Data.Show.Generic"
-      , "Data.Monoid.Conj"
-      , "Data.Semigroup.Generic"
-      , "Data.Semigroup.First"
-      , "Data.Semigroup.Last"
-      , "Data.Eq.Generic"
-      , "Data.Monoid.Disj"
-      , "Data.Monoid.Endo"
-      , "Unsafe.Coerce"
-      , "Safe.Coerce"
-      , "Data.Newtype"
-      , "Control.Lazy"
-      , "Control.Extend"
-      , "Control.Alt"
-      , "Control.Plus"
-      , "Control.Comonad"
-      , "Control.Alternative"
-      , "Control.MonadZero"
-      , "Control.MonadPlus"
-      , "Data.Monoid.Alternate"
-      , "Data.Functor.Invariant"
-      , "Data.Const"
-      , "Data.Maybe"
-      , "Data.Maybe.Last"
-      , "Data.Maybe.First"
-      , "Data.Either"
-      , "Data.Either.Nested"
-      , "Data.Either.Inject"
-      , "Data.Tuple"
-      , "Data.Tuple.Nested"
-      , "Data.Bifunctor"
-      , "Control.Biapply"
-      , "Control.Biapplicative"
-      , "Data.Bifunctor.Join"
-      , "Data.Functor.Contravariant"
-      , "Data.Op"
-      , "Data.Predicate"
-      , "Data.Comparison"
-      , "Data.Equivalence"
-      , "Data.Divide"
-      , "Data.Divisible"
-      , "Data.Decide"
-      , "Data.Decidable"
-      , "Data.Identity"
-      , "Type.Equality"
-      , "Data.Distributive"
-      , "Data.Exists"
-      , "Data.Profunctor"
-      , "Data.Profunctor.Closed"
-      , "Data.Profunctor.Join"
-      , "Data.Profunctor.Split"
-      , "Data.Profunctor.Strong"
-      , "Data.Profunctor.Costrong"
-      , "Data.Profunctor.Cochoice"
-      , "Data.Profunctor.Choice"
-      , "Data.Profunctor.Star"
-      , "Data.Functor.App"
-      , "Data.Functor.Compose"
-      , "Data.Functor.Coproduct"
-      , "Data.Functor.Product"
-      , "Data.Functor.Costar"
-      , "Data.Functor.Joker"
-      , "Data.Functor.Clown"
-      , "Data.Functor.Flip"
-      , "Data.Functor.Product2"
-      , "Data.Functor.Coproduct.Inject"
-      , "Data.Functor.Coproduct.Nested"
-      , "Data.Functor.Product.Nested"
-      , "Data.Ord.Down"
-      , "Data.Ord.Min"
-      , "Data.Ord.Max"
-      , "Data.Traversable.Accum"
-      , "Data.Traversable.Accum.Internal"
-      , "Data.FunctorWithIndex"
-      , "Data.Foldable"
-      , "Data.Bifoldable"
-      , "Data.FoldableWithIndex"
-      , "Data.Traversable"
-      , "Data.Semigroup.Foldable"
-      , "Data.Semigroup.Traversable"
-      , "Data.Bitraversable"
-      , "Data.TraversableWithIndex"
-      , "Partial"
-      , "Partial.Unsafe"
-      , "Data.Unfoldable1"
-      , "Data.Unfoldable"
-      , "Data.NonEmpty"
-      , "Effect"
-      , "Effect.Unsafe"
-      , "Effect.Uncurried"
-      , "Effect.Class"
-      , "Effect.Ref"
-      , "Control.Monad.Rec.Class"
-      , "Control.Monad.ST.Internal"
-      , "Control.Monad.ST"
-      , "Control.Monad.ST.Global"
-      , "Control.Monad.ST.Ref"
-      , "Control.Monad.ST.Class"
-      , "Data.Array.ST"
-      , "Data.Array.ST.Partial"
-      , "Data.Array.ST.Iterator"
-      , "Data.Array.NonEmpty.Internal"
-      , "Data.Array"
-      , "Data.Array.Partial"
-      , "Data.Array.NonEmpty"
-      , "Effect.Console"
-      , "Effect.Class.Console"
-      , "Test.Assert"
-      , "Data.Lazy"
-      , "Data.List.Lazy.Types"
-      , "Data.List.Types"
-      , "Data.List.Internal"
-      , "Data.List.Lazy"
-      , "Data.List"
-      , "Data.List.ZipList"
-      , "Data.List.Lazy.NonEmpty"
-      , "Data.List.Partial"
-      , "Data.List.NonEmpty"
-      , "Data.CatQueue"
-      , "Data.CatList"
-      , "Control.Monad.Gen.Class"
-      , "Control.Monad.Gen"
-      , "Control.Monad.Gen.Common"
-      , "Data.Enum"
-      , "Data.Enum.Generic"
-      , "Data.Enum.Gen"
-      , "Data.Function.Uncurried"
-      , "Math"
-      , "Data.Number.Approximate"
-      , "Data.Number.Format"
-      , "Data.Number"
-      , "Data.Int.Bits"
-      , "Data.Int"
-      , "Data.Map.Internal"
-      , "Data.Set"
-      , "Data.Map"
-      , "Data.Set.NonEmpty"
-      , "Data.Map.Gen"
-      -- "Data.Time.Duration"
-      -- "Data.Time.Duration.Gen"
-      -- "Data.Time.Component"
-      -- "Data.Date.Component"
-      -- "Data.Time.Component.Gen"
-      -- "Data.Time"
-      -- "Data.Date.Component.Gen"
-      -- "Data.Date"
-      -- "Data.Time.Gen"
-      -- "Data.Date.Gen"
-      -- "Data.DateTime"
-      -- "Data.DateTime.Gen"
-      -- "Data.DateTime.Instant"
-      -- "Data.Interval.Duration"
-      -- "Data.Interval"
-      -- "Data.Interval.Duration.Iso"
-      , "Effect.Exception"
-      , "Effect.Exception.Unsafe"
-      , "Data.String.Unsafe"
-      , "Data.String.Pattern"
-      , "Data.String.Common"
-      , "Data.String.CodeUnits"
-      , "Data.Char"
-      , "Data.Char.Gen"
-      , "Data.String.Gen"
-      , "Data.String.CodePoints"
-      , "Data.String"
-      , "Data.String.NonEmpty.Internal"
-      , "Data.String.CaseInsensitive"
-      , "Data.String.Regex.Flags"
-      , "Data.String.NonEmpty.CodeUnits"
-      , "Data.String.Regex"
-      , "Data.String.NonEmpty.CodePoints"
-      , "Data.String.Regex.Unsafe"
-      , "Data.String.NonEmpty"
-      , "Data.String.NonEmpty.CaseInsensitive"
-      , "Control.Comonad.Trans.Class"
-      , "Control.Monad.Cont.Class"
-      , "Control.Monad.Trans.Class"
-      , "Control.Monad.Reader.Class"
-      , "Control.Comonad.Traced.Trans"
-      , "Control.Comonad.Store.Trans"
-      , "Control.Monad.State.Class"
-      , "Control.Monad.Writer.Class"
-      , "Control.Comonad.Traced.Class"
-      , "Control.Monad.Cont.Trans"
-      , "Control.Comonad.Traced"
-      , "Control.Monad.Error.Class"
-      , "Control.Monad.Cont"
-      , "Control.Monad.Maybe.Trans"
-      , "Control.Monad.RWS.Trans"
-      , "Control.Monad.Reader.Trans"
-      , "Control.Monad.Except.Trans"
-      , "Control.Monad.Writer.Trans"
-      , "Control.Monad.State.Trans"
-      , "Control.Monad.Reader"
-      , "Control.Monad.Except"
-      , "Control.Monad.Writer"
-      , "Control.Monad.State"
-      , "Control.Monad.RWS"
-      , "Control.Comonad.Env.Trans"
-      , "Control.Monad.Identity.Trans"
-      , "Control.Comonad.Env.Class"
-      , "Control.Comonad.Store.Class"
-      , "Control.Comonad.Env"
-      , "Control.Comonad.Store"
-      , "Control.Monad.List.Trans"
-      -- "Foreign"
-      -- "Foreign.Keys"
-      -- "Foreign.Index"
-      , "Type.Function"
-      , "Type.Row"
-      , "Type.Data.Boolean"
-      , "Type.Data.Ordering"
-      , "Type.Data.Symbol"
-      , "Type.RowList"
-      , "Type.Prelude"
-      , "Type.Row.Homogeneous"
-      -- "Foreign.Object.ST"
-      -- "Foreign.Object"
-      -- "Foreign.Object.Unsafe"
-      -- "Foreign.Object.ST.Unsafe"
-      -- "Foreign.Object.Gen"
-      , "Data.Yoneda"
-      , "Data.Coyoneda"
-      , "Control.Monad.Free"
-      , "Control.Comonad.Cofree"
-      , "Control.Monad.Trampoline"
-      , "Control.Monad.Free.Class"
-      , "Control.Comonad.Cofree.Class"
-      , "Data.Graph"
-      , "Effect.Random"
-      , "Random.LCG"
-      , "Control.Parallel.Class"
-      , "Control.Parallel"
-      , "PSCI.Support"
-      , "Record.Unsafe.Union"
-      , "Record.Builder"
-      , "Record"
-      , "Test.QuickCheck.Gen"
-      , "Test.QuickCheck.Arbitrary"
-      , "Test.QuickCheck"
-      , "Data.Semiring.Free"
-      , "Data.Validation.Semigroup"
-      , "Data.Validation.Semiring"
-      ]
+instance Semigroup (CoreBuild ctx) where
+  CoreBuild bi1 e1 <> CoreBuild bi2 e2 = CoreBuild (bi1 <> bi2) (e1 <> e2)
 
-env :: forall ctx. Typeable ctx => Env ctx
-env = 
-  fold
-    [ Control.Apply.env
-    , Control.Bind.env
-    , Control.Extend.env
-    , Control.Monad.ST.Internal.env
-    , Data.Array.env
-    , Data.Array.NonEmpty.Internal.env
-    , Data.Array.ST.env
-    , Data.Array.ST.Partial.env
-    , Data.Bounded.env
-    , Data.Enum.env
-    , Data.Eq.env
-    , Data.EuclideanRing.env
-    , Data.Foldable.env
-    , Data.Function.Uncurried.env
-    , Data.Functor.env
-    , Data.FunctorWithIndex.env
-    , Data.HeytingAlgebra.env
-    , Data.Int.env
-    , Data.Int.Bits.env
-    , Data.Lazy.env
-    , Data.Number.env
-    , Data.Number.Format.env
-    , Data.Ord.env
-    , Data.Ring.env
-    , Data.Semigroup.env
-    , Data.Semiring.env
-    , Data.Show.env
-    , Data.Show.Generic.env
-    , Data.String.CodePoints.env
-    , Data.String.CodeUnits.env
-    , Data.String.Common.env
-    , Data.String.Regex.env
-    , Data.String.Unsafe.env
-    , Data.Symbol.env
-    , Data.Traversable.env
-    , Data.Unfoldable.env
-    , Data.Unfoldable1.env
-    , Data.Unit.env
-    , Effect.env
-    , Effect.Console.env
-    , Effect.Exception.env
-    , Effect.Random.env
-    , Effect.Ref.env
-    , Effect.Uncurried.env
-    , Effect.Unsafe.env
-    , Math.env
-    , Partial.env
-    , Partial.Unsafe.env
-    , Record.Builder.env
-    , Record.Unsafe.env
-    , Record.Unsafe.Union.env
-    , Test.Assert.env
-    , Unsafe.Coerce.env
+instance Monoid (CoreBuild ctx) where
+  mempty = CoreBuild mempty mempty
+
+core :: forall ctx. Typeable ctx => CoreBuild ctx -> Interpret ctx ()
+core bld = do
+    loadEnv (env bld)
+    let orderedInputs = [ (mn, inputs)
+                        | mn <- modules
+                        , inputs <- maybeToList (HashMap.lookup mn (buildInputs bld))
+                        ]
+    traverse_ buildOne orderedInputs
+  where
+    buildOne (_, (externs, corefn)) = do
+      let readCoreFn = either error snd . parseEither FromJSON.moduleFromJSON
+      buildCoreFn 
+        (Codec.deserialise (BL.fromStrict externs))
+        (readCoreFn (fromJust (decodeStrict corefn)))
+
+all :: Typeable ctx => CoreBuild ctx
+all = fold
+  [ arrays
+  , assert
+  , bifunctors
+  , catenableLists
+  , console
+  , _const
+  , contravariant
+  , control
+  , distributive
+  , effect
+  , _either
+  , enums
+  , exceptions
+  , exists
+  , foldableTraversable
+  , orders
+  , free
+  , functions
+  , functors
+  , gen
+  , graphs
+  , identity
+  , integers
+  , invariant
+  , lazy
+  , lcg
+  , lists
+  , math
+  , _maybe
+  , _newtype
+  , nonempty
+  , numbers
+  , orderedCollections
+  , typelevelPrelude
+  , parallel
+  , partial
+  , prelude
+  , profunctor
+  , psciSupport
+  , quickcheck
+  , random
+  , record
+  , refs
+  , safeCoerce
+  , semirings
+  , st
+  , strings
+  , tailrec
+  , transformers
+  , tuples
+  , typeEquality
+  , unfoldable
+  , unsafeCoerce
+  , validation
+  ]
+
+arrays :: Typeable ctx => CoreBuild ctx
+arrays = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Array_NonEmpty_Internal
+      , _Data_Array_NonEmpty
+      , _Data_Array_Partial
+      , _Data_Array_ST_Partial
+      , _Data_Array_ST_Iterator
+      , _Data_Array_ST
+      , _Data_Array
+      ]
+  , env = fold
+      [ Data.Array.env
+      , Data.Array.NonEmpty.Internal.env
+      , Data.Array.ST.env
+      , Data.Array.ST.Partial.env
+      ]
+  }
+
+assert :: Typeable ctx => CoreBuild ctx
+assert = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Test_Assert
+      ]
+  , env = Test.Assert.env
+  }
+
+bifunctors :: Typeable ctx => CoreBuild ctx
+bifunctors = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Bifunctor
+      , _Data_Bifunctor_Join
+      , _Control_Biapplicative
+      , _Control_Biapply
+      ]
+  , env = mempty
+  }
+
+catenableLists :: Typeable ctx => CoreBuild ctx
+catenableLists = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_CatList
+      , _Data_CatQueue
+      ]
+  , env = mempty
+  }
+
+console :: Typeable ctx => CoreBuild ctx
+console = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Effect_Console
+      , _Effect_Class_Console
+      ]
+  , env = Effect.Console.env
+  }
+
+_const :: Typeable ctx => CoreBuild ctx
+_const = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Const
+      ]
+  , env = mempty
+  }
+
+contravariant :: Typeable ctx => CoreBuild ctx
+contravariant = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Functor_Contravariant
+      , _Data_Divisible
+      , _Data_Op
+      , _Data_Decidable
+      , _Data_Equivalence
+      , _Data_Comparison
+      , _Data_Predicate
+      , _Data_Divide
+      , _Data_Decide
+      ]
+  , env = mempty
+  }
+
+control :: Typeable ctx => CoreBuild ctx
+control = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Monoid_Alternate
+      , _Control_Comonad
+      , _Control_MonadZero
+      , _Control_Alt
+      , _Control_MonadPlus
+      , _Control_Lazy
+      , _Control_Extend
+      , _Control_Alternative
+      , _Control_Plus
+      ]
+  , env = Control.Extend.env
+  }
+
+distributive :: Typeable ctx => CoreBuild ctx
+distributive = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Distributive
+      ]
+  , env = mempty
+  }
+
+effect :: Typeable ctx => CoreBuild ctx
+effect = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Effect
+      , _Effect_Class
+      , _Effect_Uncurried
+      , _Effect_Unsafe
+      ]
+  , env = fold
+      [ Effect.env
+      , Effect.Uncurried.env
+      , Effect.Unsafe.env
+      ]
+  }
+
+_either :: Typeable ctx => CoreBuild ctx
+_either = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Either_Inject
+      , _Data_Either_Nested
+      , _Data_Either
+      ]
+  , env = mempty
+  }
+
+enums :: Typeable ctx => CoreBuild ctx
+enums = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Enum_Gen
+      , _Data_Enum_Generic
+      , _Data_Enum
+      ]
+  , env = mempty
+  }
+
+exceptions :: Typeable ctx => CoreBuild ctx
+exceptions = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Effect_Exception
+      , _Effect_Exception_Unsafe
+      ]
+  , env = Effect.Exception.env
+  }
+
+exists :: Typeable ctx => CoreBuild ctx
+exists = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Exists
+      ]
+  , env = mempty
+  }
+
+foldableTraversable :: Typeable ctx => CoreBuild ctx
+foldableTraversable = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Traversable
+      , _Data_TraversableWithIndex
+      , _Data_Traversable_Accum
+      , _Data_Traversable_Accum_Internal
+      , _Data_Bifoldable
+      , _Data_FunctorWithIndex
+      , _Data_Bitraversable
+      , _Data_Foldable
+      , _Data_FoldableWithIndex
+      , _Data_Semigroup_Traversable
+      , _Data_Semigroup_Foldable
+      ]
+  , env = fold
+      [ Data.Foldable.env
+      , Data.Functor.env
+      , Data.FunctorWithIndex.env
+      , Data.Traversable.env
+      ]
+  }
+
+orders :: Typeable ctx => CoreBuild ctx
+orders = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Ord_Max
+      , _Data_Ord_Min
+      , _Data_Ord_Down
+      ]
+  , env = mempty
+  }
+
+free :: Typeable ctx => CoreBuild ctx
+free = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Yoneda
+      , _Data_Coyoneda
+      , _Control_Comonad_Cofree_Class
+      , _Control_Comonad_Cofree
+      , _Control_Monad_Free_Class
+      , _Control_Monad_Free
+      , _Control_Monad_Trampoline
+      ]
+  , env = mempty
+  }
+
+functions :: Typeable ctx => CoreBuild ctx
+functions = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Function_Uncurried
+      ]
+  , env = Data.Function.Uncurried.env
+  }
+
+functors :: Typeable ctx => CoreBuild ctx
+functors = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Functor_Coproduct_Inject
+      , _Data_Functor_Coproduct_Nested
+      , _Data_Functor_Costar
+      , _Data_Functor_Flip
+      , _Data_Functor_Product
+      , _Data_Functor_Joker
+      , _Data_Functor_Product_Nested
+      , _Data_Functor_Compose
+      , _Data_Functor_Coproduct
+      , _Data_Functor_Product2
+      , _Data_Functor_App
+      , _Data_Functor_Clown
+      ]
+  , env = mempty
+  }
+
+gen :: Typeable ctx => CoreBuild ctx
+gen = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Control_Monad_Gen
+      , _Control_Monad_Gen_Class
+      , _Control_Monad_Gen_Common
+      ]
+  , env = mempty
+  }
+
+graphs :: Typeable ctx => CoreBuild ctx
+graphs = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Graph
+      ]
+  , env = mempty
+  }
+
+identity :: Typeable ctx => CoreBuild ctx
+identity = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Identity
+      ]
+  , env = mempty
+  }
+
+integers :: Typeable ctx => CoreBuild ctx
+integers = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Int
+      , _Data_Int_Bits
+      ]
+  , env = fold
+      [ Data.Int.env
+      , Data.Int.Bits.env
+      ]
+  }
+
+invariant :: Typeable ctx => CoreBuild ctx
+invariant = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Functor_Invariant
+      ]
+  , env = mempty
+  }
+
+lazy :: Typeable ctx => CoreBuild ctx
+lazy = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Lazy
+      ]
+  , env = Data.Lazy.env
+  }
+
+lcg :: Typeable ctx => CoreBuild ctx
+lcg = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Random_LCG
+      ]
+  , env = mempty
+  }
+
+lists :: Typeable ctx => CoreBuild ctx
+lists = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_List
+      , _Data_List_NonEmpty
+      , _Data_List_Internal
+      , _Data_List_Partial
+      , _Data_List_ZipList
+      , _Data_List_Lazy
+      , _Data_List_Types
+      , _Data_List_Lazy_NonEmpty
+      , _Data_List_Lazy_Types
+      ]
+  , env = mempty
+  }
+
+math :: Typeable ctx => CoreBuild ctx
+math = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Math
+      ]
+  , env = Math.env
+  }
+
+_maybe :: Typeable ctx => CoreBuild ctx
+_maybe = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Maybe
+      , _Data_Maybe_Last
+      , _Data_Maybe_First
+      ]
+  , env = mempty
+  }
+
+_newtype :: Typeable ctx => CoreBuild ctx
+_newtype = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Newtype
+      ]
+  , env = mempty
+  }
+
+nonempty :: Typeable ctx => CoreBuild ctx
+nonempty = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_NonEmpty
+      ]
+  , env = mempty
+  }
+
+numbers :: Typeable ctx => CoreBuild ctx
+numbers = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Number_Format
+      , _Data_Number_Approximate
+      , _Data_Number
+      ]
+  , env = fold
+      [ Data.Number.env
+      , Data.Number.Format.env
+      ]
+  }
+
+orderedCollections :: Typeable ctx => CoreBuild ctx
+orderedCollections = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Map
+      , _Data_Map_Gen
+      , _Data_Map_Internal
+      , _Data_Set_NonEmpty
+      , _Data_Set
+      ]
+  , env = mempty
+  }
+
+typelevelPrelude :: Typeable ctx => CoreBuild ctx
+typelevelPrelude = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Type_RowList
+      , _Type_Row
+      , _Type_Row_Homogeneous
+      , _Type_Data_Symbol
+      , _Type_Data_Boolean
+      , _Type_Data_Ordering
+      , _Type_Prelude
+      , _Type_Function
+      ]
+  , env = mempty
+  }
+
+parallel :: Typeable ctx => CoreBuild ctx
+parallel = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Control_Parallel_Class
+      , _Control_Parallel
+      ]
+  , env = mempty
+  }
+
+partial :: Typeable ctx => CoreBuild ctx
+partial = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Partial_Unsafe
+      , _Partial
+      ]
+  , env = fold
+      [ Partial.env
+      , Partial.Unsafe.env
+      ]
+  }
+
+prelude :: Typeable ctx => CoreBuild ctx
+prelude = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Record_Unsafe
+      , _Type_Proxy
+      , _Type_Data_RowList
+      , _Type_Data_Row
+      , _Data_BooleanAlgebra
+      , _Data_Show
+      , _Data_CommutativeRing
+      , _Data_Monoid_Disj
+      , _Data_Monoid_Multiplicative
+      , _Data_Monoid_Additive
+      , _Data_Monoid_Dual
+      , _Data_Monoid_Endo
+      , _Data_Monoid_Generic
+      , _Data_Monoid_Conj
+      , _Data_Unit
+      , _Data_Void
+      , _Data_Eq_Generic
+      , _Data_Show_Generic
+      , _Data_Ring
+      , _Data_NaturalTransformation
+      , _Data_Monoid
+      , _Data_Semiring_Generic
+      , _Data_Semigroup
+      , _Data_Semigroup_Last
+      , _Data_Semigroup_Generic
+      , _Data_Semigroup_First
+      , _Data_Bounded
+      , _Data_Symbol
+      , _Data_Bounded_Generic
+      , _Data_Generic_Rep
+      , _Data_Boolean
+      , _Data_Eq
+      , _Data_EuclideanRing
+      , _Data_Ord
+      , _Data_Ring_Generic
+      , _Data_Ord_Generic
+      , _Data_Ordering
+      , _Data_Field
+      , _Data_Functor
+      , _Data_HeytingAlgebra_Generic
+      , _Data_HeytingAlgebra
+      , _Data_Function
+      , _Data_DivisionRing
+      , _Data_Semiring
+      , _Prelude
+      , _Control_Monad
+      , _Control_Category
+      , _Control_Apply
+      , _Control_Bind
+      , _Control_Applicative
+      , _Control_Semigroupoid
+      ]
+  , env = fold
+      [ Control.Apply.env
+      , Control.Bind.env
+      , Data.Bounded.env
+      , Data.Enum.env
+      , Data.Eq.env
+      , Data.EuclideanRing.env
+      , Data.Functor.env
+      , Data.HeytingAlgebra.env
+      , Data.Ord.env
+      , Data.Ring.env
+      , Data.Semigroup.env
+      , Data.Semiring.env
+      , Data.Show.env
+      , Data.Show.Generic.env
+      , Data.Unit.env
+      , Data.Symbol.env
+      , Record.Unsafe.env
+      ]
+  }
+
+profunctor :: Typeable ctx => CoreBuild ctx
+profunctor = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Profunctor
+      , _Data_Profunctor_Join
+      , _Data_Profunctor_Split
+      , _Data_Profunctor_Star
+      , _Data_Profunctor_Costrong
+      , _Data_Profunctor_Strong
+      , _Data_Profunctor_Choice
+      , _Data_Profunctor_Cochoice
+      , _Data_Profunctor_Closed
+      ]
+  , env = mempty
+  }
+
+psciSupport :: Typeable ctx => CoreBuild ctx
+psciSupport = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _PSCI_Support
+      ]
+  , env = mempty
+  }
+
+quickcheck :: Typeable ctx => CoreBuild ctx
+quickcheck = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Test_QuickCheck
+      , _Test_QuickCheck_Gen
+      , _Test_QuickCheck_Arbitrary
+      ]
+  , env = mempty
+  }
+
+random :: Typeable ctx => CoreBuild ctx
+random = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Effect_Random
+      ]
+  , env = Effect.Random.env
+  }
+
+record :: Typeable ctx => CoreBuild ctx
+record = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Record_Builder
+      , _Record_Unsafe_Union
+      , _Record
+      ]
+  , env = fold
+      [ Record.Builder.env
+      , Record.Unsafe.Union.env
+      ]
+  }
+
+refs :: Typeable ctx => CoreBuild ctx
+refs = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Effect_Ref
+      ]
+  , env = Effect.Ref.env
+  }
+
+safeCoerce :: Typeable ctx => CoreBuild ctx
+safeCoerce = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Safe_Coerce
+      ]
+  , env = mempty
+  }
+
+semirings :: Typeable ctx => CoreBuild ctx
+semirings = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Semiring_Free
+      ]
+  , env = mempty
+  }
+
+st :: Typeable ctx => CoreBuild ctx
+st = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Control_Monad_ST_Ref
+      , _Control_Monad_ST_Internal
+      , _Control_Monad_ST_Global
+      , _Control_Monad_ST_Class
+      , _Control_Monad_ST
+      ]
+  , env = Control.Monad.ST.Internal.env
+  }
+
+strings :: Typeable ctx => CoreBuild ctx
+strings = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Char_Gen
+      , _Data_String
+      , _Data_Char
+      , _Data_String_Regex
+      , _Data_String_NonEmpty_CodePoints
+      , _Data_String_NonEmpty_Internal
+      , _Data_String_NonEmpty_CodeUnits
+      , _Data_String_NonEmpty_CaseInsensitive
+      , _Data_String_CodePoints
+      , _Data_String_NonEmpty
+      , _Data_String_Gen
+      , _Data_String_CodeUnits
+      , _Data_String_Pattern
+      , _Data_String_Regex_Flags
+      , _Data_String_Regex_Unsafe
+      , _Data_String_Common
+      , _Data_String_Unsafe
+      , _Data_String_CaseInsensitive
+      ]
+  , env = fold
+      [ Data.String.CodePoints.env
+      , Data.String.CodeUnits.env
+      , Data.String.Common.env
+      , Data.String.Regex.env
+      , Data.String.Unsafe.env
+      ]
+  }
+
+tailrec :: Typeable ctx => CoreBuild ctx
+tailrec = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Control_Monad_Rec_Class
+      ]
+  , env = mempty
+  }
+
+transformers :: Typeable ctx => CoreBuild ctx
+transformers = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Control_Comonad_Traced_Class
+      , _Control_Comonad_Traced_Trans
+      , _Control_Comonad_Env_Class
+      , _Control_Comonad_Env_Trans
+      , _Control_Comonad_Env
+      , _Control_Comonad_Trans_Class
+      , _Control_Comonad_Store
+      , _Control_Comonad_Traced
+      , _Control_Comonad_Store_Class
+      , _Control_Comonad_Store_Trans
+      , _Control_Monad_Reader_Class
+      , _Control_Monad_Reader_Trans
+      , _Control_Monad_Except
+      , _Control_Monad_RWS_Trans
+      , _Control_Monad_Identity_Trans
+      , _Control_Monad_Except_Trans
+      , _Control_Monad_Writer
+      , _Control_Monad_Reader
+      , _Control_Monad_Maybe_Trans
+      , _Control_Monad_State_Class
+      , _Control_Monad_State_Trans
+      , _Control_Monad_Writer_Class
+      , _Control_Monad_Writer_Trans
+      , _Control_Monad_Cont
+      , _Control_Monad_RWS
+      , _Control_Monad_List_Trans
+      , _Control_Monad_State
+      , _Control_Monad_Trans_Class
+      , _Control_Monad_Error_Class
+      , _Control_Monad_Cont_Class
+      , _Control_Monad_Cont_Trans
+      ]
+  , env = mempty
+  }
+
+tuples :: Typeable ctx => CoreBuild ctx
+tuples = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Tuple
+      , _Data_Tuple_Nested
+  
     ]
+  , env = mempty
+  }
+
+typeEquality :: Typeable ctx => CoreBuild ctx
+typeEquality = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Type_Equality
+      ]
+  , env = mempty
+  }
+
+unfoldable :: Typeable ctx => CoreBuild ctx
+unfoldable = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Unfoldable1
+      , _Data_Unfoldable
+      ]
+  , env = fold
+      [ Data.Unfoldable.env
+      , Data.Unfoldable1.env
+      ]
+  }
+
+unsafeCoerce :: Typeable ctx => CoreBuild ctx
+unsafeCoerce = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Unsafe_Coerce
+      ]
+  , env = Unsafe.Coerce.env
+  }
+
+validation :: Typeable ctx => CoreBuild ctx
+validation = CoreBuild
+  { buildInputs = HashMap.fromList
+      [ _Data_Validation_Semigroup
+      , _Data_Validation_Semiring
+      ]
+  , env = mempty
+  }

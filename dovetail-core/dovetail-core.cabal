@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9997d92e55fb3e9b951c32fe470683640f9fa07b363ac7792b1c34500ed4f1f8
+-- hash: f9f7ccb022b0196d46e313724dd38f949cf2b37b231d6eb4d802699e437d1fbc
 
 name:           dovetail-core
 version:        0.1.0.0
@@ -602,6 +602,7 @@ library
       Dovetail.Core.Effect.Uncurried
       Dovetail.Core.Effect.Unsafe
       Dovetail.Core.Math
+      Dovetail.Core.Modules
       Dovetail.Core.Partial
       Dovetail.Core.Partial.Unsafe
       Dovetail.Core.Record.Builder

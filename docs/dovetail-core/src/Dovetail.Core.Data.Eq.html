@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments      #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings   #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications    #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns        #-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Core.Data.Eq</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Vector</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Vector</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">builtIn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="annot"><a href="Dovetail.Core.Data.Eq.html#env"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679328782"><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-18"></span><span id="env"><span class="annot"><span class="annottext">env :: Env ctx
+</span><a href="Dovetail.Core.Data.Eq.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679328781"><span class="annot"><span class="annottext">_ModuleName :: ModuleName
+</span><a href="#local-6989586621679328781"><span class="hs-identifier hs-var hs-var">_ModuleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Data.Eq&quot;</span></span><span>
+</span><span id="line-20"></span><span>  </span><span>
+</span><span id="line-21"></span><span>      </span><span id="local-6989586621679328796"><span class="annot"><a href="#local-6989586621679328779"><span class="hs-identifier hs-type">eqImpl</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="annot"><a href="#local-6989586621679328796"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679328796"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679328796"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span></span><span>
+</span><span id="line-22"></span><span>      </span><span id="local-6989586621679328779"><span class="annot"><span class="annottext">eqImpl :: a -&gt; a -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328779"><span class="hs-identifier hs-var hs-var">eqImpl</span></a></span></span><span> </span><span id="local-6989586621679328778"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679328778"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679328777"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679328777"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Eval ctx Bool
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679328778"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679328777"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span>  </span><span class="annot"><span class="annottext">[Env ctx] -&gt; Env ctx
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="hs-comment">-- eqBooleanImpl :: Boolean -&gt; Boolean -&gt; Boolean</span><span>
+</span><span id="line-26"></span><span>      </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Bool -&gt; Bool -&gt; Eval ctx Bool) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679328781"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;eqBooleanImpl&quot;</span></span><span>
+</span><span id="line-28"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Eq Bool =&gt; Bool -&gt; Bool -&gt; Eval ctx Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328779"><span class="hs-identifier hs-var">eqImpl</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>      </span><span class="hs-comment">-- eqIntImpl :: Int -&gt; Int -&gt; Boolean</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Integer -&gt; Integer -&gt; Eval ctx Bool) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679328781"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;eqIntImpl&quot;</span></span><span>
+</span><span id="line-32"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Eq Integer =&gt; Integer -&gt; Integer -&gt; Eval ctx Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328779"><span class="hs-identifier hs-var">eqImpl</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span>      </span><span class="hs-comment">-- eqNumberImpl :: Number -&gt; Number -&gt; Boolean</span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Double -&gt; Double -&gt; Eval ctx Bool) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679328781"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;eqNumberImpl&quot;</span></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Eq Double =&gt; Double -&gt; Double -&gt; Eval ctx Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328779"><span class="hs-identifier hs-var">eqImpl</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>      </span><span class="hs-comment">-- eqCharImpl :: Char -&gt; Char -&gt; Boolean</span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Char -&gt; Char -&gt; Eval ctx Bool) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679328781"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;eqCharImpl&quot;</span></span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Eq Char =&gt; Char -&gt; Char -&gt; Eval ctx Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328779"><span class="hs-identifier hs-var">eqImpl</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>      </span><span class="hs-comment">-- eqStringImpl :: String -&gt; String -&gt; Boolean</span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Text -&gt; Text -&gt; Eval ctx Bool) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679328781"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;eqStringImpl&quot;</span></span><span>
+</span><span id="line-44"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Eq Text =&gt; Text -&gt; Text -&gt; Eval ctx Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328779"><span class="hs-identifier hs-var">eqImpl</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>      </span><span class="hs-comment">-- eqArrayImpl :: forall a. (a -&gt; a -&gt; Boolean) -&gt; Array a -&gt; Array a -&gt; Boolean</span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; ((Value ctx -&gt; Value ctx -&gt; Eval ctx Bool)
+    -&gt; Vector (Value ctx) -&gt; Vector (Value ctx) -&gt; Eval ctx Bool)
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679328782"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679328781"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;eqArrayImpl&quot;</span></span><span>
+</span><span id="line-48"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679328776"><span class="annot"><span class="annottext">Value ctx -&gt; Value ctx -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328776"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679328775"><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679328775"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679328774"><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679328774"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-49"></span><span>          </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx) -&gt; Int
+forall a. Vector a -&gt; Int
+</span><span class="hs-identifier hs-var">Vector.length</span></span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679328775"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx) -&gt; Int
+forall a. Vector a -&gt; Int
+</span><span class="hs-identifier hs-var">Vector.length</span></span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679328774"><span class="hs-identifier hs-var">ys</span></a></span><span>
+</span><span id="line-50"></span><span>            </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Vector Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">Vector.and</span></span><span> </span><span class="annot"><span class="annottext">(Vector Bool -&gt; Bool) -&gt; Eval ctx (Vector Bool) -&gt; Eval ctx Bool
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">(Value ctx -&gt; Value ctx -&gt; Eval ctx Bool)
+-&gt; Vector (Value ctx)
+-&gt; Vector (Value ctx)
+-&gt; Eval ctx (Vector Bool)
+forall (m :: * -&gt; *) a b c.
+Monad m =&gt;
+(a -&gt; b -&gt; m c) -&gt; Vector a -&gt; Vector b -&gt; m (Vector c)
+</span><span class="hs-identifier hs-var">Vector.zipWithM</span></span><span> </span><span class="annot"><span class="annottext">Value ctx -&gt; Value ctx -&gt; Eval ctx Bool
+</span><a href="#local-6989586621679328776"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679328775"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679328774"><span class="hs-identifier hs-var">ys</span></a></span><span>
+</span><span id="line-51"></span><span>            </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Eval ctx Bool
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-53"></span></pre></body></html>

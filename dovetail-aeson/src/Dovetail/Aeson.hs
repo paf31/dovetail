@@ -71,7 +71,6 @@ module Dovetail.Aeson
   , UnknownJSON(..)
   ) where
 
-import Control.Monad.Fix (MonadFix)  
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
 import Data.Dynamic qualified as Dynamic
@@ -95,13 +94,12 @@ import Language.PureScript.Label qualified as Label
 -- This function is a convenient counterpart to 'eval' which can be useful 
 -- for applications whose output format is JSON.
 evalJSON 
-  :: MonadFix m
-  => Maybe ModuleName 
+  :: Maybe ModuleName 
   -> Text
-  -> InterpretT m Aeson.Value
+  -> Interpret ctx Aeson.Value
 evalJSON defaultModuleName expr = do
   (val, ty) <- eval defaultModuleName expr
-  liftEvalT $ reify ty \(_ :: Proxy a) -> 
+  liftEval $ reify ty \(_ :: Proxy a) -> 
     Aeson.toJSON <$> (fromValue @_ @a =<< val)
 
 -- | A constraint synonym for the constraint our reified types will satisfy:
@@ -110,10 +108,10 @@ evalJSON defaultModuleName expr = do
 --
 -- This synonym is provided just for the convenience of tidying up the type
 -- signatures.
-type Serializable m a =
+type Serializable ctx a =
   ( Aeson.FromJSON a
   , Aeson.ToJSON a
-  , Evaluate.ToValue m a
+  , Evaluate.ToValue ctx a
   )
 
 -- | Reify a PureScript 'P.SourceType' as a Haskell type which supports
@@ -128,18 +126,17 @@ type Serializable m a =
 -- For example, if we want to take data as input from a JSON structure,
 -- then we can reify the PureScript type of the domain of a PureScript function.
 reify 
-  :: forall m r
-   . MonadFix m
-  => P.SourceType 
+  :: forall ctx r
+   . P.SourceType 
   -- ^ The PureScript type we wish to reify, for example, from the return value of 'eval'.
-  -> (forall a. Serializable m a => Proxy a -> EvalT m r)
+  -> (forall a. Serializable ctx a => Proxy a -> Eval ctx r)
   -- ^ The continuation, which will receive a 'Proxy' for the type which has been
   -- reified.
-  -> EvalT m r
+  -> Eval ctx r
 reify = go where
   go :: P.SourceType 
-     -> (forall a. Serializable m a => Proxy a -> EvalT m r)
-     -> EvalT m r
+     -> (forall a. Serializable ctx a => Proxy a -> Eval ctx r)
+     -> Eval ctx r
   go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Int"))) f =
     f (Proxy :: Proxy Integer)
   go (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Number"))) f =
@@ -170,8 +167,8 @@ reify = go where
 
   goRecord
     :: [P.RowListItem P.SourceAnn]
-    -> (forall a. (ToJSONObject a, FromJSONObject a, ToObject m a) => Proxy a -> EvalT m r)
-    -> EvalT m r
+    -> (forall a. (ToJSONObject a, FromJSONObject a, ToObject ctx a) => Proxy a -> Eval ctx r)
+    -> Eval ctx r
   goRecord [] f = 
     f (Proxy :: Proxy Nil)
   goRecord (P.RowListItem _ (Label.Label k) x : xs) f = do
@@ -193,7 +190,7 @@ instance FromJSONObject xs => Aeson.FromJSON (OpenRecord xs) where
 instance ToJSONObject xs => Aeson.ToJSON (OpenRecord xs) where
   toJSON (OpenRecord xs o) = Aeson.Object (toJSONObject xs <> fmap getUnknownJSON o)
 
-instance (MonadFix m, ToObject m xs) => ToValue m (OpenRecord xs) where
+instance ToObject ctx xs => ToValue ctx (OpenRecord xs) where
   toValue (OpenRecord xs o) = Evaluate.Object (toObject xs <> fmap toValue o)
   
   fromValue (Evaluate.Object o) = 
@@ -212,7 +209,7 @@ instance FromJSONObject xs => Aeson.FromJSON (Record xs) where
 instance ToJSONObject xs => Aeson.ToJSON (Record xs) where
   toJSON (Record xs) = Aeson.Object (toJSONObject xs)
 
-instance (MonadFix m, ToObject m xs) => ToValue m (Record xs) where
+instance ToObject ctx xs => ToValue ctx (Record xs) where
   toValue = Evaluate.Object . toObject . getRecord
   
   fromValue (Evaluate.Object o) = 
@@ -226,9 +223,9 @@ class FromJSONObject a where
 class ToJSONObject a where
   toJSONObject :: a -> Aeson.Object
 
-class ToObject m a where
-  toObject :: a -> HashMap Text (Value m)
-  fromObject :: HashMap Text (Value m) -> EvalT m a
+class ToObject ctx a where
+  toObject :: a -> HashMap Text (Value ctx)
+  fromObject :: HashMap Text (Value ctx) -> Eval ctx a
 
 data Nil = Nil
 
@@ -238,7 +235,7 @@ instance FromJSONObject Nil where
 instance ToJSONObject Nil where 
   toJSONObject _ = HashMap.empty
 
-instance Monad m => ToObject m Nil where
+instance ToObject ctx Nil where
   toObject _ = HashMap.empty
   fromObject _ = pure Nil
 
@@ -254,7 +251,7 @@ instance forall k x xs. (KnownSymbol k, Aeson.ToJSON x, ToJSONObject xs) => ToJS
     let k = symbolVal (Proxy :: Proxy k)
      in HashMap.insert (Text.pack k) (Aeson.toJSON x) (toJSONObject xs)
 
-instance forall m k x xs. (KnownSymbol k, ToValue m x, ToObject m xs) => ToObject m (Cons k x xs) where
+instance forall ctx k x xs. (KnownSymbol k, ToValue ctx x, ToObject ctx xs) => ToObject ctx (Cons k x xs) where
   toObject (Cons x xs) = do
     let k = symbolVal (Proxy :: Proxy k)
     HashMap.insert (Text.pack k) (toValue x) (toObject xs)
@@ -273,7 +270,7 @@ instance forall m k x xs. (KnownSymbol k, ToValue m x, ToObject m xs) => ToObjec
 newtype Nullable a = Nullable (Maybe a)
   deriving (Aeson.FromJSON, Aeson.ToJSON) via Maybe a
 
-instance ToValue m a => ToValue m (Nullable a) where
+instance ToValue ctx a => ToValue ctx (Nullable a) where
   toValue (Nullable Nothing) = 
     Evaluate.Constructor (Names.ProperName "Null") []
   toValue (Nullable (Just a)) = 
@@ -296,7 +293,7 @@ instance ToValue m a => ToValue m (Nullable a) where
 newtype UnknownJSON = UnknownJSON { getUnknownJSON :: Aeson.Value }
   deriving (Aeson.ToJSON, Aeson.FromJSON) via Aeson.Value
   
-instance MonadFix m => ToValue m UnknownJSON where
+instance ToValue ctx UnknownJSON where
   toValue = toValue . Evaluate.ForeignType . getUnknownJSON
   fromValue = fmap (UnknownJSON . Evaluate.getForeignType) . fromValue
   
@@ -307,7 +304,7 @@ instance MonadFix m => ToValue m UnknownJSON where
 --
 -- Any PureScript code which needs to support type-directed serialization for
 -- values which may involve @null@ should import this module.
-stdlib :: MonadFix m => InterpretT m (Module Ann)
+stdlib :: Interpret ctx (Module Ann)
 stdlib = build . Text.unlines $
   [ "module JSON where"
   , ""

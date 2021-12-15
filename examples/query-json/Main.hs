@@ -34,8 +34,7 @@
 
 module Main where
 
-import Control.Monad.Fix (MonadFix)
-import Control.Monad.Trans.Class (lift)
+import Control.Monad.IO.Class (liftIO)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy qualified as BL 
@@ -61,10 +60,9 @@ import System.Exit (die)
 -- synthesizes Haskell types @i@ and @o@ from the input and output types, 
 -- so that they can be used for serialization.
 checkTypeOfMain 
-  :: MonadFix m
-  => P.SourceType
-  -> (forall i o. (JSON.Serializable m i, JSON.Serializable m o) => Proxy i -> Proxy o -> EvalT m r)
-  -> EvalT m r
+  :: P.SourceType
+  -> (forall i o. (JSON.Serializable ctx i, JSON.Serializable ctx o) => Proxy i -> Proxy o -> Eval ctx r)
+  -> Eval ctx r
 checkTypeOfMain (P.TypeApp _ (P.TypeApp _ fn inputTy) outputTy) f | fn == P.tyFunction =
   JSON.reify inputTy \inputProxy -> 
     JSON.reify outputTy \outputProxy -> 
@@ -86,9 +84,9 @@ main = do
   stdinBytes <- BL.readFile inputFile
   input <- either die pure (Aeson.eitherDecode stdinBytes)
   
-  -- 'runInterpretTWithDebugger' will start a REPL debugger
+  -- 'runInterpretWithDebugger' will start a REPL debugger
   -- in the event of an error:
-  runInterpretTWithDebugger $ do
+  runInterpretWithDebugger () $ do
     traverse_ ffi stdlib
     
     -- Include the JSON library, in case the user wants to handle or return
@@ -104,18 +102,18 @@ main = do
     
     -- Next, check that @main@ is a function, and synthesize Haskell types for 
     -- the input and output based on its domain and codomain types respectively:
-    output <- liftEvalT do
+    output <- liftEval do
       checkTypeOfMain ty \(_ :: Proxy input) (_ :: Proxy output) ->
         -- Using the synthesized input type, decode the input:
         case Aeson.fromJSON @input input of
           Aeson.Success a -> do
             -- Now, attempt to coerce the user's program to the correct function
             -- type and evaluate the output:
-            output <- fromValueRHS @IO @(input -> EvalT IO output) query a
+            output <- fromValueRHS @() @(input -> Eval () output) query a
             -- Finally, using the synthesized output type, encode the output as JSON:
             pure (Aeson.toJSON @output output)
           Aeson.Error err -> 
             throwErrorWithContext (Evaluate.OtherError ("error decoding input JSON: " <> Text.pack err))
               
     -- Pretty-print the resulting JSON:
-    lift $ BL8.putStrLn (Pretty.encodePretty output)
+    liftIO $ BL8.putStrLn (Pretty.encodePretty output)

@@ -1,0 +1,467 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments      #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings   #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications    #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns        #-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Core.Math</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">builtIn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="annot"><a href="Dovetail.Core.Math.html#env"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679330626"><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-15"></span><span id="env"><span class="annot"><span class="annottext">env :: Env ctx
+</span><a href="Dovetail.Core.Math.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679330625"><span class="annot"><span class="annottext">_ModuleName :: ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var hs-var">_ModuleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Math&quot;</span></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span>  </span><span class="annot"><span class="annottext">[Env ctx] -&gt; Env ctx
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="hs-comment">-- abs :: Number -&gt; Number</span><span>
+</span><span id="line-20"></span><span>      </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;abs&quot;</span></span><span>
+</span><span id="line-22"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330623"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330623"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-23"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330623"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>      </span><span class="hs-comment">-- acos :: Number -&gt; Radians</span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;acos&quot;</span></span><span>
+</span><span id="line-27"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330621"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330621"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-28"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">acos</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330621"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>      </span><span class="hs-comment">-- asin :: Number -&gt; Radians</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;asin&quot;</span></span><span>
+</span><span id="line-32"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330619"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330619"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-33"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">asin</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330619"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>      </span><span class="hs-comment">-- atan :: Number -&gt; Radians</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;atan&quot;</span></span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330617"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330617"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-38"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">atan</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330617"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-comment">-- atan2 :: Number -&gt; Number -&gt; Radians</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Double -&gt; Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;atan2&quot;</span></span><span>
+</span><span id="line-42"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330615"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330615"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679330614"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330614"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-43"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. RealFloat a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">atan2</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330615"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330614"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span>      </span><span class="hs-comment">-- ceil :: Number -&gt; Number</span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;ceil&quot;</span></span><span>
+</span><span id="line-47"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330612"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330612"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-48"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Double
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Integer
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">ceiling</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330612"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>      </span><span class="hs-comment">-- cos :: Radians -&gt; Number</span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;cos&quot;</span></span><span>
+</span><span id="line-52"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330610"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330610"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-53"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">cos</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330610"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>      </span><span class="hs-comment">-- exp :: Number -&gt; Number</span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;exp&quot;</span></span><span>
+</span><span id="line-57"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330608"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330608"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-58"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">exp</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330608"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>      </span><span class="hs-comment">-- floor :: Number -&gt; Number</span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;floor&quot;</span></span><span>
+</span><span id="line-62"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330606"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330606"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-63"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Double
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Integer
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">floor</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330606"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>      </span><span class="hs-comment">-- imul :: Int -&gt; Int -&gt; Int</span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Integer -&gt; Integer -&gt; Eval ctx Integer) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;imul&quot;</span></span><span>
+</span><span id="line-67"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330604"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330604"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679330603"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330603"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-68"></span><span>          </span><span class="annot"><span class="annottext">Integer -&gt; Eval ctx Integer
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330604"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330603"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>      </span><span class="hs-comment">-- log :: Number -&gt; Number</span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;log&quot;</span></span><span>
+</span><span id="line-72"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330601"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330601"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-73"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">log</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330601"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>      </span><span class="hs-comment">-- max :: Number -&gt; Number -&gt; Number</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Double -&gt; Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;max&quot;</span></span><span>
+</span><span id="line-77"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330599"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330599"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679330598"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330598"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-78"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">max</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330599"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330598"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>      </span><span class="hs-comment">-- min :: Number -&gt; Number -&gt; Number</span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Double -&gt; Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;min&quot;</span></span><span>
+</span><span id="line-82"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330596"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330596"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679330595"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330595"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-83"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">min</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330596"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330595"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>      </span><span class="hs-comment">-- pow :: Number -&gt; Number -&gt; Number</span><span>
+</span><span id="line-85"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Double -&gt; Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;pow&quot;</span></span><span>
+</span><span id="line-87"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330593"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330593"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679330592"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330592"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-88"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330593"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">**</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330592"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>      </span><span class="hs-comment">-- round :: Number -&gt; Number</span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-91"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;round&quot;</span></span><span>
+</span><span id="line-92"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330590"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330590"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-93"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Double
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Integer
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">round</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330590"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>      </span><span class="hs-comment">-- sin :: Radians -&gt; Number</span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;sin&quot;</span></span><span>
+</span><span id="line-97"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330588"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330588"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-98"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">sin</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330588"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>      </span><span class="hs-comment">-- sqrt :: Number -&gt; Number</span><span>
+</span><span id="line-100"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;sqrt&quot;</span></span><span>
+</span><span id="line-102"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330586"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330586"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-103"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">sqrt</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330586"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>      </span><span class="hs-comment">-- tan :: Radians -&gt; Number</span><span>
+</span><span id="line-105"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;tan&quot;</span></span><span>
+</span><span id="line-107"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330584"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330584"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-108"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">tan</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330584"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-109"></span><span>      </span><span class="hs-comment">-- trunc :: Number -&gt; Number</span><span>
+</span><span id="line-110"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;trunc&quot;</span></span><span>
+</span><span id="line-112"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330582"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330582"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-113"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Double
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Integer
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">truncate</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330582"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-114"></span><span>      </span><span class="hs-comment">-- remainder :: Number -&gt; Number -&gt; Number</span><span>
+</span><span id="line-115"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Double -&gt; Double -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;remainder&quot;</span></span><span>
+</span><span id="line-117"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330580"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330580"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679330579"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330579"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-118"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330580"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Double
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Integer
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">truncate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330580"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330579"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679330579"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>      </span><span class="hs-comment">-- e :: Number</span><span>
+</span><span id="line-120"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-121"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;e&quot;</span></span><span>
+</span><span id="line-122"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">exp</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span>      </span><span class="hs-comment">-- ln2 :: Number</span><span>
+</span><span id="line-124"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-125"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;ln2&quot;</span></span><span>
+</span><span id="line-126"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">log</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-127"></span><span>      </span><span class="hs-comment">-- ln10 :: Number</span><span>
+</span><span id="line-128"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-129"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;ln10&quot;</span></span><span>
+</span><span id="line-130"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">log</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">10</span></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>      </span><span class="hs-comment">-- log2e :: Number</span><span>
+</span><span id="line-132"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-133"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;log2e&quot;</span></span><span>
+</span><span id="line-134"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">log</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-135"></span><span>      </span><span class="hs-comment">-- log10e :: Number</span><span>
+</span><span id="line-136"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-137"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;log10e&quot;</span></span><span>
+</span><span id="line-138"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span>  </span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">log</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">10</span></span><span class="hs-special">)</span><span>
+</span><span id="line-139"></span><span>      </span><span class="hs-comment">-- pi :: Number</span><span>
+</span><span id="line-140"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-141"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;pi&quot;</span></span><span>
+</span><span id="line-142"></span><span>          </span><span class="annot"><span class="annottext">Double
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span>
+</span><span id="line-143"></span><span>      </span><span class="hs-comment">-- tau :: Number</span><span>
+</span><span id="line-144"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-145"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;tau&quot;</span></span><span>
+</span><span id="line-146"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Double
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span>
+</span><span id="line-147"></span><span>      </span><span class="hs-comment">-- sqrt1_2 :: Number</span><span>
+</span><span id="line-148"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-149"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;sqrt1_2&quot;</span></span><span>
+</span><span id="line-150"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">sqrt</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">0.5</span></span><span class="hs-special">)</span><span>
+</span><span id="line-151"></span><span>      </span><span class="hs-comment">-- sqrt2 :: Number</span><span>
+</span><span id="line-152"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; Double -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330626"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-153"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330625"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;sqrt2&quot;</span></span><span>
+</span><span id="line-154"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Double
+forall a. Floating a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">sqrt</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-155"></span><span>    </span><span class="hs-special">]</span></pre></body></html>

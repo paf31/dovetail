@@ -31,15 +31,14 @@
 
 module Main where
 
-import Control.Monad.Fix (MonadFix)
-import Control.Monad.State.Class (MonadState, state)
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.State (evalStateT)
+import Control.Monad.IO.Class (MonadIO(..))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Foldable (traverse_)
+import Data.IORef (IORef, atomicModifyIORef', newIORef)
 import Data.Text.IO qualified as Text
+import Data.Tuple (swap)
 import Data.Vector ((!))
 import Dovetail
 import Dovetail.Aeson qualified as JSON
@@ -51,18 +50,28 @@ import System.Environment (getArgs)
 import System.Exit (die)
 import System.Random qualified as Random
 
+type Context = IORef Random.StdGen
+
 main :: IO ()
 main = do
   -- Read the module filename from the CLI arguments, and read the module source
   [moduleFile, seedString] <- getArgs
   moduleText <- Text.readFile moduleFile
   
+  let seed = read seedString :: Int
+  
+  -- This helper function assists in writing the following code in a more 
+  -- direct style:
+  let orDie e f = e >>= either (liftIO . die . f) pure
+  
+  -- Create a deterministic random generator from the seed input
+  gen <- newIORef (Random.mkStdGen seed)
+  
   -- The interpretation of our PureScript module is a JSON value, whose
   -- computation may involve side-effects in the 'M' monad.
   let buildResult 
-        :: (MonadState Random.StdGen m, MonadFix m)
-        => m (Either (InterpretError m) Aeson.Value)
-      buildResult = runInterpretT do
+        :: IO (Either (InterpretError ()) Aeson.Value)
+      buildResult = runInterpret () do
         traverse_ ffi stdlib
         
         -- Include the JSON library, in case the user wants to return
@@ -80,27 +89,17 @@ main = do
           FFI.foreignImport (P.Ident "choose")
             (\a -> array a ~> a)
             \xs -> do
-              idx <- lift (state (Random.randomR (0, length xs - 1)))
+              idx <- liftIO (atomicModifyIORef' gen (swap . Random.randomR (0, length xs - 1)))
               pure (xs ! idx)
               
         CoreFn.Module{ CoreFn.moduleName } <- build moduleText
         
         -- Evaluate "main", returning JSON
         JSON.evalJSON (Just moduleName) "main"
-          
-  let seed = read seedString :: Int
-  
-  -- This helper function assists in writing the following code in a more 
-  -- direct style:
-  let orDie e f = e >>= either (lift . die . f) pure
-  
-  -- Create a deterministic random generator from the seed input
-  let gen = Random.mkStdGen seed
-  
-  flip evalStateT gen do
-    -- Interpret the main function of the PureScript module as a non-deterministic
-    -- JSON result
-    output <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
-  
-    -- Render the output as pretty-printed JSON on standard output.
-    lift (BL8.putStrLn (Pretty.encodePretty output))
+
+  -- Interpret the main function of the PureScript module as a non-deterministic
+  -- JSON result
+  output <- buildResult `orDie` renderInterpretError defaultTerminalRenderValueOptions
+
+  -- Render the output as pretty-printed JSON on standard output.
+  BL8.putStrLn (Pretty.encodePretty output)

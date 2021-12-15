@@ -11,13 +11,12 @@ module Dovetail
   , module Dovetail.FFI.Builder
   
   -- * High-level API
-  , InterpretT
-  , runInterpretT
+  , Interpret
   , runInterpret
-  , liftEvalT
+  , liftEval
   
   -- ** Debugging
-  , runInterpretTWithDebugger
+  , runInterpretWithDebugger
   
   -- ** Error messages
   , InterpretError(..)
@@ -25,6 +24,7 @@ module Dovetail
   
   -- ** Foreign function interface
   , ffi
+  , loadEnv
   
   -- ** Building PureScript source
   , build
@@ -45,21 +45,19 @@ module Dovetail
   , module Language.PureScript.Names
   ) where
 
-import Control.Monad.Catch (MonadMask)
 import Control.Monad.Error.Class (MonadError(..))
-import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.Trans.Class (MonadTrans(..))
+import Control.Monad.Reader.Class (MonadReader(..))
+import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
+import Control.Monad.Trans.Reader (ReaderT, runReaderT)
 import Control.Monad.Trans.State (StateT, evalStateT, get, put, modify, runStateT)
 import Data.Bifunctor (first)
-import Data.Functor.Identity (Identity(..))
-import Data.Map qualified as Map
+import Data.Set qualified as Set
 import Data.Text (Text)
 import Dovetail.Build (BuildError(..), renderBuildError)
 import Dovetail.Build qualified as Build
-import Dovetail.Evaluate (Env, EvalT(..), runEvalT, Eval, runEval, 
-                          ToValue(..), ToValueRHS(..))
+import Dovetail.Evaluate (Env, Eval(..), runEval, ToValue(..), ToValueRHS(..))
 import Dovetail.Evaluate qualified as Evaluate
 import Dovetail.FFI
 import Dovetail.FFI qualified as FFI
@@ -81,13 +79,10 @@ import Language.PureScript.Names
 -- The transformed monad is used to track any benign side effects that might be
 -- exposed via the foreign function interface to PureScript code, in the same sense
 -- as 'EvalT'.
-newtype InterpretT m a = InterpretT { unInterpretT :: ExceptT (InterpretError m) (StateT ([P.ExternsFile], Env m) m) a }
-  deriving newtype (Functor, Applicative, Monad, MonadError (InterpretError m))
+newtype Interpret ctx a = Interpret { unInterpret :: ReaderT ctx (ExceptT (InterpretError ctx) (StateT ([P.ExternsFile], Env ctx) IO)) a }
+  deriving newtype (Functor, Applicative, Monad, MonadError (InterpretError ctx), MonadReader ctx, MonadIO)
   
-instance MonadTrans InterpretT where
-  lift = InterpretT . lift . lift
-
--- | Run a computation in the 'InterpretT' monad, possibly returning an error.
+-- | Run a computation in the 'Interpret' monad, possibly returning an error.
 -- Note: errors can occur during module building or evaluation (i.e. module loading).
 --
 -- The 'runInterpret' function is a simpler alternative in the case where benign
@@ -96,29 +91,29 @@ instance MonadTrans InterpretT where
 -- For example:
 --
 -- @
--- runInterpret @Module do
+-- runInterpret @Module () do
 --   -- Load the prelude
 --   'ffi' 'prelude'
 --   -- Build a module from source
 --   'build' "module Main where main = \\\"example\\\"" --
 --
--- runInterpret @(Eval Text) do
+-- runInterpret @(Eval Text) () do
 --   'ffi' 'prelude'
 --   _ <- 'build' "module Main where main = \\\"example\\\""
 --   -- Evaluate the main function
 --   'evalMain' ('P.ModuleName' \"Main\")
 -- @
-runInterpretT :: Monad m => InterpretT m a -> m (Either (InterpretError m) a)
-runInterpretT = flip evalStateT ([], mempty) . runExceptT . unInterpretT
+runInterpret :: ctx -> Interpret ctx a -> IO (Either (InterpretError ctx) a)
+runInterpret ctx = flip evalStateT ([], mempty) . runExceptT . flip runReaderT ctx . unInterpret
 
--- | Like 'runInterpretT', but starts an interactive debugging session in the
+-- | Like 'runInterpret', but starts an interactive debugging session in the
 -- event of a debugging error.
-runInterpretTWithDebugger 
-  :: (MonadIO m, MonadFix m, MonadMask m)
-  => InterpretT m a
-  -> m ()
-runInterpretTWithDebugger x = do
-  (e, (externs, env)) <- flip runStateT ([], mempty) $ runExceptT (unInterpretT x)
+runInterpretWithDebugger 
+  :: ctx
+  -> Interpret ctx a
+  -> IO ()
+runInterpretWithDebugger ctx x = do
+  (e, (externs, env)) <- flip runStateT ([], mempty) $ runExceptT (runReaderT (unInterpret x) ctx)
   case e of
     Left err -> do
       liftIO . putStrLn $ renderInterpretError defaultTerminalRenderValueOptions err
@@ -127,27 +122,27 @@ runInterpretTWithDebugger x = do
           liftIO . putStrLn $ "\nStarting the debugger. ^C to exit."
           let withEnvAtError =
                 case errorContext evalErr of
-                  EvaluationContext (frame : _) ->
+                  EvaluationContext (frame : _) _ ->
                     (frameEnv frame <> env)
                   _ -> env
               additionalNames = 
                 [ P.disqualify ident
-                | ident <- Map.keys (withEnvAtError Map.\\ env)
+                | ident <- Set.toList (envNames withEnvAtError Set.\\ envNames env)
                 , not (P.isQualified ident)
                 ]
-          REPL.defaultMain Nothing externs additionalNames withEnvAtError
+          REPL.defaultMain Nothing externs additionalNames withEnvAtError ctx
         _ -> pure ()
     Right{} -> pure ()
 
-type Interpret = InterpretT Identity
-
-runInterpret :: Interpret a -> Either (InterpretError Identity) a
-runInterpret = runIdentity . runInterpretT
-
--- | A convenience function for running 'EvalT' computations in 'InterpretT',
+-- | A convenience function for running 'EvalT' computations in 'Interpret',
 -- reporting errors via 'InterpretError'.
-liftEvalT :: Monad m => EvalT m a -> InterpretT m a
-liftEvalT = (>>= either (throwError . ErrorDuringEvaluation) pure) . lift . runEvalT
+liftEval :: Eval ctx a -> Interpret ctx a
+liftEval e = do
+  ctx <- ask
+  x <- liftIO $ runEval ctx e
+  case x of
+    Left err -> throwError (ErrorDuringEvaluation err)
+    Right a -> pure a
 
 -- | Make an 'FFI' module available for use to subsequent operations.
 --
@@ -156,34 +151,40 @@ liftEvalT = (>>= either (throwError . ErrorDuringEvaluation) pure) . lift . runE
 -- @
 -- ffi 'Dovetail.Prelude.prelude'
 -- @
-ffi :: Monad m => FFI m -> InterpretT m ()
-ffi f = InterpretT . lift $ modify \(externs, env) -> 
+ffi :: FFI ctx -> Interpret ctx ()
+ffi f = Interpret . lift . lift $ modify \(externs, env) -> 
   ( FFI.toExterns f : externs
   , env <> FFI.toEnv f
   )
 
--- | The type of errors that can occur in the 'InterpretT' monad.
-data InterpretError m
-  = ErrorDuringEvaluation (Evaluate.EvaluationError m)
+loadEnv :: Env ctx -> Interpret ctx ()
+loadEnv env = Interpret . lift . lift $ modify \(externs, env') -> 
+  ( externs
+  , env <> env'
+  )
+  
+-- | The type of errors that can occur in the 'Interpret' monad.
+data InterpretError ctx
+  = ErrorDuringEvaluation (Evaluate.EvaluationError ctx)
   -- ^ Evaluation errors can occur during the initial evaluation of the module
   -- when it is loaded into the environment.
   | ErrorDuringBuild Build.BuildError
   -- ^ Build errors can occur if we are building modules from source or corefn.
 
-renderInterpretError :: RenderValueOptions -> InterpretError m -> String
+renderInterpretError :: RenderValueOptions -> InterpretError ctx -> String
 renderInterpretError _ (ErrorDuringBuild err) =
   "Build error: " <> Build.renderBuildError err
 renderInterpretError opts (ErrorDuringEvaluation err) =
   "Evaluation error: " <> Evaluate.renderEvaluationError opts err
 
-liftWith :: Monad m => (e -> InterpretError m) -> m (Either e a) -> InterpretT m a
-liftWith f ma = InterpretT . ExceptT . lift $ fmap (first f) ma
+liftWith :: (e -> InterpretError ctx) -> IO (Either e a) -> Interpret ctx a
+liftWith f ma = Interpret . lift . ExceptT . lift $ fmap (first f) ma
 
 -- | Build a PureScript module from source, and make its exported functions available
 -- during subsequent evaluations.
-build :: MonadFix m => Text -> InterpretT m (CoreFn.Module CoreFn.Ann)
+build :: Text -> Interpret ctx (CoreFn.Module CoreFn.Ann)
 build moduleText = do
-  (externs, _) <- InterpretT (lift get)
+  (externs, _) <- Interpret ((lift . lift) get)
   (m, newExterns) <- liftWith ErrorDuringBuild $ pure $ Build.buildSingleModule externs moduleText
   buildCoreFn newExterns m
 
@@ -192,44 +193,45 @@ build moduleText = do
 --
 -- The corefn module may be preprepared, for example by compiling from source text using the
 -- functions in the "Dovetail.Build" module.
-buildCoreFn :: MonadFix m => P.ExternsFile -> CoreFn.Module CoreFn.Ann -> InterpretT m (CoreFn.Module CoreFn.Ann)
+buildCoreFn :: P.ExternsFile -> CoreFn.Module CoreFn.Ann -> Interpret ctx (CoreFn.Module CoreFn.Ann)
 buildCoreFn newExterns m = do
-  (externs, env) <- InterpretT (lift get)
-  newEnv <- liftWith ErrorDuringEvaluation (Evaluate.runEvalT (Evaluate.buildCoreFn env m))
-  InterpretT . lift $ put (externs <> [newExterns], newEnv)
+  ctx <- ask
+  (externs, env) <- Interpret ((lift . lift) get)
+  newEnv <- liftWith ErrorDuringEvaluation (Evaluate.runEval ctx (Evaluate.buildCoreFn env m))
+  Interpret . lift . lift $ put (externs <> [newExterns], newEnv)
   pure m
 
 -- | Evaluate a PureScript expression from source
 eval
-  :: (MonadFix m, ToValueRHS m a)
+  :: ToValueRHS ctx a
   => Maybe P.ModuleName
   -- ^ The name of the "default module" whose exports will be made available unqualified
   -- to the evaluated expression.
   -> Text
-  -> InterpretT m (a, P.SourceType)
+  -> Interpret ctx (a, P.SourceType)
 eval defaultModule exprText = do
-  (externs, env) <- InterpretT (lift get)
+  (externs, env) <- Interpret ((lift . lift) get)
   (expr, ty) <- liftWith ErrorDuringBuild $ pure $ Build.buildSingleExpression defaultModule externs exprText
   pure (Evaluate.fromValueRHS (Evaluate.eval env expr), ty)
 
 -- | Evaluate a PureScript corefn expression and return the result.
 -- Note: The expression is not type-checked by the PureScript typechecker. 
 -- See the documentation for 'ToValueRHS' for valid result types.
-evalCoreFn :: (MonadFix m, ToValueRHS m a) => CoreFn.Expr CoreFn.Ann -> InterpretT m a
+evalCoreFn :: ToValueRHS ctx a => CoreFn.Expr CoreFn.Ann -> Interpret ctx a
 evalCoreFn expr = do
-  (_externs, env) <- InterpretT (lift get)
+  (_externs, env) <- Interpret ((lift . lift) get)
   pure . Evaluate.fromValueRHS $ Evaluate.eval env expr
 
 -- | Evaluate @main@ in the specified module and return the result.
-evalMain :: (MonadFix m, ToValueRHS m a) => P.ModuleName -> InterpretT m a
+evalMain :: ToValueRHS ctx a => P.ModuleName -> Interpret ctx a
 evalMain moduleName = evalCoreFn (CoreFn.Var (CoreFn.ssAnn P.nullSourceSpan) (P.Qualified (Just moduleName) (P.Ident "main")))
 
 -- | Start an interactive debugger (REPL) session.
 repl 
-  :: (MonadFix m, MonadIO m, MonadMask m) 
-  => Maybe P.ModuleName 
+  :: Maybe P.ModuleName 
   -- ^ The default module, whose members will be available unqualified in scope
-  -> InterpretT m ()
+  -> Interpret ctx ()
 repl defaultModule = do
-  (externs, env) <- InterpretT (lift get)
-  lift $ REPL.defaultMain defaultModule externs [] env
+  (externs, env) <- Interpret ((lift . lift) get)
+  ctx <- ask
+  liftIO $ REPL.defaultMain defaultModule externs [] env ctx

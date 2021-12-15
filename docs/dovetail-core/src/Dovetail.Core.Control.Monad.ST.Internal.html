@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments      #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings   #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications    #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns        #-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Core.Control.Monad.ST.Internal</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">for_</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.IORef</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">IORef</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Typeable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Typeable</span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Vector</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.Ref.html"><span class="hs-identifier">Dovetail.Core.Effect.Ref</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ForeignType</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">builtIn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>    </span><span>
+</span><span id="line-20"></span><span class="hs-keyword">type</span><span> </span><span id="ST"><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-var">ST</span></a></span></span><span> </span><span id="local-6989586621679330312"><span class="annot"><a href="#local-6989586621679330312"><span class="hs-identifier hs-type">ctx</span></a></span></span><span> </span><span id="local-6989586621679330311"><span class="annot"><a href="#local-6989586621679330311"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330312"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330312"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330311"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#env"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679330309"><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Typeable</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-23"></span><span id="env"><span class="annot"><span class="annottext">env :: Env ctx
+</span><a href="Dovetail.Core.Control.Monad.ST.Internal.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679330308"><span class="annot"><span class="annottext">_ModuleName :: ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var hs-var">_ModuleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Control.Monad.ST.Internal&quot;</span></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span>  </span><span class="annot"><span class="annottext">[Env ctx] -&gt; Env ctx
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="hs-comment">-- new :: forall a r. a -&gt; ST r (STRef r a)</span><span>
+</span><span id="line-28"></span><span>      </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Value ctx -&gt; ST ctx (Ref ctx)) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Ref.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;new&quot;</span></span><span>
+</span><span id="line-30"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330306"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330306"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-31"></span><span>          </span><span class="annot"><span class="annottext">IORef (Value ctx) -&gt; Ref ctx
+forall a. a -&gt; ForeignType a
+</span><span class="hs-identifier hs-var">ForeignType</span></span><span> </span><span class="annot"><span class="annottext">(IORef (Value ctx) -&gt; Ref ctx)
+-&gt; Eval ctx (IORef (Value ctx)) -&gt; Eval ctx (Ref ctx)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">IO (IORef (Value ctx)) -&gt; Eval ctx (IORef (Value ctx))
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Value ctx -&gt; IO (IORef (Value ctx))
+forall a. a -&gt; IO (IORef a)
+</span><span class="hs-identifier hs-var">IORef.newIORef</span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330306"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>      </span><span class="hs-comment">-- read :: forall a r. STRef r a -&gt; ST r a</span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Ref ctx -&gt; ST ctx (Value ctx)) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Ref.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;read&quot;</span></span><span>
+</span><span id="line-35"></span><span>        </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span id="local-6989586621679330301"><span class="annot"><span class="annottext">IORef (Value ctx)
+</span><a href="#local-6989586621679330301"><span class="hs-identifier hs-var">ref</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-36"></span><span>          </span><span class="annot"><span class="annottext">IO (Value ctx) -&gt; Eval ctx (Value ctx)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IORef (Value ctx) -&gt; IO (Value ctx)
+forall a. IORef a -&gt; IO a
+</span><span class="hs-identifier hs-var">IORef.readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef (Value ctx)
+</span><a href="#local-6989586621679330301"><span class="hs-identifier hs-var">ref</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>      </span><span class="hs-comment">-- write :: forall a r. a -&gt; STRef r a -&gt; ST r a</span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Value ctx -&gt; Ref ctx -&gt; ST ctx (Value ctx)) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.Ref.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;write&quot;</span></span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330299"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330299"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span id="local-6989586621679330298"><span class="annot"><span class="annottext">IORef (Value ctx)
+</span><a href="#local-6989586621679330298"><span class="hs-identifier hs-var">ref</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-41"></span><span>          </span><span class="annot"><span class="annottext">IO () -&gt; Eval ctx ()
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IORef (Value ctx) -&gt; Value ctx -&gt; IO ()
+forall a. IORef a -&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">IORef.writeIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef (Value ctx)
+</span><a href="#local-6989586621679330298"><span class="hs-identifier hs-var">ref</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330299"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>      </span><span class="hs-comment">-- modifyImpl :: forall r a b.           </span><span>
+</span><span id="line-44"></span><span>      </span><span class="hs-comment">--   (a                    </span><span>
+</span><span id="line-45"></span><span>      </span><span class="hs-comment">--    -&gt; { state :: a      </span><span>
+</span><span id="line-46"></span><span>      </span><span class="hs-comment">--       , value :: b      </span><span>
+</span><span id="line-47"></span><span>      </span><span class="hs-comment">--       }                 </span><span>
+</span><span id="line-48"></span><span>      </span><span class="hs-comment">--   )                     </span><span>
+</span><span id="line-49"></span><span>      </span><span class="hs-comment">--   -&gt; Ref r a -&gt; ST r b</span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; ((Value ctx -&gt; Eval ctx (ModifyResult ctx))
+    -&gt; Ref ctx -&gt; ST ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Ref.html#ModifyResult"><span class="hs-identifier hs-type">ModifyResult</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.Ref.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;modifyImpl&quot;</span></span><span>
+</span><span id="line-52"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330295"><span class="annot"><span class="annottext">Value ctx -&gt; Eval ctx (ModifyResult ctx)
+</span><a href="#local-6989586621679330295"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span id="local-6989586621679330294"><span class="annot"><span class="annottext">IORef (Value ctx)
+</span><a href="#local-6989586621679330294"><span class="hs-identifier hs-var">ref</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-53"></span><span>          </span><span id="local-6989586621679330293"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330293"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Value ctx) -&gt; Eval ctx (Value ctx)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IORef (Value ctx) -&gt; IO (Value ctx)
+forall a. IORef a -&gt; IO a
+</span><span class="hs-identifier hs-var">IORef.readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef (Value ctx)
+</span><a href="#local-6989586621679330294"><span class="hs-identifier hs-var">ref</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>          </span><span class="annot"><a href="Dovetail.Core.Effect.Ref.html#ModifyResult"><span class="hs-identifier hs-type">ModifyResult</span></a></span><span> </span><span id="local-6989586621679330291"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330291"><span class="hs-identifier hs-var">newState</span></a></span></span><span> </span><span id="local-6989586621679330290"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330290"><span class="hs-identifier hs-var">result</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Value ctx -&gt; Eval ctx (ModifyResult ctx)
+</span><a href="#local-6989586621679330295"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330293"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-55"></span><span>          </span><span class="annot"><span class="annottext">IO () -&gt; Eval ctx ()
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IORef (Value ctx) -&gt; Value ctx -&gt; IO ()
+forall a. IORef a -&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">IORef.writeIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef (Value ctx)
+</span><a href="#local-6989586621679330294"><span class="hs-identifier hs-var">ref</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330291"><span class="hs-identifier hs-var">newState</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330290"><span class="hs-identifier hs-var">result</span></a></span><span>
+</span><span id="line-57"></span><span>      </span><span class="hs-comment">-- map_ :: forall r a b. (a -&gt; b) -&gt; ST r a -&gt; ST r b</span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (ST ctx (Value ctx) -&gt; ST ctx (Value ctx) -&gt; ST ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;map_&quot;</span></span><span>
+</span><span id="line-60"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330289"><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330289"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679330288"><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330288"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span id="local-6989586621679330287"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330287"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-61"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330289"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">ST ctx (Value ctx) -&gt; Eval ctx (Value ctx) -&gt; Eval ctx (Value ctx)
+forall (m :: * -&gt; *) a b. Monad m =&gt; (a -&gt; m b) -&gt; m a -&gt; m b
+</span><span class="hs-operator hs-var">=&lt;&lt;</span></span><span> </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330288"><span class="hs-identifier hs-var">st</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330287"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-62"></span><span>      </span><span class="hs-comment">-- pure_ :: forall r a. a -&gt; ST r a</span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Value ctx -&gt; ST ctx (Value ctx)) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;pure_&quot;</span></span><span>
+</span><span id="line-65"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330285"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330285"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330285"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-66"></span><span>      </span><span class="hs-comment">-- bind_ :: forall r a b. ST r a -&gt; (a -&gt; ST r b) -&gt; ST r b</span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (ST ctx (Value ctx)
+    -&gt; (Value ctx -&gt; ST ctx (Value ctx)) -&gt; ST ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;bind_&quot;</span></span><span>
+</span><span id="line-69"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330284"><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330284"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span id="local-6989586621679330283"><span class="annot"><span class="annottext">Value ctx -&gt; ST ctx (Value ctx)
+</span><a href="#local-6989586621679330283"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679330282"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330282"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-70"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330284"><span class="hs-identifier hs-var">st</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330282"><span class="hs-identifier hs-var">rw</span></a></span><span> </span><span class="annot"><span class="annottext">Eval ctx (Value ctx) -&gt; ST ctx (Value ctx) -&gt; Eval ctx (Value ctx)
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679330281"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330281"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Value ctx -&gt; ST ctx (Value ctx)
+</span><a href="#local-6989586621679330283"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330281"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330282"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-71"></span><span>      </span><span class="hs-comment">-- run :: forall a. (forall r. ST r a) -&gt; a</span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (ST ctx (Value ctx) -&gt; Eval ctx (Value ctx)) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;run&quot;</span></span><span>
+</span><span id="line-74"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330280"><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330280"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-75"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330280"><span class="hs-identifier hs-var">st</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>      </span><span class="hs-comment">-- while :: forall r a. ST r Boolean -&gt; ST r a -&gt; ST r Unit</span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (ST ctx Bool -&gt; ST ctx (Value ctx) -&gt; ST ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;while&quot;</span></span><span>
+</span><span id="line-79"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330279"><span class="annot"><span class="annottext">ST ctx Bool
+</span><a href="#local-6989586621679330279"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span id="local-6989586621679330278"><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330278"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span id="local-6989586621679330277"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330277"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-80"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679330276"><span class="annot"><span class="annottext">loop :: Eval ctx ()
+</span><a href="#local-6989586621679330276"><span class="hs-identifier hs-var hs-var">loop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-81"></span><span>                </span><span id="local-6989586621679330275"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679330275"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ST ctx Bool
+</span><a href="#local-6989586621679330279"><span class="hs-identifier hs-var">cond</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330277"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-82"></span><span>                </span><span class="annot"><span class="annottext">Bool -&gt; Eval ctx () -&gt; Eval ctx ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679330275"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+</span><a href="#local-6989586621679330278"><span class="hs-identifier hs-var">body</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330277"><span class="hs-identifier hs-var">rw</span></a></span><span> </span><span class="annot"><span class="annottext">Eval ctx (Value ctx) -&gt; Eval ctx () -&gt; Eval ctx ()
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Eval ctx ()
+</span><a href="#local-6989586621679330276"><span class="hs-identifier hs-var">loop</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>          </span><span class="annot"><span class="annottext">Eval ctx ()
+</span><a href="#local-6989586621679330276"><span class="hs-identifier hs-var">loop</span></a></span><span>
+</span><span id="line-84"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span>      </span><span class="hs-comment">-- for :: forall r a. Int -&gt; Int -&gt; (Int -&gt; ST r a) -&gt; ST r Unit</span><span>
+</span><span id="line-86"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Integer
+    -&gt; Integer
+    -&gt; (Integer -&gt; ST ctx (Value ctx))
+    -&gt; ST ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;for&quot;</span></span><span>
+</span><span id="line-88"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330274"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330274"><span class="hs-identifier hs-var">from</span></a></span></span><span> </span><span id="local-6989586621679330273"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330273"><span class="hs-identifier hs-var">to</span></a></span></span><span> </span><span id="local-6989586621679330272"><span class="annot"><span class="annottext">Integer -&gt; ST ctx (Value ctx)
+</span><a href="#local-6989586621679330272"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span id="local-6989586621679330271"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330271"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-89"></span><span>          </span><span class="annot"><span class="annottext">[Integer] -&gt; (Integer -&gt; Eval ctx (Value ctx)) -&gt; Eval ctx ()
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Foldable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f ()
+</span><span class="hs-identifier hs-var">for_</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330274"><span class="hs-identifier hs-var">from</span></a></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330273"><span class="hs-identifier hs-var">to</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679330270"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330270"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-90"></span><span>            </span><span class="annot"><span class="annottext">Integer -&gt; ST ctx (Value ctx)
+</span><a href="#local-6989586621679330272"><span class="hs-identifier hs-var">body</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679330270"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330271"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-91"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span>      </span><span class="hs-comment">-- foreach :: forall r a. Array a -&gt; (a -&gt; ST r Unit) -&gt; ST r Unit</span><span>
+</span><span id="line-93"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Vector (Value ctx)
+    -&gt; (Value ctx -&gt; ST ctx (Value ctx)) -&gt; ST ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Control.Monad.ST.Internal.html#ST"><span class="hs-identifier hs-type">ST</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330309"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330308"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;foreach&quot;</span></span><span>
+</span><span id="line-95"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330269"><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679330269"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679330268"><span class="annot"><span class="annottext">Value ctx -&gt; ST ctx (Value ctx)
+</span><a href="#local-6989586621679330268"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679330267"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330267"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-96"></span><span>          </span><span class="annot"><span class="annottext">Vector (Value ctx) -&gt; ST ctx (Value ctx) -&gt; Eval ctx ()
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Foldable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f ()
+</span><span class="hs-identifier hs-var">for_</span></span><span> </span><span class="annot"><span class="annottext">Vector (Value ctx)
+</span><a href="#local-6989586621679330269"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679330266"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330266"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-97"></span><span>            </span><span class="annot"><span class="annottext">Value ctx -&gt; ST ctx (Value ctx)
+</span><a href="#local-6989586621679330268"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330266"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330267"><span class="hs-identifier hs-var">rw</span></a></span><span>
+</span><span id="line-98"></span><span>          </span><span class="annot"><span class="annottext">ST ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashMap Text (Value ctx) -&gt; Value ctx
+forall ctx. HashMap Text (Value ctx) -&gt; Value ctx
+</span><span class="hs-identifier hs-var">Object</span></span><span> </span><span class="annot"><span class="annottext">HashMap Text (Value ctx)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>    </span><span class="hs-special">]</span></pre></body></html>

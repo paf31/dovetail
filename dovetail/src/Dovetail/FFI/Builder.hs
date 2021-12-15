@@ -37,37 +37,36 @@ module Dovetail.FFI.Builder
   , ForAll
   ) where
   
-import Control.Monad.Fix (MonadFix)
 import Control.Monad.Writer.Class (MonadWriter(..))
 import Control.Monad.Writer.Strict (Writer, runWriter)
 import Data.Text (Text)
 import Data.Vector (Vector)
-import Dovetail.Evaluate (EvalT, Value)
+import Dovetail.Evaluate (Eval, Value)
 import Dovetail.Evaluate qualified as Evaluate
 import Dovetail.FFI (FFI(..), ForeignImport(..))
 import Dovetail.FFI.Internal qualified as Internal
 import Language.PureScript qualified as P
 
-data TypeScheme m a where
-  Cons :: (FunctionType m (Value m) (EvalT m (Value m)) -> TypeScheme m a)
-       -> TypeScheme m a
-  Nil :: FunctionType m a r -> TypeScheme m a
+data TypeScheme ctx a where
+  Cons :: (FunctionType ctx (Value ctx) (Eval ctx (Value ctx)) -> TypeScheme ctx a)
+       -> TypeScheme ctx a
+  Nil :: FunctionType ctx a r -> TypeScheme ctx a
             
-data FunctionType m l r where
-  Function  :: FunctionType m al ar
-            -> FunctionType m bl br 
-            -> FunctionType m (al -> br) (al -> br)
-  Array    :: FunctionType m l r 
-           -> FunctionType m (Vector l) (EvalT m (Vector l))
-  MonoType :: MonoType m l -> FunctionType m l (EvalT m l)
+data FunctionType ctx l r where
+  Function  :: FunctionType ctx al ar
+            -> FunctionType ctx bl br 
+            -> FunctionType ctx (al -> br) (al -> br)
+  Array    :: FunctionType ctx l r 
+           -> FunctionType ctx (Vector l) (Eval ctx (Vector l))
+  MonoType :: MonoType ctx l -> FunctionType ctx l (Eval ctx l)
   
-data MonoType m a where
-  String   :: MonoType m Text
-  Char     :: MonoType m Char
-  Boolean  :: MonoType m Bool
-  Number   :: MonoType m Double
-  Int      :: MonoType m Integer
-  Var      :: P.SourceType -> MonoType m (Value m)
+data MonoType ctx a where
+  String   :: MonoType ctx Text
+  Char     :: MonoType ctx Char
+  Boolean  :: MonoType ctx Bool
+  Number   :: MonoType ctx Double
+  Int      :: MonoType ctx Integer
+  Var      :: P.SourceType -> MonoType ctx (Value ctx)
   
 -- | This type class exists to facilitate the concise description of
 -- PureScript type schemes using the 'foreignImport' function.
@@ -75,15 +74,13 @@ data MonoType m a where
 --
 -- @
 -- foreignImport (Ident "identity") \a -> a ~> a
---   :: MonadFix m 
---   => (Value m -> EvalT m (Value m)) 
---   -> FFIBuilder m ()
+--   :: (Value ctx -> Eval ctx (Value ctx)) 
+--   -> FFIBuilder ctx ()
 --
 -- foreignImport (Ident "flip") \a b c -> (a ~> b ~> c) ~> b ~> a ~> c
---   :: MonadFix m 
---   => ((Value m -> Value m -> EvalT m (Value m))
---   ->   Value m -> Value m -> EvalT m (Value m))
---   -> FFIBuilder m ()
+--   :: ((Value ctx -> Value ctx -> Eval ctx (Value ctx))
+--   ->   Value ctx -> Value ctx -> Eval ctx (Value ctx))
+--   -> FFIBuilder ctx ()
 -- @
 --
 -- These Haskell functions applications describe the PureScript type schemes for the 
@@ -97,62 +94,62 @@ data MonoType m a where
 -- us. This is about as simple as things can get - we cannot simply specify the
 -- Haskell implementation and infer the PureScript type, because there is not a
 -- single best PureScript type for every given Haskell type.
-class ForAll m r a | a -> m r where
+class ForAll ctx r a | a -> ctx r where
   
   -- | Create a 'TypeScheme' which describes a PureScript type from a Haskell 
   -- function, where type bindings in PureScript types are represented by
   -- function arguments in the Haskell code.
-  forAll :: a -> TypeScheme m r
+  forAll :: a -> TypeScheme ctx r
   
-instance ForAll m a (FunctionType m a r_) where
+instance ForAll ctx a (FunctionType ctx a r_) where
   forAll = Nil
   
-instance (ForAll m r o, a ~ FunctionType m (Value m) (EvalT m (Value m))) => ForAll m r (a -> o) where
+instance (ForAll ctx r o, a ~ FunctionType ctx (Value ctx) (Eval ctx (Value ctx))) => ForAll ctx r (a -> o) where
   forAll f = Cons (forAll . f)
   
 infixr 0 ~>
 
 -- | Construct a PureScript function type
-(~>) :: FunctionType m al ar
-      -> FunctionType m bl br 
-      -> FunctionType m (al -> br) (al -> br)
+(~>) :: FunctionType ctx al ar
+      -> FunctionType ctx bl br 
+      -> FunctionType ctx (al -> br) (al -> br)
 (~>) = Function
   
 -- | The PureScript string type
-string  :: FunctionType m Text (EvalT m Text)
+string :: FunctionType ctx Text (Eval ctx Text)
 string = MonoType String
   
 -- | The PureScript char type
-char  :: FunctionType m Char (EvalT m Char)
+char :: FunctionType ctx Char (Eval ctx Char)
 char = MonoType Char
 
 -- | The PureScript boolean type
-boolean :: FunctionType m Bool (EvalT m Bool)
+boolean :: FunctionType ctx Bool (Eval ctx Bool)
 boolean = MonoType Boolean
 
 -- | The PureScript number type
-number :: FunctionType m Double (EvalT m Double)
+number :: FunctionType ctx Double (Eval ctx Double)
 number = MonoType Number
 
 -- | The PureScript integer type
-int :: FunctionType m Integer (EvalT m Integer)
+int :: FunctionType ctx Integer (Eval ctx Integer)
 int = MonoType Int
   
 -- | Construct a PureScript array type
-array :: FunctionType m l r
-      -> FunctionType m (Vector l) (EvalT m (Vector l))
+array :: FunctionType ctx l r
+      -> FunctionType ctx (Vector l) (Eval ctx (Vector l))
 array = Array
   
-data ForeignImports m = ForeignImports
-  { foreignImports_values :: [ForeignImport m]
+data ForeignImports ctx = ForeignImports
+  { foreignImports_values :: [ForeignImport ctx]
   }
   
-instance Semigroup (ForeignImports m) where
+instance Semigroup (ForeignImports ctx) where
   x <> y = ForeignImports
     { foreignImports_values = foreignImports_values x <> foreignImports_values y
     }
   
-instance Monoid (ForeignImports m) where
+instance Monoid (ForeignImports ctx) where
   mempty = ForeignImports 
     { foreignImports_values = mempty 
     }
@@ -167,17 +164,17 @@ instance Monoid (ForeignImports m) where
 --     (\a -> a ~> a)
 --     pure
 -- @
-newtype FFIBuilder m a = FFIBuilder { unFFIBuilder :: Writer (ForeignImports m) a }
-  deriving newtype (Functor, Applicative, Monad, MonadWriter (ForeignImports m)) 
+newtype FFIBuilder ctx a = FFIBuilder { unFFIBuilder :: Writer (ForeignImports ctx) a }
+  deriving newtype (Functor, Applicative, Monad, MonadWriter (ForeignImports ctx)) 
   
 -- | Run a computation in the 'FFIBuilder' monad, returning only the constructed
 -- 'FFI'.
-evalFFIBuilder :: P.ModuleName -> FFIBuilder m a -> FFI m
+evalFFIBuilder :: P.ModuleName -> FFIBuilder ctx a -> FFI ctx
 evalFFIBuilder mn = snd . runFFIBuilder mn
   
 -- | Run a computation in the 'FFIBuilder' monad, returning the result of the
 -- computation alongside the constructed 'FFI'.
-runFFIBuilder :: P.ModuleName -> FFIBuilder m a -> (a, FFI m)
+runFFIBuilder :: P.ModuleName -> FFIBuilder ctx a -> (a, FFI ctx)
 runFFIBuilder mn = fmap convert . runWriter . unFFIBuilder where
   convert (ForeignImports values) = FFI
     { ffi_moduleName = mn
@@ -196,11 +193,11 @@ runFFIBuilder mn = fmap convert . runWriter . unFFIBuilder where
 -- The type checker will ensure that the PureScript and Haskell types are
 -- compatible.
 foreignImport 
-  :: (MonadFix m, Evaluate.ToValue m a, ForAll m a ty)
+  :: (Evaluate.ToValue ctx a, ForAll ctx a ty)
   => P.Ident
   -> ty
   -> a
-  -> FFIBuilder m ()
+  -> FFIBuilder ctx ()
 foreignImport = 
   \nm ty impl -> tell $ ForeignImports
     { foreignImports_values = 
@@ -212,11 +209,11 @@ foreignImport =
         ]
     }
     
-typeSchemeToSourceType :: MonadFix m => TypeScheme m a -> P.SourceType
+typeSchemeToSourceType :: TypeScheme ctx a -> P.SourceType
 typeSchemeToSourceType (Cons f) = Internal.forAll \a -> typeSchemeToSourceType (f (MonoType (Var a)))
 typeSchemeToSourceType (Nil t) = functionTypeToSourceType t
 
-functionTypeToSourceType :: MonadFix m => FunctionType m l r -> P.SourceType
+functionTypeToSourceType :: FunctionType ctx l r -> P.SourceType
 functionTypeToSourceType (Function ty1 ty2) = 
   Internal.function 
     (functionTypeToSourceType ty1)
@@ -226,7 +223,7 @@ functionTypeToSourceType (Array ty) =
     (functionTypeToSourceType ty)
 functionTypeToSourceType (MonoType t) = monoTypeToSourceType t
 
-monoTypeToSourceType :: MonadFix m => MonoType m a -> P.SourceType
+monoTypeToSourceType :: MonoType ctx a -> P.SourceType
 monoTypeToSourceType String = P.tyString
 monoTypeToSourceType Char = P.tyChar
 monoTypeToSourceType Boolean = P.tyBoolean

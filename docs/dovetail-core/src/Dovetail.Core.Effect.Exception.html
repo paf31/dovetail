@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments      #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings   #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications    #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns        #-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Core.Effect.Exception</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Error.Class</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">catchError</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Reader.Class</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ask</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Text</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Typeable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Typeable</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ForeignType</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">builtIn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">type</span><span> </span><span id="Error"><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-var">Error</span></a></span></span><span> </span><span id="local-6989586621679330113"><span class="annot"><a href="#local-6989586621679330113"><span class="hs-identifier hs-type">ctx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">EvaluationError</span></span><span> </span><span class="annot"><a href="#local-6989586621679330113"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#renderValueOptions"><span class="hs-identifier hs-type">renderValueOptions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">RenderValueOptions</span></span><span>
+</span><span id="line-22"></span><span id="renderValueOptions"><span class="annot"><span class="annottext">renderValueOptions :: RenderValueOptions
+</span><a href="Dovetail.Core.Effect.Exception.html#renderValueOptions"><span class="hs-identifier hs-var hs-var">renderValueOptions</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">RenderValueOptions :: Bool -&gt; Maybe Int -&gt; RenderValueOptions
+</span><span class="hs-identifier hs-type">RenderValueOptions</span></span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">colorOutput :: Bool
+</span><span class="hs-identifier hs-var">colorOutput</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">maximumDepth :: Maybe Int
+</span><span class="hs-identifier hs-var">maximumDepth</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Int
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#env"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679330107"><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Typeable</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-28"></span><span id="env"><span class="annot"><span class="annottext">env :: Env ctx
+</span><a href="Dovetail.Core.Effect.Exception.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679330106"><span class="annot"><span class="annottext">_ModuleName :: ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var hs-var">_ModuleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Effect.Exception&quot;</span></span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span>  </span><span class="annot"><span class="annottext">[Env ctx] -&gt; Env ctx
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="hs-comment">-- throwException :: forall a. Error -&gt; Effect a</span><span>
+</span><span id="line-33"></span><span>      </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; (Error ctx -&gt; Value ctx -&gt; Eval ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;throwException&quot;</span></span><span> </span><span>
+</span><span id="line-35"></span><span>        </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span id="local-6989586621679330103"><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330103"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-36"></span><span>          </span><span class="annot"><span class="annottext">EvaluationErrorType ctx -&gt; Eval ctx (Value ctx)
+forall x (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EvaluationError ctx -&gt; EvaluationErrorType ctx
+forall ctx. EvaluationError ctx -&gt; EvaluationErrorType ctx
+</span><span class="hs-identifier hs-var hs-var">errorType</span></span><span> </span><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330103"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-comment">-- catchException :: forall a. (Error -&gt; Effect a) -&gt; Effect a -&gt; Effect a</span><span>
+</span><span id="line-38"></span><span>      </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; ((Error ctx -&gt; Value ctx -&gt; Eval ctx (Value ctx))
+    -&gt; (Value ctx -&gt; Eval ctx (Value ctx))
+    -&gt; Value ctx
+    -&gt; Eval ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;catchException&quot;</span></span><span> </span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330100"><span class="annot"><span class="annottext">Error ctx -&gt; Value ctx -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679330100"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span id="local-6989586621679330099"><span class="annot"><span class="annottext">Value ctx -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679330099"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679330098"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330098"><span class="hs-identifier hs-var">rw</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-41"></span><span>          </span><span class="annot"><span class="annottext">Eval ctx (Value ctx)
+-&gt; (EvaluationError ctx -&gt; Eval ctx (Value ctx))
+-&gt; Eval ctx (Value ctx)
+forall e (m :: * -&gt; *) a.
+MonadError e m =&gt;
+m a -&gt; (e -&gt; m a) -&gt; m a
+</span><span class="hs-identifier hs-var">catchError</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Value ctx -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679330099"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330098"><span class="hs-identifier hs-var">rw</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679330097"><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330097"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Error ctx -&gt; Value ctx -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679330100"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EvaluationError ctx -&gt; Error ctx
+forall a. a -&gt; ForeignType a
+</span><span class="hs-identifier hs-var">ForeignType</span></span><span> </span><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330097"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330098"><span class="hs-identifier hs-var">rw</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>      </span><span class="hs-comment">-- showErrorImpl :: Error -&gt; String</span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Error ctx -&gt; Eval ctx Text) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;showErrorImpl&quot;</span></span><span>
+</span><span id="line-45"></span><span>        </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span id="local-6989586621679330096"><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330096"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-46"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Eval ctx Text
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">RenderValueOptions -&gt; EvaluationError ctx -&gt; String
+forall ctx. RenderValueOptions -&gt; EvaluationError ctx -&gt; String
+</span><span class="hs-identifier hs-var">renderEvaluationError</span></span><span> </span><span class="annot"><span class="annottext">RenderValueOptions
+</span><a href="Dovetail.Core.Effect.Exception.html#renderValueOptions"><span class="hs-identifier hs-var">renderValueOptions</span></a></span><span> </span><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330096"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>      </span><span class="hs-comment">-- error :: String -&gt; Error</span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Text -&gt; Eval ctx (Error ctx)) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;error&quot;</span></span><span>
+</span><span id="line-50"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330093"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679330093"><span class="hs-identifier hs-var">msg</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-51"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">EvaluationContext</span></span><span> </span><span class="annot"><span class="annottext">[EvaluationStackFrame ctx]
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679330091"><span class="annot"><span class="annottext">ctx
+</span><a href="#local-6989586621679330091"><span class="hs-identifier hs-var">ctx</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Eval ctx (EvaluationContext ctx)
+forall r (m :: * -&gt; *). MonadReader r m =&gt; m r
+</span><span class="hs-identifier hs-var">ask</span></span><span>
+</span><span id="line-52"></span><span>          </span><span class="annot"><span class="annottext">Error ctx -&gt; Eval ctx (Error ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EvaluationError ctx -&gt; Error ctx
+forall a. a -&gt; ForeignType a
+</span><span class="hs-identifier hs-var">ForeignType</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EvaluationErrorType ctx
+-&gt; EvaluationContext ctx -&gt; EvaluationError ctx
+forall ctx.
+EvaluationErrorType ctx
+-&gt; EvaluationContext ctx -&gt; EvaluationError ctx
+</span><span class="hs-identifier hs-var">EvaluationError</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; EvaluationErrorType ctx
+forall ctx. Text -&gt; EvaluationErrorType ctx
+</span><span class="hs-identifier hs-var">OtherError</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679330093"><span class="hs-identifier hs-var">msg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[EvaluationStackFrame ctx] -&gt; ctx -&gt; EvaluationContext ctx
+forall ctx.
+[EvaluationStackFrame ctx] -&gt; ctx -&gt; EvaluationContext ctx
+</span><span class="hs-identifier hs-var">EvaluationContext</span></span><span> </span><span class="annot"><span class="annottext">[EvaluationStackFrame ctx]
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span> </span><span class="annot"><span class="annottext">ctx
+</span><a href="#local-6989586621679330091"><span class="hs-identifier hs-var">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>      </span><span class="hs-comment">-- message :: Error -&gt; String</span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Error ctx -&gt; Eval ctx Text) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;message&quot;</span></span><span>
+</span><span id="line-56"></span><span>        </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span id="local-6989586621679330088"><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330088"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-57"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Eval ctx Text
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">RenderValueOptions -&gt; EvaluationErrorType ctx -&gt; String
+forall ctx. RenderValueOptions -&gt; EvaluationErrorType ctx -&gt; String
+</span><span class="hs-identifier hs-var">renderEvaluationErrorType</span></span><span> </span><span class="annot"><span class="annottext">RenderValueOptions
+</span><a href="Dovetail.Core.Effect.Exception.html#renderValueOptions"><span class="hs-identifier hs-var">renderValueOptions</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EvaluationError ctx -&gt; EvaluationErrorType ctx
+forall ctx. EvaluationError ctx -&gt; EvaluationErrorType ctx
+</span><span class="hs-identifier hs-var hs-var">errorType</span></span><span> </span><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330088"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span>      </span><span class="hs-comment">-- name :: Error -&gt; String</span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Error ctx -&gt; Eval ctx Text) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;name&quot;</span></span><span>
+</span><span id="line-61"></span><span>        </span><span class="hs-glyph">\</span><span class="annot"><span class="annottext">Error ctx
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-62"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Eval ctx Text
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Error&quot;</span></span><span>
+</span><span id="line-63"></span><span>      </span><span class="hs-comment">-- stackImpl :: (forall a. a -&gt; Maybe a) -&gt; (forall a. Maybe a) -&gt; Error -&gt; Maybe String</span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; ((Text -&gt; Eval ctx (Value ctx))
+    -&gt; Value ctx -&gt; Error ctx -&gt; Eval ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Dovetail.Core.Effect.Exception.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679330107"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679330106"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;stackImpl&quot;</span></span><span>
+</span><span id="line-66"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679330086"><span class="annot"><span class="annottext">Text -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679330086"><span class="hs-identifier hs-var">_just</span></a></span></span><span> </span><span id="local-6989586621679330085"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330085"><span class="hs-identifier hs-var">_nothing</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ForeignType</span></span><span> </span><span id="local-6989586621679330084"><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330084"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-67"></span><span>          </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">EvaluationContext ctx -&gt; [EvaluationStackFrame ctx]
+forall ctx. EvaluationContext ctx -&gt; [EvaluationStackFrame ctx]
+</span><span class="hs-identifier hs-var hs-var">callStack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EvaluationError ctx -&gt; EvaluationContext ctx
+forall ctx. EvaluationError ctx -&gt; EvaluationContext ctx
+</span><span class="hs-identifier hs-var hs-var">errorContext</span></span><span> </span><span class="annot"><span class="annottext">EvaluationError ctx
+</span><a href="#local-6989586621679330084"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-68"></span><span>            </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Value ctx -&gt; Eval ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679330085"><span class="hs-identifier hs-var">_nothing</span></a></span><span>
+</span><span id="line-69"></span><span>            </span><span id="local-6989586621679330081"><span class="annot"><span class="annottext">[EvaluationStackFrame ctx]
+</span><a href="#local-6989586621679330081"><span class="hs-identifier hs-var">stack</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679330086"><span class="hs-identifier hs-var">_just</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[EvaluationStackFrame ctx] -&gt; Text
+forall ctx. [EvaluationStackFrame ctx] -&gt; Text
+</span><span class="hs-identifier hs-var">renderEvaluationStack</span></span><span> </span><span class="annot"><span class="annottext">[EvaluationStackFrame ctx]
+</span><a href="#local-6989586621679330081"><span class="hs-identifier hs-var">stack</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">]</span></pre></body></html>

@@ -29,6 +29,7 @@ executables:
     - containers
     - dovetail
     - dovetail-aeson
+    - dovetail-core
     - mtl
     - purescript
     - purescript-cst
@@ -58,6 +59,29 @@ executables:
     - purescript-cst
     - random
     - reflection
+    - text
+    - transformers
+    - vector
+    
+  repl:
+    main:                Main.hs
+    source-dirs:         repl
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    - -Werror
+    - -fwarn-unused-imports
+    dependencies:
+    - bytestring
+    - containers
+    - dovetail
+    - dovetail-core
+    - mtl
+    - purescript
+    - purescript-cst
+    - random
     - text
     - transformers
     - vector

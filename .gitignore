@@ -1,6 +1,6 @@
 dist-newstyle/
 /*.purs
 /*.json
-output/
+/output/
 .stack-work
 test-files/*/actual

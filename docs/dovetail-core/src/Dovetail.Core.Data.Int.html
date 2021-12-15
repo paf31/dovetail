@@ -1,0 +1,378 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BlockArguments      #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings   #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE TypeApplications    #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns        #-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Dovetail.Core.Data.Int</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">chr</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">ord</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Text</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Dovetail.Evaluate</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">builtIn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Numeric</span></span><span> </span><span class="hs-keyword">qualified</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="annot"><a href="Dovetail.Core.Data.Int.html#env"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679329023"><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Env</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span>
+</span><span id="line-20"></span><span id="env"><span class="annot"><span class="annottext">env :: Env ctx
+</span><a href="Dovetail.Core.Data.Int.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679329022"><span class="annot"><span class="annottext">_ModuleName :: ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var hs-var">_ModuleName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; ModuleName
+</span><span class="hs-identifier hs-var">ModuleName</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Data.Int&quot;</span></span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span>  </span><span class="annot"><span class="annottext">[Env ctx] -&gt; Env ctx
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="hs-comment">-- fromNumberImpl :: (forall a. a -&gt; Maybe a) -&gt; (forall a. Maybe a) -&gt; Number -&gt; Maybe Int</span><span>
+</span><span id="line-25"></span><span>      </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; ((Integer -&gt; Eval ctx (Value ctx))
+    -&gt; Value ctx -&gt; Double -&gt; Eval ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;fromNumberImpl&quot;</span></span><span> </span><span>
+</span><span id="line-27"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679329020"><span class="annot"><span class="annottext">Integer -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679329020"><span class="hs-identifier hs-var">_just</span></a></span></span><span> </span><span id="local-6989586621679329019"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679329019"><span class="hs-identifier hs-var">_nothing</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; (Integer, Double)
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; (b, a)
+</span><span class="hs-identifier hs-var">properFraction</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679329017"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329017"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679329016"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679329016"><span class="hs-identifier hs-var">d</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-28"></span><span>          </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679329016"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><span class="hs-number">0.0</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679329020"><span class="hs-identifier hs-var">_just</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329017"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Value ctx -&gt; Eval ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679329019"><span class="hs-identifier hs-var">_nothing</span></a></span><span>
+</span><span id="line-29"></span><span>      </span><span class="hs-comment">-- toNumber :: Int -&gt; Number</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName -&gt; Text -&gt; (Integer -&gt; Eval ctx Double) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;toNumber&quot;</span></span><span>
+</span><span id="line-32"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679329015"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329015"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-33"></span><span>          </span><span class="annot"><span class="annottext">Double -&gt; Eval ctx Double
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Double
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329015"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>      </span><span class="hs-comment">-- quot :: Int -&gt; Int -&gt; Int</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Integer -&gt; Integer -&gt; Eval ctx Integer) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;quot&quot;</span></span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679329014"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329014"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679329013"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329013"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-38"></span><span>          </span><span class="annot"><span class="annottext">Integer -&gt; Eval ctx Integer
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329014"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">`quot`</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329013"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-comment">-- rem :: Int -&gt; Int -&gt; Int</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Integer -&gt; Integer -&gt; Eval ctx Integer) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;rem&quot;</span></span><span>
+</span><span id="line-42"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679329011"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329011"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679329010"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329010"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-43"></span><span>          </span><span class="annot"><span class="annottext">Integer -&gt; Eval ctx Integer
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329011"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">`rem`</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329010"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span>      </span><span class="hs-comment">-- pow :: Int -&gt; Int -&gt; Int</span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Integer -&gt; Integer -&gt; Eval ctx Integer) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;pow&quot;</span></span><span>
+</span><span id="line-47"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679329008"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329008"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679329007"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329007"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-48"></span><span>          </span><span class="annot"><span class="annottext">Integer -&gt; Eval ctx Integer
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329008"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+forall a b. (Num a, Integral b) =&gt; a -&gt; b -&gt; a
+</span><span class="hs-operator hs-var">^</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329007"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>      </span><span class="hs-comment">-- fromStringAsImpl :: (forall a. a -&gt; Maybe a) -&gt; (forall a. Maybe a) -&gt; Radix -&gt; String -&gt; Maybe Int</span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text
+-&gt; ((Integer -&gt; Eval ctx (Value ctx))
+    -&gt; Value ctx -&gt; Integer -&gt; Text -&gt; Eval ctx (Value ctx))
+-&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;fromStringAsImpl&quot;</span></span><span>
+</span><span id="line-52"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679329005"><span class="annot"><span class="annottext">Integer -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679329005"><span class="hs-identifier hs-var">_just</span></a></span></span><span> </span><span id="local-6989586621679329004"><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679329004"><span class="hs-identifier hs-var">_nothing</span></a></span></span><span> </span><span id="local-6989586621679329003"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329003"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679329002"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679329002"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-53"></span><span>          </span><span class="annot"><span class="annottext">Bool -&gt; Eval ctx () -&gt; Eval ctx ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329003"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329003"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">36</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-54"></span><span>            </span><span class="annot"><span class="annottext">EvaluationErrorType ctx -&gt; Eval ctx ()
+forall x (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; EvaluationErrorType ctx
+forall ctx. Text -&gt; EvaluationErrorType ctx
+</span><span class="hs-identifier hs-var">OtherError</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;fromStringAsImpl: radix must be between 2 and 36&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span class="annot"><a href="#local-6989586621679328996"><span class="hs-identifier hs-type">readDigit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-56"></span><span>              </span><span id="local-6989586621679328996"><span class="annot"><span class="annottext">readDigit :: Char -&gt; Int
+</span><a href="#local-6989586621679328996"><span class="hs-identifier hs-var hs-var">readDigit</span></a></span></span><span> </span><span id="local-6989586621679328995"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span>
+</span><span id="line-57"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'0'</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'9'</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'0'</span></span><span>
+</span><span id="line-58"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'a'</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'z'</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'a'</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span>
+</span><span id="line-59"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'A'</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'Z'</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328995"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'A'</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span>
+</span><span id="line-60"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; Int
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;readDigit: invalid input&quot;</span></span><span>
+</span><span id="line-61"></span><span>                </span><span>
+</span><span id="line-62"></span><span>              </span><span class="annot"><a href="#local-6989586621679328990"><span class="hs-identifier hs-type">isValidDigit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-63"></span><span>              </span><span id="local-6989586621679328990"><span class="annot"><span class="annottext">isValidDigit :: Char -&gt; Bool
+</span><a href="#local-6989586621679328990"><span class="hs-identifier hs-var hs-var">isValidDigit</span></a></span></span><span> </span><span id="local-6989586621679328989"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328989"><span class="hs-identifier hs-var">c</span></a></span></span><span>
+</span><span id="line-64"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328989"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'0'</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328989"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'9'</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-65"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328989"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'a'</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328989"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'z'</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-66"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328989"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'A'</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679328989"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'Z'</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-67"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-68"></span><span>          </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; (Char -&gt; Bool) -&gt; (Char -&gt; Int) -&gt; ReadS Integer
+forall a. Num a =&gt; a -&gt; (Char -&gt; Bool) -&gt; (Char -&gt; Int) -&gt; ReadS a
+</span><span class="hs-identifier hs-var">Numeric.readInt</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679329003"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><a href="#local-6989586621679328990"><span class="hs-identifier hs-var">isValidDigit</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><a href="#local-6989586621679328996"><span class="hs-identifier hs-var">readDigit</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; [Char]
+</span><span class="hs-identifier hs-var">Text.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679329002"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-69"></span><span>            </span><span class="hs-special">[</span><span class="hs-special">(</span><span id="local-6989586621679328986"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328986"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Eval ctx (Value ctx)
+</span><a href="#local-6989586621679329005"><span class="hs-identifier hs-var">_just</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328986"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-70"></span><span>            </span><span class="annot"><span class="annottext">[(Integer, [Char])]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Value ctx -&gt; Eval ctx (Value ctx)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Value ctx
+</span><a href="#local-6989586621679329004"><span class="hs-identifier hs-var">_nothing</span></a></span><span>
+</span><span id="line-71"></span><span>      </span><span class="hs-comment">-- toStringAs :: Radix -&gt; Int -&gt; String</span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ModuleName
+-&gt; Text -&gt; (Integer -&gt; Integer -&gt; Eval ctx Text) -&gt; Env ctx
+forall ctx a. ToValue ctx a =&gt; ModuleName -&gt; Text -&gt; a -&gt; Env ctx
+</span><span class="hs-identifier hs-var">builtIn</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eval</span></span><span> </span><span class="annot"><a href="#local-6989586621679329023"><span class="hs-identifier hs-type">ctx</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>        </span><span class="annot"><span class="annottext">ModuleName
+</span><a href="#local-6989586621679329022"><span class="hs-identifier hs-var">_ModuleName</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;toStringAs&quot;</span></span><span>
+</span><span id="line-74"></span><span>        </span><span class="hs-glyph">\</span><span id="local-6989586621679328985"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328985"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679328984"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328984"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-75"></span><span>          </span><span class="annot"><span class="annottext">Bool -&gt; Eval ctx () -&gt; Eval ctx ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328985"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328985"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">36</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-76"></span><span>            </span><span class="annot"><span class="annottext">EvaluationErrorType ctx -&gt; Eval ctx ()
+forall x (m :: * -&gt; *) a.
+(MonadError (EvaluationError x) m,
+ MonadReader (EvaluationContext x) m) =&gt;
+EvaluationErrorType x -&gt; m a
+</span><span class="hs-identifier hs-var">throwErrorWithContext</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; EvaluationErrorType ctx
+forall ctx. Text -&gt; EvaluationErrorType ctx
+</span><span class="hs-identifier hs-var">OtherError</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;toStringAs: radix must be between 2 and 36&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span class="annot"><a href="#local-6989586621679328983"><span class="hs-identifier hs-type">showDigit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span>
+</span><span id="line-78"></span><span>              </span><span id="local-6989586621679328983"><span class="annot"><span class="annottext">showDigit :: Int -&gt; Char
+</span><a href="#local-6989586621679328983"><span class="hs-identifier hs-var hs-var">showDigit</span></a></span></span><span> </span><span id="local-6989586621679328982"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679328982"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span>
+</span><span id="line-79"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679328982"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679328982"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Char
+</span><span class="hs-identifier hs-var">chr</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'0'</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679328982"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679328982"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679328982"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">36</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Char
+</span><span class="hs-identifier hs-var">chr</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Char -&gt; Int
+</span><span class="hs-identifier hs-var">ord</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'a'</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679328982"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>                </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; Char
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;showDigit: invalid input&quot;</span></span><span>
+</span><span id="line-82"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Eval ctx Text
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Eval ctx Text)
+-&gt; ([Char] -&gt; Text) -&gt; [Char] -&gt; Eval ctx Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; Text
+</span><span class="hs-identifier hs-var">Text.pack</span></span><span> </span><span class="annot"><span class="annottext">([Char] -&gt; Eval ctx Text) -&gt; [Char] -&gt; Eval ctx Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; (Int -&gt; Char) -&gt; Integer -&gt; ShowS
+forall a. (Integral a, Show a) =&gt; a -&gt; (Int -&gt; Char) -&gt; a -&gt; ShowS
+</span><span class="hs-identifier hs-var">Numeric.showIntAtBase</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328985"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Char
+</span><a href="#local-6989586621679328983"><span class="hs-identifier hs-var">showDigit</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679328984"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-83"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-84"></span></pre></body></html>

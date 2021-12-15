@@ -1,0 +1,1 @@
+{"moduleName":["Unsafe","Coerce"],"reExports":{},"imports":[{"annotation":{"meta":null,"sourceSpan":{"start":[2,1],"end":[27,50]}},"moduleName":["Prim"]}],"builtWith":"0.14.4","modulePath":".spago/unsafe-coerce/v5.0.0/src/Unsafe/Coerce.purs","exports":["unsafeCoerce"],"decls":[],"comments":[],"foreign":["unsafeCoerce"],"sourceSpan":{"start":[2,1],"end":[27,50]}}

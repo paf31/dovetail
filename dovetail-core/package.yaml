@@ -1,0 +1,54 @@
+name:                dovetail-core
+version:             0.1.0.0
+github:              "paf31/dovetail"
+license:             BSD3
+license-file:        LICENSE
+author:              "Phil Freeman"
+maintainer:          "freeman.phil@gmail.com"
+copyright:           "2021 Phil Freeman"
+category:            Language
+synopsis:            Dovetail support for the PureScript core library set
+
+dependencies:
+- base >= 4.7 && < 5
+
+extra-source-files:
+  purs/**/*
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -O2
+  - -Wall
+  - -fwarn-unused-imports
+  dependencies:
+  - aeson
+  - bytestring
+  - dovetail
+  - filepath
+  - file-embed
+  - mtl
+  - purescript
+  - purescript-cst
+  - random
+  - serialise
+  - template-haskell
+  - text
+  - th-lift-instances
+  - unordered-containers
+  - vector
+  
+tests:
+  dovetail-core-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -fwarn-unused-imports
+    dependencies:
+    - dovetail
+    - dovetail-core
+    - hspec
+    - purescript

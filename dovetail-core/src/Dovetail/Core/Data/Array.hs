@@ -107,20 +107,26 @@ env = do
       --   -> a
       --   -> Array a
       --   -> Maybe (Array a)
-    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Integer -> Value ctx -> Vector (Value ctx) -> Eval ctx (Value ctx))
+    , builtIn @ctx @((Vector (Value ctx) -> Eval ctx (Value ctx)) -> Value ctx -> Integer -> Value ctx -> Vector (Value ctx) -> Eval ctx (Value ctx))
         _ModuleName "_insertAt"
-        \_just _nothing _i _x _xs ->
-          throwErrorWithContext (OtherError "_insertAt is not implemented")
+        \_just _nothing i x xs ->
+          if i >= 0 && fromIntegral i <= Vector.length xs
+            then let (ys, zs) = Vector.splitAt (fromIntegral i) xs
+                  in _just (ys <> pure x <> zs)
+            else pure _nothing
       -- _deleteAt :: forall a
       --    . (forall b. b -> Maybe b)
       --   -> (forall b. Maybe b)
       --   -> Int
       --   -> Array a
       --   -> Maybe (Array a)
-    , builtIn @ctx @((Value ctx -> Eval ctx (Value ctx)) -> Value ctx -> Integer -> Vector (Value ctx) -> Eval ctx (Value ctx))
+    , builtIn @ctx @((Vector (Value ctx) -> Eval ctx (Value ctx)) -> Value ctx -> Integer -> Vector (Value ctx) -> Eval ctx (Value ctx))
         _ModuleName "_deleteAt"
-        \_just _nothing _i _xs ->
-          throwErrorWithContext (OtherError "_deleteAt is not implemented")
+        \_just _nothing i xs ->
+          if i >= 0 && fromIntegral i < Vector.length xs
+            then let (ys, zs) = Vector.splitAt (fromIntegral i) xs
+                  in _just (ys <> Vector.drop 1 zs)
+            else pure _nothing
       -- _updateAt :: forall a
       --    . (forall b. b -> Maybe b)
       --   -> (forall b. Maybe b)

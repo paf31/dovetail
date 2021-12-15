@@ -6,7 +6,72 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE ViewPatterns        #-}
 
-module Dovetail.Core where
+module Dovetail.Core 
+  ( 
+  -- ** Building core libraries
+    CoreBuild(..)
+  , buildModules
+  
+  -- ** Package collections
+  , allPackages
+  , minimal
+  
+  -- ** Individual packages
+  , arrays
+  , assert
+  , bifunctors
+  , catenableLists
+  , console
+  , _const
+  , contravariant
+  , control
+  , distributive
+  , effect
+  , _either
+  , enums
+  , exceptions
+  , exists
+  , foldableTraversable
+  , orders
+  , free
+  , functions
+  , functors
+  , gen
+  , graphs
+  , identity
+  , integers
+  , invariant
+  , lazy
+  , lcg
+  , lists
+  , math
+  , _maybe
+  , _newtype
+  , nonempty
+  , numbers
+  , orderedCollections
+  , typelevelPrelude
+  , parallel
+  , partial
+  , prelude
+  , profunctor
+  , psciSupport
+  , quickcheck
+  , random
+  , record
+  , refs
+  , safeCoerce
+  , semirings
+  , st
+  , strings
+  , tailrec
+  , transformers
+  , tuples
+  , typeEquality
+  , unfoldable
+  , unsafeCoerce
+  , validation
+  ) where
 
 import Codec.Serialise qualified as Codec
 import Data.Aeson (decodeStrict)
@@ -104,8 +169,8 @@ instance Semigroup (CoreBuild ctx) where
 instance Monoid (CoreBuild ctx) where
   mempty = CoreBuild mempty mempty
 
-core :: forall ctx. Typeable ctx => CoreBuild ctx -> Interpret ctx ()
-core bld = do
+buildModules :: forall ctx. Typeable ctx => CoreBuild ctx -> Interpret ctx ()
+buildModules bld = do
     loadEnv (env bld)
     let orderedInputs = [ (mn, inputs)
                         | mn <- modules
@@ -119,8 +184,8 @@ core bld = do
         (Codec.deserialise (BL.fromStrict externs))
         (readCoreFn (fromJust (decodeStrict corefn)))
 
-all :: Typeable ctx => CoreBuild ctx
-all = fold
+allPackages :: Typeable ctx => CoreBuild ctx
+allPackages = fold
   [ arrays
   , assert
   , bifunctors
@@ -176,6 +241,50 @@ all = fold
   , unsafeCoerce
   , validation
   ]
+  
+-- | A smaller package collection which is the transitive closure of
+-- the arrays, strings, integers, numbers and math packages.
+minimal :: Typeable ctx => CoreBuild ctx
+minimal = fold
+  [ arrays
+  , bifunctors
+  , console
+  , _const
+  , contravariant
+  , control
+  , distributive
+  , effect
+  , _either
+  , enums
+  , exists
+  , foldableTraversable
+  , functions
+  , functors
+  , gen
+  , identity
+  , integers
+  , invariant
+  , math
+  , _maybe
+  , _newtype
+  , nonempty
+  , numbers
+  , orders
+  , partial
+  , prelude
+  , profunctor
+  , psciSupport
+  , refs
+  , safeCoerce
+  , st
+  , strings
+  , tailrec
+  , tuples
+  , typeEquality
+  , unfoldable
+  , unsafeCoerce
+  ]
+
 
 arrays :: Typeable ctx => CoreBuild ctx
 arrays = CoreBuild

@@ -50,14 +50,14 @@ env = do
           pure (Object mempty)
       -- for :: forall r a. Int -> Int -> (Int ->  a) ->  Unit
     , builtIn @ctx @(Integer -> Integer -> (Integer -> Effect ctx (Value ctx)) -> Effect ctx (Value ctx))
-        _ModuleName "for"
+        _ModuleName "forE"
         \from to body rw -> do
           for_ [from .. to] \i -> 
             body i rw
           pure (Object mempty)
       -- foreach :: forall r a. Array a -> (a ->  Unit) ->  Unit
     , builtIn @ctx @(Vector (Value ctx) -> (Value ctx -> Effect ctx (Value ctx)) -> Effect ctx (Value ctx))
-        _ModuleName "foreach"
+        _ModuleName "foreachE"
         \xs f rw -> do
           for_ xs \x -> 
             f x rw

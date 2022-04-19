@@ -152,6 +152,8 @@ reify = go where
   go (P.TypeApp _ (P.TypeConstructor _ (P.Qualified (Just (P.ModuleName "Prim")) (P.ProperName "Record"))) ty) f = do
     let (knownFields, unknownFields) = P.rowToSortedList ty
     case unknownFields of
+      P.REmpty{} ->
+        goRecord knownFields (\(Proxy :: Proxy xs) -> f (Proxy :: Proxy (Record xs)))
       P.KindApp _ P.REmpty{} _ ->
         goRecord knownFields (\(Proxy :: Proxy xs) -> f (Proxy :: Proxy (Record xs)))
       P.TypeVar{} ->

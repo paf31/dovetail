@@ -51,6 +51,7 @@ import Control.Monad.Error.Class (MonadError(..))
 import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader.Class (MonadReader(..))
+import Control.Monad.Catch (MonadThrow, MonadCatch)
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT)
 import Data.Dynamic (Dynamic)
@@ -251,6 +252,8 @@ newtype Eval ctx a = Eval { unEval :: ReaderT (EvaluationContext ctx) (ExceptT (
     , MonadReader (EvaluationContext ctx)
     , MonadIO
     , MonadFix
+    , MonadThrow
+    , MonadCatch
     )
 
 runEval :: ctx -> Eval ctx a -> IO (Either (EvaluationError ctx) a)

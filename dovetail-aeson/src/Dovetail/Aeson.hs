@@ -76,6 +76,7 @@ import Data.Aeson.Types qualified as Aeson
 import Data.Dynamic qualified as Dynamic
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
+import Data.Maybe (fromMaybe)
 import Data.Proxy (Proxy(..))
 import Data.Reflection (reifySymbol)
 import Data.Text (Text)
@@ -246,8 +247,12 @@ data Cons (k :: Symbol) x xs = Cons x xs
 instance forall k x xs. (KnownSymbol k, Aeson.FromJSON x, FromJSONObject xs) => FromJSONObject (Cons k x xs) where
   parseJSONObject o =
     let k = symbolVal (Proxy :: Proxy k)
-     in Cons <$> o Aeson..: (Text.pack k) <*> parseJSONObject o
+     in Cons <$> parseMissingAsNull o (Text.pack k) <*> parseJSONObject o
   
+parseMissingAsNull :: Aeson.FromJSON x => Aeson.Object -> Text -> Aeson.Parser x
+parseMissingAsNull o k =
+  Aeson.parseJSON $ fromMaybe Aeson.Null (HashMap.lookup k o)
+    
 instance forall k x xs. (KnownSymbol k, Aeson.ToJSON x, ToJSONObject xs) => ToJSONObject (Cons k x xs) where
   toJSONObject (Cons x xs) =
     let k = symbolVal (Proxy :: Proxy k)
